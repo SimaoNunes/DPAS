@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="Client" />
         <module name="Client_API" />
+        <module name="Library" />
         <module name="Server" />
       </profile>
     </annotationProcessing>
