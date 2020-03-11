@@ -11,14 +11,21 @@ public class App
         System.out.println( "Hello World from server!" );
 
         try{  
-            ServerSocket ss = new ServerSocket(9000);  
+            ServerSocket ss = new ServerSocket(9000);
+            Boolean open = true;
 
-            while (true){
+            while (open){
                 Socket s = ss.accept();
                 DataInputStream dis = new DataInputStream(s.getInputStream());  
-                String str = (String)dis.readUTF();  
-                System.out.println("message = "+str);  
+                String str = (String)dis.readUTF();
+                System.out.println("message = "+str);
+
+                if (str.equals("END")) {
+                    open = false;
+                }
             }
+
+            ss.close();
                         
         } catch(Exception e) {
             System.out.println("Something went wrong.");
