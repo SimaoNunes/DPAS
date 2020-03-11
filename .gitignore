@@ -1,1 +1,4 @@
-./.ideia
+*/.ideia
+*/.settings
+*/target
+*/.project
