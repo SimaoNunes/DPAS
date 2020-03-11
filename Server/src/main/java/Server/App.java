@@ -12,13 +12,14 @@ public class App
 
         try{  
             ServerSocket ss = new ServerSocket(9000);  
-            Socket s = ss.accept();
 
-            DataInputStream dis = new DataInputStream(s.getInputStream());  
-            String str = (String)dis.readUTF();  
-            System.out.println("message = "+str);  
-            
-            ss.close();  
+            while (true){
+                Socket s = ss.accept();
+                DataInputStream dis = new DataInputStream(s.getInputStream());  
+                String str = (String)dis.readUTF();  
+                System.out.println("message = "+str);  
+            }
+                        
         } catch(Exception e) {
             System.out.println("Something went wrong.");
         }  
