@@ -1,9 +1,6 @@
 package Server;
 
-import java.io.File;
-import java.io.ObjectInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 
 import java.nio.file.Path;
 import java.nio.file.Files;
@@ -50,25 +47,25 @@ public class App
     		try {
     			inStream = new ObjectInputStream(socket.getInputStream());
     			outStream = new ObjectOutputStream(socket.getOutputStream());
-				String cmd = null;
-    			Boolean open = true;
     			try {
-    				System.out.println("User connected.");
-    				while(open) {
-    					cmd = (String) inStream.readObject();
-    					switch(cmd) {
-    						case "POST":
-    							post();
-								break;
-							case "GET":
-								send(outStream);
-								break;
-    						case "END":
-    							quitUser();
-    							open = false;
-    							break;
-    					}
-    				}
+					System.out.println("User connected.");
+
+					String input = inStream.readUTF();
+    				String[] utf = input.split("_");
+					String cmd = utf[0];
+					int length = Integer.parseInt(utf[1]);
+					System.out.println(utf[0]);
+					System.out.println(utf[1]);
+					System.out.println(input);
+					//cmd = (String) inStream.readObject();
+					switch(cmd) {
+						case "POST":
+							post(inStream, length);
+							break;
+						case "GET":
+							send(outStream);
+							break;
+					}
     			}catch (Exception e) {
     				e.printStackTrace();
     			}
@@ -77,12 +74,23 @@ public class App
     		}
     	}
 
-		private void post() {
+		private void post(ObjectInputStream inStream, int length) {
 			System.out.println("POST method");
-			
-			String example = "Esta merda tem de ir para bytes";
+			byte[] message = new byte[length];
+			String m;
+
+			try {
+				m = (String) inStream.readObject();
+				System.out.println(m);
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+
+
 		
-			try{
+			/*try{
 				byte[] bytes = example.getBytes("UTF-8");
 
 				File file = new File("./storage");
@@ -92,7 +100,7 @@ public class App
 				fos.close();
 			} catch (Exception e) {
 				e.printStackTrace();
-			}
+			}*/
 		
 		}
 
