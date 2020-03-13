@@ -1,5 +1,6 @@
-./ideia
-./project
+.ideia
+.settings
+.project
 **/.ideia
 **/.settings
 **/target

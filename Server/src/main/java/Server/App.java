@@ -82,26 +82,20 @@ public class App
 			try {
 				m = (String) inStream.readObject();
 				System.out.println(m);
+
+				File file = new File("./test_user_annoucement");
+				FileOutputStream fos = new FileOutputStream(file);
+				
+				message = m.getBytes();
+				fos.write(message);
+				fos.close();
+				
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
-
-
-		
-			/*try{
-				byte[] bytes = example.getBytes("UTF-8");
-
-				File file = new File("./storage");
-				FileOutputStream fos = new FileOutputStream(file);
 	
-				fos.write(bytes);
-				fos.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}*/
-		
 		}
 
 		private void send(ObjectOutputStream outStream) {
