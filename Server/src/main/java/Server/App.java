@@ -85,7 +85,7 @@ public class App
 			try{
 				byte[] bytes = example.getBytes("UTF-8");
 
-				File file = new File("./storage.dat");
+				File file = new File("./storage");
 				FileOutputStream fos = new FileOutputStream(file);
 	
 				fos.write(bytes);
