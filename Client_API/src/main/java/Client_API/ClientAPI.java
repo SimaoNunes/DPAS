@@ -50,9 +50,6 @@ public class ClientAPI {
         outStream.flush();
 
         outStream.close();
-
-        socket.close();
-
     }
 
     public void register(PublicKey key, String name){
