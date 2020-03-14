@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import Library.Request;
+import jdk.nashorn.internal.ir.RuntimeNode;
 import org.apache.commons.io.*;
 
 public class App 
@@ -50,20 +52,21 @@ public class App
     			try {
 					System.out.println("User connected.");
 
-					String input = inStream.readUTF();
-    				String[] utf = input.split("_");
-					String cmd = utf[0];
-					int length = Integer.parseInt(utf[1]);
-					System.out.println(utf[0]);
-					System.out.println(utf[1]);
-					System.out.println(input);
-					//cmd = (String) inStream.readObject();
-					switch(cmd) {
+					//aqui decifra-se
+
+					Request request = (Request) inStream.readObject();
+					switch(request.getOperation()) {
 						case "POST":
-							post(inStream, length);
+							post(request);
 							break;
-						case "GET":
+						case "READ":
 							send(outStream);
+							break;
+						case "POSTGENERAL":
+							postGeneral();
+							break;
+						case "READGENERAL":
+							readGeneral();
 							break;
 					}
     			}catch (Exception e) {
@@ -74,19 +77,19 @@ public class App
     		}
     	}
 
-		private void post(ObjectInputStream inStream, int length) {
-			System.out.println("POST method");
-			byte[] message = new byte[length];
-			String m;
+    	private void readGeneral(){
 
-			try {
-				m = (String) inStream.readObject();
-				System.out.println(m);
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			}
+		}
+
+    	private void postGeneral(){
+
+		}
+
+		private void post(Request request) {
+			System.out.println("POST method");
+
+			System.out.println(request.getMessage());
+    	}
 
 
 		
@@ -101,8 +104,7 @@ public class App
 			} catch (Exception e) {
 				e.printStackTrace();
 			}*/
-		
-		}
+
 
 		private void send(ObjectOutputStream outStream) {
 			System.out.println("SEND method");

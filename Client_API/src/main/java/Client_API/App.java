@@ -5,7 +5,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-import java.util.Scanner; 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.util.Scanner;
 
 
 public class App {
@@ -40,8 +44,18 @@ public class App {
         } catch(Exception e){
             System.out.println(e);
         }*/
+        PublicKey key = null;
+        try {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+            kpg.initialize(2048);
+            KeyPair kp = kpg.generateKeyPair();
+            key = kp.getPublic();
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
         ClientAPI c = new ClientAPI();
-        c.post("AIAIAIAI TESTE");
+        c.post(key, "AIAIAIAI TESTE", null);
         
     }
 

@@ -1,9 +1,13 @@
 package Client_API;
 
+import Library.Request;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigInteger;
 import java.net.Socket;
+import java.security.PublicKey;
 import java.util.Scanner;
 
 public class ClientAPI {
@@ -31,21 +35,58 @@ public class ClientAPI {
         return new Scanner(System.in);
     }
 
-    public void post(String message){
+    public void send(ObjectOutputStream outStream, Request request) throws IOException {
+
+        outStream.writeObject(request);
+
+        outStream.flush();
+
+        outStream.close();
+
+    }
+
+    public void post(PublicKey key, String message, int[] announcs){
+
+        Request request = new Request("POST", key, message, announcs);
 
         try {
             Socket socket = createSocket();
             outStream = createOutputStream(socket);
-            int length = message.getBytes().length;
-            outStream.writeUTF("POST_" + length);
-            outStream.writeObject(message);
-            outStream.flush();
-            outStream.close();
+            send(outStream, request);
             socket.close();
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+    }
+
+    public void postGeneral(String message){
+
+        try {
+            Socket socket = createSocket();
+            outStream = createOutputStream(socket);
+            //send(outStream, message.getBytes());
+            socket.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void read(int number){
+
+        try {
+            Socket socket = createSocket();
+            outStream = createOutputStream(socket);
+            //send(outStream, BigInteger.valueOf(number).toByteArray());
+            socket.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
     }
 
