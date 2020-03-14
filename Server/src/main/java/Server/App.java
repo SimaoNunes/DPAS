@@ -2,9 +2,11 @@ package Server;
 
 import java.io.*;
 
+import java.security.PublicKey;
+
 import java.nio.file.Path;
-import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.Files;
 
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -57,7 +59,7 @@ public class App
 					Request request = (Request) inStream.readObject();
 					switch(request.getOperation()) {
 						case "POST":
-							post(outStream, request);
+							post(request);
 							break;
 						case "READ":
 							send(outStream);
@@ -69,6 +71,7 @@ public class App
 							readGeneral();
 							break;
 					}
+					socket.close();
     			}catch (Exception e) {
     				e.printStackTrace();
     			}
@@ -85,45 +88,37 @@ public class App
 
 		}
 
-		private void post(ObjectOutputStream outStream, Request request) throws IOException {
+		private void post(Request request) throws IOException {
 			System.out.println("POST method");
 
-			System.out.println(request.getMessage());
+			int nAnnouncements = 0;
+			String path = "./storage/username/";
+			// MAIS TARDE TEMOS DE SUBSTITUIR ^USERNAME PELO ID DO USER
+			File files = new File(path);
 
-			outStream.close();
-    	}
+			if (!files.exists()) {
+				files.mkdirs();
+				System.out.println("Directories created!");
+			} else {
+				nAnnouncements = files.list().length;
+			}
+			System.out.println("Total announcements" + Integer.toString(nAnnouncements));
 
+			String announcement = request.getMessage();
+			byte[] bytesToStore = announcement.getBytes();
 
-			/*try{
-				byte[] bytes = example.getBytes("UTF-8");
-
-				File file = new File("./storage");
+			try{
+				System.out.println("Inside Try");
+				File file = new File(path + Integer.toString(nAnnouncements));
 				FileOutputStream fos = new FileOutputStream(file);
-	
-				fos.write(bytes);
-				fos.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}*/
-			/*
-			try {
-				m = (String) inStream.readObject();
-				System.out.println(m);
 
-				File file = new File("./test_user_annoucement");
-				FileOutputStream fos = new FileOutputStream(file);
-				
-				message = m.getBytes();
-				fos.write(message);
+				fos.write(bytesToStore);
 				fos.close();
-				
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
+
+			} catch (Exception e){
 				e.printStackTrace();
 			}
-	
-		}*/
+    	}
 
 		private void send(ObjectOutputStream outStream) {
 			System.out.println("SEND method");
