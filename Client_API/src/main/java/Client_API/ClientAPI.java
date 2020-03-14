@@ -20,12 +20,7 @@ public class ClientAPI {
     private static ObjectInputStream inStream;
 
     public ClientAPI(){
-        try{
-            createSocket();
-            createOutputStream(socket);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+
     }
 
     public void createSocket() throws IOException {
@@ -44,13 +39,31 @@ public class ClientAPI {
         scanner = new Scanner(System.in);
     }
 
-    public void send(ObjectOutputStream outStream, Request request) throws IOException {
+    public void send(Request request) throws IOException {
+
+        createSocket();
+
+        createOutputStream(socket);
 
         outStream.writeObject(request);
 
         outStream.flush();
 
         outStream.close();
+
+        socket.close();
+
+    }
+
+    public void register(PublicKey key, String name){
+
+        Request request = new Request("REGISTER", key, name);
+
+        try{
+            send(request);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -59,38 +72,45 @@ public class ClientAPI {
         Request request = new Request("POST", key, message, announcs);
 
         try {
-            send(outStream, request);
+            send(request);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-        /*public void postGeneral(String message){
+        public void postGeneral(PublicKey key, String message, int[] announcs){
 
-        try {
-            createSocket();
-            createOutputStream(socket);
-            //send(outStream, message.getBytes());
-            socket.close();
+            Request request = new Request("POSTGENERAL", key, message, announcs);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            try {
+               send(request);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
     }
 
-    public void read(int number){
+    public void read(PublicKey key, int number){
+
+        Request request = new Request("READ", key, number);
 
         try {
-            createSocket();
-            createOutputStream(socket);
-            //send(outStream, BigInteger.valueOf(number).toByteArray());
-            socket.close();
+            send(request);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
 
-    }*/
+    }
 
+    public void readGeneral(int number){
+
+        Request request = new Request("READGENERAL", number);
+
+        try{
+            send(request);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

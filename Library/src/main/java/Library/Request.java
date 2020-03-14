@@ -14,7 +14,6 @@ public class Request implements Serializable {
      * Fields used for the register operation.
      ******/
     private String name = null;
-    private int id = -1;
 
 
     /****
@@ -36,6 +35,17 @@ public class Request implements Serializable {
     public Request(String operation, PublicKey key, int number){ //read
         this.publicKey = key;
         this.number = number;
+        this.operation = operation;
+    }
+
+    public Request(String operation, int number){ //read
+        this.number = number;
+        this.operation = operation;
+    }
+
+    public Request(String operation, PublicKey key, String name){ //read
+        this.publicKey = key;
+        this.name = name;
         this.operation = operation;
     }
 
@@ -86,12 +96,5 @@ public class Request implements Serializable {
     public void setName(String name) {
         this.name = name;
     }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
+    
 }

@@ -56,6 +56,7 @@ public class App {
         }
         ClientAPI c = new ClientAPI();
         c.post(key, "AIAIAIAI TESTE", null);
+        c.post(key, "AIAIAIAI TESTE2222", null);
         
     }
 
