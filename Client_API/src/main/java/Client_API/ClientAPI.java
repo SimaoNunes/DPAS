@@ -10,29 +10,38 @@ import java.net.Socket;
 import java.security.PublicKey;
 import java.util.Scanner;
 
+import javax.swing.plaf.InsetsUIResource;
+
 public class ClientAPI {
 
+    private static Socket socket;
     private static Scanner scanner;
     private static ObjectOutputStream outStream;
     private static ObjectInputStream inStream;
 
     public ClientAPI(){
+        try{
+            createSocket();
+            createOutputStream(socket);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
-    public Socket createSocket() throws IOException {
-        return new Socket("localhost",9000);
+    public void createSocket() throws IOException {
+        socket = new Socket("localhost",9000);
     }
 
-    public ObjectOutputStream createOutputStream(Socket socket) throws IOException {
-        return new ObjectOutputStream(socket.getOutputStream());
+    public void createOutputStream(Socket socket) throws IOException {
+        outStream = new ObjectOutputStream(socket.getOutputStream());
     }
 
-    public ObjectInputStream createInputStream(Socket socket) throws IOException {
-        return new ObjectInputStream(socket.getInputStream());
+    public void createInputStream(Socket socket) throws IOException {
+        inStream = new ObjectInputStream(socket.getInputStream());
     }
 
-    public Scanner createScanner(){
-        return new Scanner(System.in);
+    public void createScanner(){
+        scanner = new Scanner(System.in);
     }
 
     public void send(ObjectOutputStream outStream, Request request) throws IOException {
@@ -45,27 +54,21 @@ public class ClientAPI {
 
     }
 
-    public void post(PublicKey key, String message, int[] announcs){
+    public void post(PublicKey key, String message, int[] announcs) {
 
         Request request = new Request("POST", key, message, announcs);
 
         try {
-            Socket socket = createSocket();
-            outStream = createOutputStream(socket);
             send(outStream, request);
-            socket.close();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
-
-    public void postGeneral(String message){
+        /*public void postGeneral(String message){
 
         try {
-            Socket socket = createSocket();
-            outStream = createOutputStream(socket);
+            createSocket();
+            createOutputStream(socket);
             //send(outStream, message.getBytes());
             socket.close();
 
@@ -78,8 +81,8 @@ public class ClientAPI {
     public void read(int number){
 
         try {
-            Socket socket = createSocket();
-            outStream = createOutputStream(socket);
+            createSocket();
+            createOutputStream(socket);
             //send(outStream, BigInteger.valueOf(number).toByteArray());
             socket.close();
 
@@ -88,6 +91,6 @@ public class ClientAPI {
         }
 
 
-    }
+    }*/
 
 }

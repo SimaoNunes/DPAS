@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <annotationProcessing>
-      <profile name="Maven default annotation processors profile" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <module name="Client" />
-        <module name="Client_API" />
-        <module name="Library" />
-        <module name="Server" />
-      </profile>
-    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="A03_DPAS" target="1.7" />
+      <module name="Client" target="1.7" />
+      <module name="Client_API" target="1.7" />
+      <module name="Library" target="1.7" />
+      <module name="Server" target="1.7" />
+    </bytecodeTargetLevel>
   </component>
 </project>

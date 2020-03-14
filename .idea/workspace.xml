@@ -33,13 +33,15 @@
               </provider>
             </entry>
           </file>
-          <file pinned="false" current-in-tab="true">
+          <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/Client_API/src/main/java/Client_API/ClientAPI.java">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="381">
-                  <caret line="49" column="46" selection-start-line="49" selection-start-column="46" selection-end-line="49" selection-end-column="46" />
+                <state relative-caret-position="765">
+                  <caret line="67" lean-forward="true" selection-start-line="67" selection-end-line="67" />
                   <folding>
                     <element signature="imports" expanded="true" />
+                    <element signature="e#1106#1107#0" expanded="true" />
+                    <element signature="e#1154#1155#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
@@ -48,20 +50,22 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/Server/src/main/java/Server/App.java">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="432">
-                  <caret line="57" column="46" lean-forward="true" selection-start-line="57" selection-start-column="46" selection-end-line="57" selection-end-column="46" />
+                <state relative-caret-position="369">
+                  <caret line="95" selection-start-line="95" selection-end-line="95" />
                   <folding>
                     <element signature="imports" expanded="true" />
+                    <element signature="e#3527#3528#0" expanded="true" />
+                    <element signature="e#3576#3577#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
             </entry>
           </file>
-          <file pinned="false" current-in-tab="false">
+          <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/Client_API/src/main/java/Client_API/App.java">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="245">
-                  <caret line="35" column="47" lean-forward="true" selection-start-line="35" selection-start-column="47" selection-end-line="35" selection-end-column="47" />
+                <state relative-caret-position="740">
+                  <caret line="60" column="4" selection-start-line="60" selection-start-column="4" selection-end-line="60" selection-end-column="4" />
                 </state>
               </provider>
             </entry>
@@ -158,10 +162,10 @@
         <option value="$PROJECT_DIR$/Library/src/main/java/Library/Board.java" />
         <option value="$PROJECT_DIR$/Library/src/main/java/Library/GeneralBoard.java" />
         <option value="$PROJECT_DIR$/Client_API/pom.xml" />
-        <option value="$PROJECT_DIR$/Client_API/src/main/java/Client_API/App.java" />
-        <option value="$PROJECT_DIR$/Server/src/main/java/Server/App.java" />
-        <option value="$PROJECT_DIR$/Client_API/src/main/java/Client_API/ClientAPI.java" />
         <option value="$PROJECT_DIR$/Library/src/main/java/Library/Request.java" />
+        <option value="$PROJECT_DIR$/Client_API/src/main/java/Client_API/ClientAPI.java" />
+        <option value="$PROJECT_DIR$/Server/src/main/java/Server/App.java" />
+        <option value="$PROJECT_DIR$/Client_API/src/main/java/Client_API/App.java" />
       </list>
     </option>
   </component>
@@ -300,7 +304,7 @@
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1584208481740" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1584209017836" />
     <property name="last_opened_file_path" value="$USER_HOME$/Downloads/a35_tue_1400_10 (2)/A35_MedicalRecords/Cloud/src/main/java/CloudServices/CloudFileManager.java" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
@@ -336,12 +340,12 @@
       <workItem from="1583945982780" duration="2812000" />
       <workItem from="1584098785759" duration="9640000" />
       <workItem from="1584190432829" duration="4786000" />
-      <workItem from="1584205920915" duration="2362000" />
+      <workItem from="1584205920915" duration="2894000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="21292000" />
+    <option name="totallyTimeSpent" value="21824000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
@@ -456,33 +460,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Server/src/main/java/Server/App.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="432">
-          <caret line="57" column="46" lean-forward="true" selection-start-line="57" selection-start-column="46" selection-end-line="57" selection-end-column="46" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client_API/src/main/java/Client_API/App.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="619">
-          <caret line="57" column="42" selection-start-line="57" selection-start-column="42" selection-end-line="57" selection-end-column="42" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Client_API/src/main/java/Client_API/ClientAPI.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="381">
-          <caret line="49" column="46" selection-start-line="49" selection-start-column="46" selection-end-line="49" selection-end-column="46" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Library/src/main/java/Library/Request.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="68">
@@ -518,6 +495,37 @@
             <element signature="e#1957#1958#0" expanded="true" />
             <element signature="e#1985#1986#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client_API/src/main/java/Client_API/ClientAPI.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="765">
+          <caret line="67" lean-forward="true" selection-start-line="67" selection-end-line="67" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#1106#1107#0" expanded="true" />
+            <element signature="e#1154#1155#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Server/src/main/java/Server/App.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="369">
+          <caret line="95" selection-start-line="95" selection-end-line="95" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#3527#3528#0" expanded="true" />
+            <element signature="e#3576#3577#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Client_API/src/main/java/Client_API/App.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="740">
+          <caret line="60" column="4" selection-start-line="60" selection-start-column="4" selection-end-line="60" selection-end-column="4" />
         </state>
       </provider>
     </entry>

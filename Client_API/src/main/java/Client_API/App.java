@@ -14,9 +14,9 @@ import java.util.Scanner;
 
 public class App {
 
-	private static Scanner myObj;
-	private static ObjectOutputStream outStream;
-	private static ObjectInputStream inStream;
+	// private static Scanner myObj;
+	// private static ObjectOutputStream outStream;
+	// private static ObjectInputStream inStream;
 
     public static void main( String[] args ) {
         System.out.println( "Hello World from the Client_API!" );        
@@ -59,8 +59,4 @@ public class App {
         
     }
 
-    public void post() throws IOException {
-
-        Socket socket = new Socket("localhost",9000);
-    }
 }

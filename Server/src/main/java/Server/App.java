@@ -57,7 +57,7 @@ public class App
 					Request request = (Request) inStream.readObject();
 					switch(request.getOperation()) {
 						case "POST":
-							post(request);
+							post(outStream, request);
 							break;
 						case "READ":
 							send(outStream);
@@ -85,14 +85,15 @@ public class App
 
 		}
 
-		private void post(Request request) {
+		private void post(ObjectOutputStream outStream, Request request) throws IOException {
 			System.out.println("POST method");
 
 			System.out.println(request.getMessage());
+
+			outStream.close();
     	}
 
 
-		
 			/*try{
 				byte[] bytes = example.getBytes("UTF-8");
 
@@ -104,7 +105,25 @@ public class App
 			} catch (Exception e) {
 				e.printStackTrace();
 			}*/
+			/*
+			try {
+				m = (String) inStream.readObject();
+				System.out.println(m);
 
+				File file = new File("./test_user_annoucement");
+				FileOutputStream fos = new FileOutputStream(file);
+				
+				message = m.getBytes();
+				fos.write(message);
+				fos.close();
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+	
+		}*/
 
 		private void send(ObjectOutputStream outStream) {
 			System.out.println("SEND method");
