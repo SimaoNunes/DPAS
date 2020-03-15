@@ -62,7 +62,7 @@ public class App
 							post(request);
 							break;
 						case "READ":
-							send(outStream);
+							read(outStream);
 							break;
 						case "POSTGENERAL":
 							postGeneral();
@@ -120,7 +120,7 @@ public class App
 			}
     	}
 
-		private void send(ObjectOutputStream outStream) {
+		private void read(ObjectOutputStream outStream) {
 			System.out.println("SEND method");
 			
             Path fileLocation = Paths.get("./storage");
