@@ -14,8 +14,7 @@ public class Request implements Serializable {
      * Fields used for the register operation.
      ******/
     private String name = null;
-
-
+    
     /****
     * Each constructor corresponds to each operation of the API.
      ****/
