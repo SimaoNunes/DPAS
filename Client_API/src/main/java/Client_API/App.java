@@ -1,14 +1,11 @@
 package Client_API;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import javax.net.ssl.KeyManagerFactory;
+import java.io.*;
 import java.net.Socket;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.Scanner;
 
 
@@ -44,7 +41,25 @@ public class App {
         } catch(Exception e){
             System.out.println(e);
         }*/
-        PublicKey key = null;
+
+        KeyStore ks;
+        PublicKey publicKey = null;
+        char[] passphrase = "changeit".toCharArray();
+
+        try {
+
+            ks = KeyStore.getInstance("JKS");
+            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
+            Key key = ks.getKey("user1", passphrase);
+
+            publicKey = ks.getCertificate("user1").getPublicKey();
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        /*PublicKey key = null;
         try {
             KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
             kpg.initialize(2048);
@@ -53,9 +68,9 @@ public class App {
 
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
-        }
+        }*/
         ClientAPI c = new ClientAPI();
-        c.post(key, "AIAIAIAI TESTE", null);
+        c.post(publicKey, "AIAIAIAI TESTE", null);
         // c.post(key, "AIAIAIAI TESTE2222", null);
         
     }
