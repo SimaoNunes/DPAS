@@ -119,8 +119,4 @@ public class ClientAPI {
             e.printStackTrace();
         }
     }
-    
-    public int always1(int number) {
-    	return 1;
-    }
 }
