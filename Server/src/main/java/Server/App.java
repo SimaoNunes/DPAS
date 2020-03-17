@@ -19,7 +19,16 @@ public class App
 {
     public static void main( String[] args ) {
 
-        try{
+		try {
+			ServerSocket ss = new ServerSocket(9000);
+			Server server = new Server(ss);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+        /*try{
         	// Start server
         	ServerSocket ss = new ServerSocket(9000);
             System.out.println("Server running on port 9000!");
@@ -150,5 +159,6 @@ public class App
 		private void quitUser() {
 			System.out.println("User disconnected.");
 		}
-    }
+    }*/
+
 }
