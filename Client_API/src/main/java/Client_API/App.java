@@ -46,9 +46,8 @@ public class App {
             e.printStackTrace();
         }*/
         ClientAPI c = new ClientAPI();
-        c.post(publicKey, "AIAIAIAI TESTE", null);
-        // c.post(key, "AIAIAIAI TESTE2222", null);
-        
+        c.post(publicKey, "Este anuncio e especifico do user.", null);
+        c.postGeneral(publicKey, "Este anuncio vai para o general", null);
     }
 
 }

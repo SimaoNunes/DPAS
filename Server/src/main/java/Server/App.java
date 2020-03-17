@@ -59,13 +59,13 @@ public class App
 					Request request = (Request) inStream.readObject();
 					switch(request.getOperation()) {
 						case "POST":
-							post(request);
+							post(request, false);
+							break;
+						case "POSTGENERAL":
+							post(request, true);
 							break;
 						case "READ":
 							read(outStream);
-							break;
-						case "POSTGENERAL":
-							postGeneral();
 							break;
 						case "READGENERAL":
 							readGeneral();
@@ -78,38 +78,27 @@ public class App
     		}catch (Exception e) {
     			e.printStackTrace();
     		}
-    	}
-
-    	private void readGeneral(){
-
 		}
-
-    	private void postGeneral(){
-
-		}
-
-		private void post(Request request) throws IOException {
-			System.out.println("POST method");
-
-			int nAnnouncements = 0;
-			String path = "./storage/username/";
-			// MAIS TARDE TEMOS DE SUBSTITUIR ^USERNAME PELO ID DO USER
+		
+		private int checkDirectory(String path){
+			int totalAnnouncements = 0;
 			File files = new File(path);
 
 			if (!files.exists()) {
 				files.mkdirs();
 				System.out.println("Directories created!");
 			} else {
-				nAnnouncements = files.list().length;
+				totalAnnouncements = files.list().length;
 			}
-			System.out.println("Total announcements" + Integer.toString(nAnnouncements));
 
-			String announcement = request.getMessage();
+			System.out.println("Total announcements " + Integer.toString(totalAnnouncements));
+			return totalAnnouncements;
+		}
+
+		private void saveFile(String completePath, String announcement) throws IOException {
 			byte[] bytesToStore = announcement.getBytes();
-
 			try{
-				System.out.println("Inside Try");
-				File file = new File(path + Integer.toString(nAnnouncements));
+				File file = new File(completePath);
 				FileOutputStream fos = new FileOutputStream(file);
 
 				fos.write(bytesToStore);
@@ -118,13 +107,32 @@ public class App
 			} catch (Exception e){
 				e.printStackTrace();
 			}
-    	}
+		} 
+
+    	private void readGeneral(){
+
+		}
+
+    	private void post(Request request, Boolean general) throws IOException{
+			System.out.println("POST method");
+			
+			String path;
+			if(general){
+				path = "./storage/general/";
+			} else {
+				path = "./storage/username/";
+				// change this username ^ later ***** 
+			}
+
+			int totalAnnouncements = checkDirectory(path);
+			saveFile(path + Integer.toString(totalAnnouncements), request.getMessage());
+		}
+
 
 		private void read(ObjectOutputStream outStream) {
 			System.out.println("SEND method");
 			
             Path fileLocation = Paths.get("./storage");
-		
 			if(!Files.exists(fileLocation)){
                 System.out.println("Maninho essa merda nao existe");
 			} else{

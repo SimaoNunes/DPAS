@@ -40,90 +40,77 @@ public class ClientAPI {
     }
 
     public void send(Request request) throws IOException {
-
         createSocket();
-
         createOutputStream(socket);
 
         outStream.writeObject(request);
-
         outStream.flush();
-
         outStream.close();
     }
 
-    public int register(PublicKey key, String name){
+    public void register(PublicKey key, String name){
 
         Request request = new Request("REGISTER", key, name);
         // Send request to Server
         try {
            send(request);
            // On success return 1
-           return 1;
         } catch (IOException e) {
         	// On failure return 0
             e.printStackTrace();
-            return 0;
         }
     }
 
-    public int post(PublicKey key, String message, int[] announcs) {
+    public void post(PublicKey key, String message, int[] announcs) {
 
         Request request = new Request("POST", key, message, announcs);
         // Send request to Server
         try {
             send(request);
             // On success return 1
-            return 1;
+            
         } catch (IOException e) {
         	// On failure return 0
             e.printStackTrace();
-            return 0;
         }
     }
     
-    public int postGeneral(PublicKey key, String message, int[] announcs){
+    public void postGeneral(PublicKey key, String message, int[] announcs){
 
         Request request = new Request("POSTGENERAL", key, message, announcs);
         // Send request to Server
         try {
            send(request);
            // On success return 1
-           return 1;
         } catch (IOException e) {
         	// On failure return 0
             e.printStackTrace();
-            return 0;
         }
     }
 
-    public int read(PublicKey key, int number){
+    public void read(PublicKey key, int number){
 
         Request request = new Request("READ", key, number);
         // Send request to Server
         try {
            send(request);
            // On success return 1
-           return 1;
         } catch (IOException e) {
         	// On failure return 0
             e.printStackTrace();
-            return 0;
         }
     }
 
-    public int readGeneral(int number){
+    public void readGeneral(int number){
 
         Request request = new Request("READGENERAL", number);
         // Send request to Server
         try {
            send(request);
            // On success return 1
-           return 1;
         } catch (IOException e) {
         	// On failure return 0
             e.printStackTrace();
-            return 0;
         }
     }
     
