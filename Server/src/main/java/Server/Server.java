@@ -1,6 +1,8 @@
 package Server;
 
+import Exceptions.MessageTooBigException;
 import Library.Request;
+import Library.Response;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -46,10 +48,10 @@ public class Server implements Runnable{
                 Request request = (Request) inStream.readObject();
                 switch(request.getOperation()) {
                     case "POST":
-                        post(request, false);
+                        post(request, false, outStream);
                         break;
                     case "POSTGENERAL":
-                        post(request, true);
+                        post(request, true, outStream);
                         break;
                     case "READ":
                         read(outStream);
@@ -65,6 +67,15 @@ public class Server implements Runnable{
         }catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void send(Response response, ObjectOutputStream outputStream){
+        try {
+            outputStream.writeObject(response);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 
@@ -101,8 +112,14 @@ public class Server implements Runnable{
 
     }
 
-    private void post(Request request, Boolean general) throws IOException{
+    private void post(Request request, Boolean general, ObjectOutputStream outstream) throws IOException{
         System.out.println("POST method");
+        System.out.println(request.getMessage().length());
+        if(request.getMessage().length() > 255){
+            System.out.println("ENTREI AQUI");
+            Response response = new Response(new MessageTooBigException("Message cannot have more than 255 characters!"));
+            send(response, outstream);
+        }
 
         String path;
         if(general){

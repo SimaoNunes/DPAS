@@ -1,6 +1,8 @@
 package Client_API;
 
+import Exceptions.MessageTooBigException;
 import Library.Request;
+import Library.Response;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -40,12 +42,9 @@ public class ClientAPI {
     }
 
     public void send(Request request) throws IOException {
-        createSocket();
         createOutputStream(socket);
 
         outStream.writeObject(request);
-        outStream.flush();
-        outStream.close();
     }
 
     public void register(PublicKey key, String name){
@@ -66,11 +65,18 @@ public class ClientAPI {
         Request request = new Request("POST", key, message, announcs);
         // Send request to Server
         try {
+            createSocket();
             send(request);
+            createInputStream(socket);
+            Response response = (Response) inStream.readObject();
+            MessageTooBigException mtb = (MessageTooBigException) response.getException();
+            System.out.println(mtb.getMessage());
             // On success return 1
             
         } catch (IOException e) {
         	// On failure return 0
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }

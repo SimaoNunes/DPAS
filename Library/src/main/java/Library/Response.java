@@ -15,6 +15,10 @@ public class Response implements Serializable {
         this.success = success;
     }
 
+    public Response(Exception exception){
+        this.exception = exception;
+    }
+
     public String getMessage() {
         return message;
     }
@@ -29,5 +33,13 @@ public class Response implements Serializable {
 
     public void setSuccess(Boolean success) {
         this.success = success;
+    }
+
+    public Exception getException() {
+        return exception;
+    }
+
+    public void setException(Exception exception) {
+        this.exception = exception;
     }
 }
