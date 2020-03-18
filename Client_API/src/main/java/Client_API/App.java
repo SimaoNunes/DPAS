@@ -1,5 +1,10 @@
 package Client_API;
 
+import Exceptions.InvalidAnnouncementException;
+import Exceptions.InvalidPublicKeyException;
+import Exceptions.MessageTooBigException;
+import Exceptions.UserNotRegisteredException;
+
 import javax.net.ssl.KeyManagerFactory;
 import java.io.*;
 import java.net.Socket;
@@ -16,7 +21,7 @@ public class App {
 	// private static ObjectInputStream inStream;
 
     public static void main( String[] args ) {
-        System.out.println( "Hello World from the Client_API!" );        
+       /* System.out.println( "Hello World from the Client_API!" );
 
         KeyStore ks;
         PublicKey publicKey = null;
@@ -44,15 +49,10 @@ public class App {
 
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
-        }*/
+        }
         ClientAPI c = new ClientAPI();
-        c.post(publicKey, "tem 256 caracteressssssssssss" +
-                "sssssssssssssssssssssssssssssssssssssssssssssssss" +
-                "ssssssssssssssssssssssssssssssssssssssssssssssssss" +
-                "ssssssssssssssssssssssssssssssssssssssssssssssssss" +
-                "sssssssssssssssssssssssssssssssssssss" +
-                "sssssssssssssssssssssssssssssssssssssssss", null);
-        //c.postGeneral(publicKey, "Este anuncio vai para o general", null);
+
+        //c.postGeneral(publicKey, "Este anuncio vai para o general", null);*/
     }
 
 }

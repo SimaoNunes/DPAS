@@ -4,10 +4,10 @@ import java.io.Serializable;
 
 public class Response implements Serializable {
 
-    private String message;
-    private Boolean success;
+    private String message = null;
+    private boolean success;
 
-    private Exception exception;
+    private int errorCode;
 
     
     public Response(String message, Boolean success){ 
@@ -15,8 +15,14 @@ public class Response implements Serializable {
         this.success = success;
     }
 
-    public Response(Exception exception){
-        this.exception = exception;
+    public Response(boolean success, int errorCode){
+
+        this.success = success;
+        this.errorCode = errorCode;
+    }
+
+    public Response(boolean success){
+        this.success = success;
     }
 
     public String getMessage() {
@@ -27,19 +33,19 @@ public class Response implements Serializable {
         this.message = message;
     }
 
-    public Boolean getSuccess() {
+    public boolean getSuccess() {
         return success;
     }
 
-    public void setSuccess(Boolean success) {
+    public void setSuccess(boolean success) {
         this.success = success;
     }
 
-    public Exception getException() {
-        return exception;
+    public int getErrorCode() {
+        return errorCode;
     }
 
-    public void setException(Exception exception) {
-        this.exception = exception;
+    public void setErrorCode(int errorCode) {
+        this.errorCode = errorCode;
     }
 }

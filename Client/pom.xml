@@ -93,5 +93,11 @@
       <version>4.11</version>
       <scope>test</scope>
     </dependency>
+      <dependency>
+          <groupId>SEC</groupId>
+          <artifactId>Client_API</artifactId>
+          <version>1.0.0-SNAPSHOT</version>
+          <scope>test</scope>
+      </dependency>
   </dependencies>
 </project>

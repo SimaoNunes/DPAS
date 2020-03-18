@@ -116,9 +116,14 @@ public class Server implements Runnable{
         System.out.println("POST method");
         System.out.println(request.getMessage().length());
         if(request.getMessage().length() > 255){
-            System.out.println("ENTREI AQUI");
-            Response response = new Response(new MessageTooBigException("Message cannot have more than 255 characters!"));
-            send(response, outstream);
+            send(new Response(false, -4), outstream);
+        }
+        else if(request.getPublicKey().getEncoded().length != 256){
+            send(new Response(false, -3), outstream);
+        }
+        else{
+            send(new Response(true), outstream);
+
         }
 
         String path;

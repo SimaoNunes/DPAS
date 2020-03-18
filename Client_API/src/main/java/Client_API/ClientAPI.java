@@ -1,6 +1,6 @@
 package Client_API;
 
-import Exceptions.MessageTooBigException;
+import Exceptions.*;
 import Library.Request;
 import Library.Response;
 
@@ -16,105 +16,164 @@ import javax.swing.plaf.InsetsUIResource;
 
 public class ClientAPI {
 
-    private static Socket socket;
-    private static Scanner scanner;
-    private static ObjectOutputStream outStream;
-    private static ObjectInputStream inStream;
 
     public ClientAPI(){
 
     }
 
-    public void createSocket() throws IOException {
-        socket = new Socket("localhost",9000);
+    private Socket createSocket() throws IOException {
+        return new Socket("localhost",9000);
     }
 
-    public void createOutputStream(Socket socket) throws IOException {
-        outStream = new ObjectOutputStream(socket.getOutputStream());
+    private ObjectOutputStream createOutputStream(Socket socket) throws IOException {
+        return new ObjectOutputStream(socket.getOutputStream());
     }
 
-    public void createInputStream(Socket socket) throws IOException {
-        inStream = new ObjectInputStream(socket.getInputStream());
+    private ObjectInputStream createInputStream(Socket socket) throws IOException {
+        return new ObjectInputStream(socket.getInputStream());
     }
 
-    public void createScanner(){
-        scanner = new Scanner(System.in);
+    private Response sendReceive(Request request) throws IOException, ClassNotFoundException {
+        Socket socket = createSocket();
+        createOutputStream(socket).writeObject(request);
+
+
+        return (Response) createInputStream(socket).readObject();
+
     }
 
-    public void send(Request request) throws IOException {
-        createOutputStream(socket);
+    public void checkPost(Response response) throws UserNotRegisteredException,
+            InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException {
 
-        outStream.writeObject(request);
+        if(!response.getSuccess()){
+            int error = response.getErrorCode();
+            if(error == -1){
+                throw new UserNotRegisteredException("User with this public key is not registered!");
+            }
+
+            else if(error == -3){
+                throw new InvalidPublicKeyException("Invalid public key!");
+            }
+
+            else if(error == -4){
+                throw new MessageTooBigException("Message cannot have more than 255 characters!");
+            }
+
+            else if(error == -5){
+                throw new InvalidAnnouncementException("Announcements referenced do not exist!");
+            }
+
+        }
+
     }
 
-    public void register(PublicKey key, String name){
+    public void checkRead(Response response) throws UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException, InvalidPostsNumberException {
+
+        if(!response.getSuccess()){
+            int error = response.getErrorCode();
+            if(error == -1){
+                throw new UserNotRegisteredException("User with this public key is not registered!");
+            }
+
+            else if(error == -3){
+                throw new InvalidPublicKeyException("Invalid public key!");
+            }
+
+            else if(error == -6){
+                throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+            }
+
+        }
+
+    }
+
+
+
+    public void register(PublicKey key, String name) throws AlreadyRegisteredException {
 
         Request request = new Request("REGISTER", key, name);
         // Send request to Server
         try {
-           send(request);
+
+            Response response = sendReceive(request);
+            if(!response.getSuccess()){
+                int error = response.getErrorCode();
+                if(error == -2){
+                    throw new AlreadyRegisteredException("User with that public key already registered!");
+                }
+            }
            // On success return 1
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
         	// On failure return 0
             e.printStackTrace();
         }
     }
 
-    public void post(PublicKey key, String message, int[] announcs) {
+    public int post(PublicKey key, String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
 
         Request request = new Request("POST", key, message, announcs);
         // Send request to Server
         try {
-            createSocket();
-            send(request);
-            createInputStream(socket);
-            Response response = (Response) inStream.readObject();
-            MessageTooBigException mtb = (MessageTooBigException) response.getException();
-            System.out.println(mtb.getMessage());
-            // On success return 1
+            Response response = sendReceive(request);
+
+            checkPost(response);
+
+            return 1;
             
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
         	// On failure return 0
             e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            return 0;
         }
     }
     
-    public void postGeneral(PublicKey key, String message, int[] announcs){
+    public void postGeneral(PublicKey key, String message, int[] announcs) throws UserNotRegisteredException,
+            InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException {
 
         Request request = new Request("POSTGENERAL", key, message, announcs);
         // Send request to Server
         try {
-           send(request);
+
+           Response response = sendReceive(request);
+
+           checkPost(response);
+
+
            // On success return 1
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
         	// On failure return 0
             e.printStackTrace();
         }
     }
 
-    public void read(PublicKey key, int number){
+    public void read(PublicKey key, int number) throws InvalidAnnouncementException,
+            InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException {
 
         Request request = new Request("READ", key, number);
         // Send request to Server
         try {
-           send(request);
+
+           Response response = sendReceive(request);
+
+           checkRead(response);
            // On success return 1
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
         	// On failure return 0
             e.printStackTrace();
         }
     }
 
-    public void readGeneral(int number){
+    public void readGeneral(int number) throws InvalidAnnouncementException,
+            InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException {
 
         Request request = new Request("READGENERAL", number);
         // Send request to Server
         try {
-           send(request);
+            Response response = sendReceive(request);
+
+            checkRead(response);
            // On success return 1
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
         	// On failure return 0
             e.printStackTrace();
         }
