@@ -41,6 +41,13 @@ public class ClientAPI {
         return (Response) createInputStream(socket).readObject();
 
     }
+    
+    
+ //////////////////////////////////////////////////////////////
+ //															 //
+ //   Methods that check if responses must throw exceptions  //
+ //															 //
+ //////////////////////////////////////////////////////////////
 
     public void checkPost(Response response) throws UserNotRegisteredException,
             InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException {
@@ -67,7 +74,8 @@ public class ClientAPI {
 
     }
 
-    public void checkRead(Response response) throws UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException, InvalidPostsNumberException {
+    public void checkRead(Response response) throws UserNotRegisteredException,
+    		InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException, InvalidPostsNumberException {
 
         if(!response.getSuccess()){
             int error = response.getErrorCode();
@@ -87,7 +95,12 @@ public class ClientAPI {
 
     }
 
-
+    
+ ///////////////////////
+ //					  //
+ //   API Functions   //
+ //	  	     		  //
+ ///////////////////////
 
     public void register(PublicKey key, String name) throws AlreadyRegisteredException {
 
@@ -109,73 +122,78 @@ public class ClientAPI {
         }
     }
 
-    public int post(PublicKey key, String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
+    public int post(PublicKey key, String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException,
+    		InvalidPublicKeyException, InvalidAnnouncementException {
 
         Request request = new Request("POST", key, message, announcs);
         // Send request to Server
         try {
             Response response = sendReceive(request);
-
+            // Check if response is bad (throws exception in case it is bad)
             checkPost(response);
-
+            // On success, return 1
             return 1;
             
         } catch (IOException | ClassNotFoundException e) {
-        	// On failure return 0
+        	// On failure, return 0
             e.printStackTrace();
             return 0;
         }
     }
     
-    public void postGeneral(PublicKey key, String message, int[] announcs) throws UserNotRegisteredException,
+    public int postGeneral(PublicKey key, String message, int[] announcs) throws UserNotRegisteredException,
             InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException {
 
         Request request = new Request("POSTGENERAL", key, message, announcs);
         // Send request to Server
         try {
-
            Response response = sendReceive(request);
-
+           // Check if response is bad (throws exception in case it is bad)
            checkPost(response);
-
+           // On success, return 1
+           return 1;
 
            // On success return 1
         } catch (IOException | ClassNotFoundException e) {
-        	// On failure return 0
+        	// On failure, return 0
             e.printStackTrace();
+            return 0;
         }
     }
 
-    public void read(PublicKey key, int number) throws InvalidAnnouncementException,
+    public String read(PublicKey key, int number) throws InvalidAnnouncementException,
             InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException {
 
         Request request = new Request("READ", key, number);
         // Send request to Server
         try {
-
            Response response = sendReceive(request);
-
+           // Check if response is bad (throws exception in case it is bad)
            checkRead(response);
-           // On success return 1
+           // On success, return message
+           return response.getMessage();
         } catch (IOException | ClassNotFoundException e) {
-        	// On failure return 0
+        	// On failure, return null
             e.printStackTrace();
+            return null;
         }
     }
 
-    public void readGeneral(int number) throws InvalidAnnouncementException,
+    public String readGeneral(int number) throws InvalidAnnouncementException,
             InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException {
 
         Request request = new Request("READGENERAL", number);
         // Send request to Server
         try {
             Response response = sendReceive(request);
-
+            // Check if response is bad (throws exception in case it is bad)
             checkRead(response);
-           // On success return 1
+            // On success, return message
+            return response.getMessage();
         } catch (IOException | ClassNotFoundException e) {
-        	// On failure return 0
+        	// On failure, return null
             e.printStackTrace();
+            return null;
         }
     }
 }
