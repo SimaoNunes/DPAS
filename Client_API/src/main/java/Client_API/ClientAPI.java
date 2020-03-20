@@ -123,7 +123,6 @@ public class ClientAPI {
 
     public int post(PublicKey key, String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException,
     		InvalidPublicKeyException, InvalidAnnouncementException {
-
         Request request = new Request("POST", key, message, announcs);
         // Send request to Server
         try {

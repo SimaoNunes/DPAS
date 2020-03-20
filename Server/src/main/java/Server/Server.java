@@ -144,10 +144,12 @@ public class Server implements Runnable{
     private void post(Request request, Boolean general, ObjectOutputStream outstream) throws IOException{
         System.out.println("POST method");
         System.out.println(request.getMessage().length());
+        System.out.println(request.getPublicKey().getEncoded().length);
         if(request.getMessage().length() > 255){
             send(new Response(false, -4), outstream);
         }
-        else if(request.getPublicKey().getEncoded().length != 256){
+        else if(request.getPublicKey().getEncoded().length != 294){
+            System.out.println("ta so a entrar aqui");
             send(new Response(false, -3), outstream);
         }
         else{

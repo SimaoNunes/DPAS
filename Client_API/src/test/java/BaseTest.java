@@ -25,6 +25,7 @@ public class BaseTest {
             Key key = ks.getKey("user1", passphrase);
 
             publicKey = ks.getCertificate("user1").getPublicKey();
+            System.out.println(publicKey.getEncoded().length);
         } catch (Exception e) {
             e.printStackTrace();
         }
