@@ -139,22 +139,6 @@ public class Server implements Runnable{
 
     }
 
-
-    private int checkDirectory(String path){
-        int totalAnnouncements = 0;
-        File files = new File(path);
-
-        if (!files.exists()) {
-            files.mkdirs();
-            System.out.println("Directories created!");
-        } else {
-            totalAnnouncements = files.list().length;
-        }
-
-        System.out.println("Total announcements " + Integer.toString(totalAnnouncements));
-        return totalAnnouncements;
-    }
-
     private void saveFile(String completePath, String announcement) throws IOException {
         byte[] bytesToStore = announcement.getBytes();
         try{
@@ -177,6 +161,7 @@ public class Server implements Runnable{
         System.out.println("POST method");
         System.out.println(request.getMessage().length());
         System.out.println(request.getPublicKey().getEncoded().length);
+        
         if(request.getMessage().length() > 255){
             send(new Response(false, -4), outstream);
         }
@@ -185,20 +170,21 @@ public class Server implements Runnable{
             send(new Response(false, -3), outstream);
         }
         else{
-            send(new Response(true), outstream);
-
+            String key = Base64.getEncoder().encodeToString(request.getPublicKey().getEncoded());
+            String path = "./storage/AnnouncementBoards/" + key;
+            File file = new File(path);
+            if(file.exists()){
+                int totalAnnouncements = file.list().length;
+                System.out.println("Total announcements " + Integer.toString(totalAnnouncements));
+                if(general){
+                    path = "./storage/GeneralBoard/";
+                }
+                saveFile(path + Integer.toString(totalAnnouncements), request.getMessage());
+                send(new Response(true), outstream);
+            } else {
+                send(new Response(false, -1), outstream);
+            }
         }
-
-        String path;
-        if(general){
-            path = "./storage/GeneralBoard/";
-        } else {
-            path = "./storage/AnnouncementBoards/";
-            // change this username ^ later *****
-        }
-
-        int totalAnnouncements = checkDirectory(path);
-        saveFile(path + Integer.toString(totalAnnouncements), request.getMessage());
     }
 
 
