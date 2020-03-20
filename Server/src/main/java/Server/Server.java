@@ -122,7 +122,7 @@ public class Server implements Runnable{
     }
 
     public void register(Request request, ObjectOutputStream outputStream){
-        System.out.println("Register operation");
+        System.out.println("Registering user: " + request.getName());
 
         if(!checkKey(request.getPublicKey())){
             send(new Response(false, -7), outputStream);

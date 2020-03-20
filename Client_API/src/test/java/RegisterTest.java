@@ -8,6 +8,18 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+////////////////////////////////////////////////////////////////////
+//																  //
+//   WARNING: Server must be running in order to run these tests  //
+//                                                                //
+////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////
+//                                                                //
+//     Only 1 user is considered for tests purposes (user1)       //
+//                                                                //
+////////////////////////////////////////////////////////////////////
+
 public class RegisterTest extends BaseTest {
 
     @BeforeClass
@@ -21,6 +33,6 @@ public class RegisterTest extends BaseTest {
 
     @Test
     public void RegisterSuccess() throws AlreadyRegisteredException {
-        clientAPI.register(publicKey, "nome a toa");
+        clientAPI.register(publicKey1, "nome a toa");
     }
 }

@@ -8,21 +8,33 @@ import org.junit.*;
 
 import java.security.*;
 
+////////////////////////////////////////////////////////////////////
+//                                                                //
+//   WARNING: Server must be running in order to run these tests  //
+//                                                                //
+////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////
+//                                                                //
+//     Only 1 user is considered for tests purposes (user1)       //
+//                                                                //
+////////////////////////////////////////////////////////////////////
+
 public class PostTest extends BaseTest {
 	
 	@Test
-	public void Should_Succeed_When_AnnouncsIsNull() {
-		//assertEquals(1, clientAPI.post(publicKey, "teste", null));
+	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
+		assertEquals(1, clientAPI.post(publicKey1, "teste", null));
 	}
 
 	@Test
 	public void postSuccess() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
-		assertEquals(1, clientAPI.post(publicKey, "Isto e um teste!", null));
+		assertEquals(1, clientAPI.post(publicKey1, "Isto e um teste!", null));
 	}
 
 	@Test(expected = MessageTooBigException.class)
 	public void postFailMessageTooBig() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
-		clientAPI.post(publicKey, "tem 256 caracteressssssssssss" +
+		clientAPI.post(publicKey1, "tem 256 caracteressssssssssss" +
 				"sssssssssssssssssssssssssssssssssssssssssssssssss" +
 				"ssssssssssssssssssssssssssssssssssssssssssssssssss" +
 				"ssssssssssssssssssssssssssssssssssssssssssssssssss" +
