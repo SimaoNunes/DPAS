@@ -11,7 +11,7 @@ public class BaseTest {
 	
 	static ClientAPI clientAPI;
 	static PublicKey publicKey;
-	
+
 	@BeforeClass
 	public static void oneTimeSetup() {
 		clientAPI = new ClientAPI();

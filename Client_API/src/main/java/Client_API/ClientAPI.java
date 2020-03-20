@@ -102,10 +102,9 @@ public class ClientAPI {
  //	  	     		  //
  ///////////////////////
 
-    public void register(PublicKey key, String name) throws AlreadyRegisteredException {
+    public int register(PublicKey key, String name) throws AlreadyRegisteredException {
 
         Request request = new Request("REGISTER", key, name);
-        // Send request to Server
         try {
 
             Response response = sendReceive(request);
@@ -115,10 +114,10 @@ public class ClientAPI {
                     throw new AlreadyRegisteredException("User with that public key already registered!");
                 }
             }
-           // On success return 1
+           return 1;
         } catch (IOException | ClassNotFoundException e) {
-        	// On failure return 0
             e.printStackTrace();
+            return 0;
         }
     }
 

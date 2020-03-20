@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 public class Response implements Serializable {
 
+    private int userID = -1;
     private String message = null;
     private boolean success;
 
@@ -47,5 +48,13 @@ public class Response implements Serializable {
 
     public void setErrorCode(int errorCode) {
         this.errorCode = errorCode;
+    }
+
+    public int getUserID() {
+        return userID;
+    }
+
+    public void setUserID(int userID) {
+        this.userID = userID;
     }
 }
