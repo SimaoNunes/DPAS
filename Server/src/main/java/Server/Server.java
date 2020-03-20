@@ -83,29 +83,40 @@ public class Server implements Runnable{
         }
     }
 
-    public boolean checkKey(PublicKey publicKey) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException {
+    public boolean checkKey(PublicKey publicKey){
 
         char[] passphrase = "changeit".toCharArray();
-        KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(new FileInputStream("Keystores/keystore"), passphrase);
+        KeyStore ks = null;
+        try {
+            ks = KeyStore.getInstance("JKS");
+            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
 
-        Enumeration aliases = ks.aliases();
+            Enumeration aliases = ks.aliases();
 
-        for (; aliases.hasMoreElements(); ) {
+            for (; aliases.hasMoreElements(); ) {
 
-            String alias = (String) aliases.nextElement();
+                String alias = (String) aliases.nextElement();
 
-            boolean b = ks.isKeyEntry(alias);
 
-            if(ks.isKeyEntry(alias) && ks.isCertificateEntry(alias)){
-                PublicKey key = ks.getCertificate(alias).getPublicKey();
-                if(key == publicKey){
-                    System.out.println("DE FACTO EXISTE");
-                    return true;
+                if (ks.isKeyEntry(alias)) {
+                    PublicKey key = ks.getCertificate(alias).getPublicKey();
+                    if (key.equals(publicKey)) {
+                        return true;
+                    }
+
                 }
 
             }
-
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return false;
     }
@@ -113,7 +124,9 @@ public class Server implements Runnable{
     public void register(Request request, ObjectOutputStream outputStream){
         System.out.println("Register operation");
 
-        checkKey(request.getPublicKey());
+        if(!checkKey(request.getPublicKey())){
+            send(new Response(false, -7), outputStream);
+        }
 
         String key = Base64.getEncoder().encodeToString(request.getPublicKey().getEncoded());
 

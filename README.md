@@ -36,4 +36,5 @@ Error Code                     Exception
 -4                             MessageTooBig
 -5                             InvalidAnnouncement
 -6                             InvalidPostsNumber
+-7                             NonExistingPublicKey
 ```
