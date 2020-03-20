@@ -12,6 +12,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.util.Enumeration;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Arrays;
 import java.util.Base64;
@@ -80,8 +83,37 @@ public class Server implements Runnable{
         }
     }
 
+    public boolean checkKey(PublicKey publicKey) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException {
+
+        char[] passphrase = "changeit".toCharArray();
+        KeyStore ks = KeyStore.getInstance("JKS");
+        ks.load(new FileInputStream("Keystores/keystore"), passphrase);
+
+        Enumeration aliases = ks.aliases();
+
+        for (; aliases.hasMoreElements(); ) {
+
+            String alias = (String) aliases.nextElement();
+
+            boolean b = ks.isKeyEntry(alias);
+
+            if(ks.isKeyEntry(alias) && ks.isCertificateEntry(alias)){
+                PublicKey key = ks.getCertificate(alias).getPublicKey();
+                if(key == publicKey){
+                    System.out.println("DE FACTO EXISTE");
+                    return true;
+                }
+
+            }
+
+        }
+        return false;
+    }
+
     public void register(Request request, ObjectOutputStream outputStream){
         System.out.println("Register operation");
+
+        checkKey(request.getPublicKey());
 
         String key = Base64.getEncoder().encodeToString(request.getPublicKey().getEncoded());
 
