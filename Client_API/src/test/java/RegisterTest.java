@@ -22,17 +22,4 @@ import java.net.Socket;
 
 public class RegisterTest extends BaseTest {
 
-    @BeforeClass
-    public static void setup() throws IOException {
-        Socket socket = new Socket("localhost", 9000);
-        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-        outputStream.writeObject(new Request("DELETEALL", null));
-        outputStream.close();
-        socket.close();
-    }
-
-    @Test
-    public void RegisterSuccess() throws AlreadyRegisteredException {
-        clientAPI.register(publicKey1, "nome a toa");
-    }
 }

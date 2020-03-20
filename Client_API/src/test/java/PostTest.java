@@ -24,17 +24,17 @@ public class PostTest extends BaseTest {
 	
 	@Test
 	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
-		assertEquals(1, clientAPI.post(publicKey1, "teste", null));
+		assertEquals(1, clientAPI.post(publicKey1, "user1 test message", null));
 	}
 
 	@Test
-	public void postSuccess() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
-		assertEquals(1, clientAPI.post(publicKey1, "Isto e um teste!", null));
+	public void Should_Succeed_When_AnnouncsIsValidArray() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
+		
 	}
 
 	@Test(expected = MessageTooBigException.class)
 	public void postFailMessageTooBig() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
-		clientAPI.post(publicKey1, "tem 256 caracteressssssssssss" +
+		clientAPI.post(publicKey1, "Has 256 charsssssssssssssssss" +
 				"sssssssssssssssssssssssssssssssssssssssssssssssss" +
 				"ssssssssssssssssssssssssssssssssssssssssssssssssss" +
 				"ssssssssssssssssssssssssssssssssssssssssssssssssss" +
@@ -52,7 +52,7 @@ public class PostTest extends BaseTest {
 		KeyPair pair = keyGen.generateKeyPair();
 		PublicKey pub = pair.getPublic();
 
-		clientAPI.post(pub, "isto vai correr mal", null);
+		clientAPI.post(pub, "This is going to fail", null);
 
 	}
 
