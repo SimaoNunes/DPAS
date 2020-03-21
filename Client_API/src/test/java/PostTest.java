@@ -27,24 +27,21 @@ public class PostTest extends BaseTest {
 		assertEquals(1, clientAPI.post(publicKey1, "user1 test message", null));
 	}
 
-	@Test
+	/*@Test
 	public void Should_Succeed_When_AnnouncsIsValidArray() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
 		
-	}
+	}*/
 
 	@Test(expected = MessageTooBigException.class)
-	public void postFailMessageTooBig() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
-		clientAPI.post(publicKey1, "Has 256 charsssssssssssssssss" +
-				"sssssssssssssssssssssssssssssssssssssssssssssssss" +
-				"ssssssssssssssssssssssssssssssssssssssssssssssssss" +
-				"ssssssssssssssssssssssssssssssssssssssssssssssssss" +
-				"sssssssssssssssssssssssssssssssssssss" +
-				"sssssssssssssssssssssssssssssssssssssssss", null);
+	public void Should_Fail_When_MessageIsTooBig() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
+		clientAPI.post(publicKey1, "Has 256 charssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
+									"sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
+									"sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
+									"ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", null);
 	}
 
 	@Test(expected = InvalidPublicKeyException.class)
-	public void postFailInvalidKey() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
-
+	public void Should_Fail_When_KeyIsInvalid() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
 
 		SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");

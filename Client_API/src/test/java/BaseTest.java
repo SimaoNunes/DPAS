@@ -3,7 +3,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.security.Key;
 import java.security.KeyStore;
 import java.security.PublicKey;
 
@@ -29,6 +28,7 @@ public class BaseTest {
 	static ClientAPI clientAPI;
 	static KeyStore keyStore;
 	static PublicKey publicKey1;
+	static char[] passphrase = "changeit".toCharArray();
 
 	@BeforeClass
 	public static void oneTimeSetup() {
@@ -36,7 +36,6 @@ public class BaseTest {
 		clientAPI = new ClientAPI();
         try {
         	// Get user1 PublicKey from the KeyStore
-            char[] passphrase = "changeit".toCharArray();
             keyStore = KeyStore.getInstance("JKS");
             keyStore.load(new FileInputStream("Keystores/keystore"), passphrase);
             publicKey1 = keyStore.getCertificate("user1").getPublicKey();

@@ -7,12 +7,8 @@ import Library.Response;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.math.BigInteger;
 import java.net.Socket;
 import java.security.PublicKey;
-import java.util.Scanner;
-
-import javax.swing.plaf.InsetsUIResource;
 
 public class ClientAPI {
 

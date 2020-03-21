@@ -4,47 +4,51 @@ import java.io.Serializable;
 import java.security.PublicKey;
 
 public class Request implements Serializable {
+	
     private String operation;
     private PublicKey publicKey = null;
     private String message = null;
     private int number = -1;
     private int[] announcements = null;
-
-    /******
-     * Fields used for the register operation.
-     ******/
     private String name = null;
     
-    /****
-    * Each constructor corresponds to each operation of the API.
-     ****/
-    public Request(String operation, PublicKey key){   //register
+    ////////////////////////////////////////////////////////////////
+    //				                                         	  //
+    //   Different constructors that allow different operations   //
+    //	  	     		                                          //
+    ////////////////////////////////////////////////////////////////
+    
+    // Register or ??? Read ???
+    public Request(String operation, PublicKey key, String name){
         this.publicKey = key;
         this.operation = operation;
-
+        this.name = name;
     }
-
-    public Request(String operation, PublicKey key, String message, int[] announcs){ //post
+    
+    // Register (DELETEALL)
+    public Request(String operation, PublicKey key){
+        this.publicKey = key;
+        this.operation = operation;
+    }
+    
+    // Post
+    public Request(String operation, PublicKey key, String message, int[] announcs) {
         this.publicKey = key;
         this.message = message;
         this.announcements = announcs;
         this.operation = operation;
     }
-
-    public Request(String operation, PublicKey key, int number){ //read
+    
+    // Read
+    public Request(String operation, PublicKey key, int number) {
         this.publicKey = key;
         this.number = number;
         this.operation = operation;
     }
-
-    public Request(String operation, int number){ //read
+    
+    // Read
+    public Request(String operation, int number) {
         this.number = number;
-        this.operation = operation;
-    }
-
-    public Request(String operation, PublicKey key, String name){ //read
-        this.publicKey = key;
-        this.name = name;
         this.operation = operation;
     }
 
