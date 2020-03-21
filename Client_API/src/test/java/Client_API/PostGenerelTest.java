@@ -1,3 +1,5 @@
+package Client_API;
+
 import static org.junit.Assert.assertEquals;
 
 import java.security.KeyPair;

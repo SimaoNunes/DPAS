@@ -1,3 +1,5 @@
+package Client_API;
+
 import org.junit.Test;
 
 import Exceptions.AlreadyRegisteredException;
