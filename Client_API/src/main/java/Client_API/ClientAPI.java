@@ -44,6 +44,15 @@ public class ClientAPI {
  //   Methods that check if responses must throw exceptions  //
  //															 //
  //////////////////////////////////////////////////////////////
+    
+    public void checkRegister(Response response) throws AlreadyRegisteredException {
+        if(!response.getSuccess()){
+            int error = response.getErrorCode();
+            if(error == -2){
+                throw new AlreadyRegisteredException("User with that public key already registered!");
+            }
+        }
+    }
 
     public void checkPost(Response response) throws UserNotRegisteredException,
             InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException {
@@ -102,16 +111,13 @@ public class ClientAPI {
 
         Request request = new Request("REGISTER", key, name);
         try {
-
             Response response = sendReceive(request);
-            if(!response.getSuccess()){
-                int error = response.getErrorCode();
-                if(error == -2){
-                    throw new AlreadyRegisteredException("User with that public key already registered!");
-                }
-            }
-           return 1;
+            // Check if response is bad (throws exception in case it is bad)
+            checkRegister(response);
+            // On success, return 1
+            return 1;
         } catch (IOException | ClassNotFoundException e) {
+        	// On failure, return 0
             e.printStackTrace();
             return 0;
         }
