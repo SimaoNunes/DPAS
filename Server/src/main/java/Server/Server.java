@@ -1,6 +1,5 @@
 package Server;
 
-import Exceptions.MessageTooBigException;
 import Library.Request;
 import Library.Response;
 import org.apache.commons.io.FileUtils;
@@ -8,15 +7,12 @@ import org.apache.commons.io.FileUtils;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.Enumeration;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.Arrays;
 import java.util.Base64;
 
 
@@ -217,10 +213,6 @@ public class Server implements Runnable{
             }
 
         }
-    }
-
-    private void quitUser() {
-        System.out.println("User disconnected.");
     }
 
     public void deleteUsers() throws IOException {
