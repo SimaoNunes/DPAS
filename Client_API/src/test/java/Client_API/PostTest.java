@@ -16,11 +16,11 @@ import java.security.*;
 //                                                                //
 ////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////
-//                                                                //
-//     Only 1 user is considered for tests purposes (user1)       //
-//                                                                //
-////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+//													   //
+//     Only 1 user is already registered (user1)       //
+//												       //
+/////////////////////////////////////////////////////////
 
 public class PostTest extends BaseTest {
 	
@@ -49,10 +49,15 @@ public class PostTest extends BaseTest {
 		SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
 		keyGen.initialize(1024, random);
 		KeyPair pair = keyGen.generateKeyPair();
-		PublicKey pub = pair.getPublic();
+		PublicKey publicKey = pair.getPublic();
 
-		clientAPI.post(pub, "This is going to fail", null);
+		clientAPI.post(publicKey, "This is going to fail", null);
 
 	}
 
+	@Test(expected = UserNotRegisteredException.class)
+	public void Should_Fail_When_UserIsNotRegistered() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
+		clientAPI.post(publicKey2, "I am not a registered user", null);
+	}
+	
 }

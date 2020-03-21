@@ -48,5 +48,10 @@ public class PostGenerelTest extends BaseTest {
 		clientAPI.postGeneral(pub, "This is going to fail", null);
 
 	}
+	
+	@Test(expected = UserNotRegisteredException.class)
+	public void Should_Fail_When_UserIsNotRegistered() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
+		clientAPI.post(publicKey2, "I am not a registered user", null);
+	}
 
 }

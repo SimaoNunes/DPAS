@@ -170,12 +170,12 @@ public class Server implements Runnable{
         System.out.println("POST method");
         System.out.println(request.getMessage().length());
         System.out.println(request.getPublicKey().getEncoded().length);
-        
+        // Check if message length exceeds 255 characters
         if(request.getMessage().length() > 255){
             send(new Response(false, -4), outstream);
         }
+        // Checks if key has proper length
         else if(request.getPublicKey().getEncoded().length != 294){
-            System.out.println("ta so a entrar aqui");
             send(new Response(false, -3), outstream);
         }
         else{
@@ -191,6 +191,7 @@ public class Server implements Runnable{
                 saveFile(path + Integer.toString(totalAnnouncements), request.getMessage());
                 send(new Response(true), outstream);
             } else {
+            	// This user is not registered
                 send(new Response(false, -1), outstream);
             }
         }

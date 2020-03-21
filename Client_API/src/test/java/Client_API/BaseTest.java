@@ -19,17 +19,13 @@ import Library.Request;
 //															      //
 ////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////
-//                                                                //
-//     Only 1 user is considered for tests purposes (user1)       //
-//                                                                //
-////////////////////////////////////////////////////////////////////
 
 public class BaseTest {
 	
 	static ClientAPI clientAPI;
 	static KeyStore keyStore;
 	static PublicKey publicKey1;
+	static PublicKey publicKey2;
 	static char[] passphrase = "changeit".toCharArray();
 
 	@BeforeClass
@@ -41,6 +37,7 @@ public class BaseTest {
             keyStore = KeyStore.getInstance("JKS");
             keyStore.load(new FileInputStream("Keystores/keystore"), passphrase);
             publicKey1 = keyStore.getCertificate("user1").getPublicKey();
+            publicKey2 = keyStore.getCertificate("user2").getPublicKey();
             // Register user
             clientAPI.register(publicKey1, "user1");
         } catch (Exception e) {
