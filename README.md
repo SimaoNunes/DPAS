@@ -37,4 +37,5 @@ Error Code                     Exception
 -5                             InvalidAnnouncement
 -6                             InvalidPostsNumber
 -7                             NonExistingPublicKey
+-8                             ErrorReadingFile
 ```

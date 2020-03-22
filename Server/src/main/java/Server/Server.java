@@ -6,6 +6,9 @@ import org.apache.commons.io.FileUtils;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
+import java.io.FileReader;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -63,7 +66,7 @@ public class Server implements Runnable{
                         post(request, true, outStream);
                         break;
                     case "READ":
-                        read(outStream);
+                        read(request, outStream);
                         break;
                     case "READGENERAL":
                         readGeneral();
@@ -164,6 +167,41 @@ public class Server implements Runnable{
         }
     }
 
+    
+    private void read(Request request, ObjectOutputStream outStream) {
+        System.out.println("READ method");
+
+        String key = Base64.getEncoder().encodeToString(request.getPublicKey().getEncoded());
+        String path = "./storage/AnnouncementBoards/" + key + "/";
+        File file = new File(path);
+
+        // FALTA FAZER VERIFICACOES DE EXCEPTIONS.... 
+        // TIPO QUANDO SE PEDEM MAIS ANNOUNCEMENTS DO QUE OS QUE EXISTEM E ASSIM
+
+        if(file.exists()) {
+            int n_announcements = file.list().length;
+            JSONParser parser = new JSONParser();
+            try{
+                JSONArray annoucementsList = new JSONArray();
+                JSONObject announcement;
+                for (int i=0; i<request.getNumber(); i++) {
+                    announcement = (JSONObject) parser.parse(new FileReader(path + Integer.toString(n_announcements)));
+                    n_announcements--;
+                    annoucementsList.add(announcement);
+                }
+                JSONObject announcementsToSend =  new JSONObject();
+                announcementsToSend.put("announcementList", annoucementsList);
+                // AQUI FALTA ENVIAR O OBJETO announcementsToSend NA RESPOSTA
+                send(new Response(true), outStream);
+            } catch(Exception e){
+                e.printStackTrace();
+                send(new Response(false, -8), outStream);
+            }
+        } else {
+            send(new Response(false, -1), outStream);
+        }
+    }
+
     private void readGeneral(){
 
     }
@@ -201,25 +239,6 @@ public class Server implements Runnable{
             	// This user is not registered
                 send(new Response(false, -1), outstream);
             }
-        }
-    }
-
-
-    private void read(ObjectOutputStream outStream) {
-        System.out.println("SEND method");
-
-        Path fileLocation = Paths.get("./storage");
-        if(!Files.exists(fileLocation)){
-            System.out.println("Maninho essa merda nao existe");
-        } else{
-            try {
-                byte[] data = Files.readAllBytes(fileLocation);
-                outStream.write(data);
-                outStream.flush();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
         }
     }
 
