@@ -128,11 +128,11 @@ public class Server implements Runnable{
 
         String path = "./storage/AnnouncementBoards/" + key;
         File file = new File(path);
-        if(file.exists()){ //already registered
+        // Check if user is already registered
+        if(file.exists()){
             send(new Response(false, -2), outputStream);
         }
         else{
-            System.out.println("tenho de entrar aqui");
             file.mkdirs();
             send(new Response("User successfully registered!", true), outputStream);
         }
