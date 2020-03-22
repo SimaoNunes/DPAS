@@ -1,8 +1,14 @@
 package Client_API;
 
+import Exceptions.UnknownPublicKeyException;
 import org.junit.Test;
 
 import Exceptions.AlreadyRegisteredException;
+
+import java.io.FileInputStream;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.PublicKey;
 
 ////////////////////////////////////////////////////////////////////
 //																  //
@@ -19,18 +25,20 @@ import Exceptions.AlreadyRegisteredException;
 public class RegisterTest extends BaseTest {
 	
 	@Test
-	public void Should_Succeed_When_AnnouncsIsValidArray() throws AlreadyRegisteredException {
+	public void Should_Succeed_When_AnnouncsIsValidArray() throws AlreadyRegisteredException, UnknownPublicKeyException {
 	        clientAPI.register(publicKey2, "user2");
 	}
 	
 	@Test(expected = AlreadyRegisteredException.class)
-	public void Should_Fail_When_UserIsAlreadyRegistered() throws AlreadyRegisteredException {
+	public void Should_Fail_When_UserIsAlreadyRegistered() throws AlreadyRegisteredException, UnknownPublicKeyException {
 		// This user is registered @BeforeClass
         clientAPI.register(publicKey1, "user1");
 	}
 
-	@Test(expected = )
-	public void Should_Fail_When_Server_DoesntHave_PubKey() {
+	@Test(expected = UnknownPublicKeyException.class)
+	public void Should_Fail_When_Server_DoesntHave_PubKey() throws KeyStoreException, AlreadyRegisteredException, UnknownPublicKeyException {
+		PublicKey badPub = keyStore.getCertificate("userERROR").getPublicKey();
+		clientAPI.register(badPub, "userERROR");
 
 	}
 	

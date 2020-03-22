@@ -46,11 +46,14 @@ public class ClientAPI {
  //															 //
  //////////////////////////////////////////////////////////////
     
-    public void checkRegister(Response response) throws AlreadyRegisteredException {
+    public void checkRegister(Response response) throws AlreadyRegisteredException, UnknownPublicKeyException {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -2){
                 throw new AlreadyRegisteredException("User with that public key already registered!");
+            }
+            else if(error == -7){
+                throw new UnknownPublicKeyException("Such key doesn't exist in the server side!");
             }
         }
     }
@@ -108,7 +111,7 @@ public class ClientAPI {
  //	  	     		  //
  ///////////////////////
 
-    public int register(PublicKey key, String name) throws AlreadyRegisteredException {
+    public int register(PublicKey key, String name) throws AlreadyRegisteredException, UnknownPublicKeyException {
 
         Request request = new Request("REGISTER", key, name);
         try {

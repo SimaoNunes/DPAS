@@ -123,6 +123,7 @@ public class Server implements Runnable{
         System.out.println("Registering user: " + request.getName());
 
         if(!checkKey(request.getPublicKey())){
+            System.out.println("entrei aqui");
             send(new Response(false, -7), outputStream);  //UnknownPublicKeyException
             return;
         }
