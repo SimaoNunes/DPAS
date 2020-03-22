@@ -199,7 +199,7 @@ public class Server implements Runnable{
 
 
     private void read(ObjectOutputStream outStream) {
-        System.out.println("SEND method");
+        System.out.println("READ method");
 
         Path fileLocation = Paths.get("./storage");
         if(!Files.exists(fileLocation)){
@@ -217,8 +217,7 @@ public class Server implements Runnable{
     }
 
     public void deleteUsers() throws IOException {
-
-        System.out.println("Delete operation");
+        System.out.println("DELETEALL method");
 
         String path = "./storage/AnnouncementBoards";
         FileUtils.deleteDirectory(new File(path));

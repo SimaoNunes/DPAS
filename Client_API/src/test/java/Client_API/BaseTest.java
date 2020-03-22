@@ -26,6 +26,7 @@ public class BaseTest {
 	static KeyStore keyStore;
 	static PublicKey publicKey1;
 	static PublicKey publicKey2;
+	static PublicKey publicKey3;
 	static char[] passphrase = "changeit".toCharArray();
 
 	@BeforeClass
@@ -38,8 +39,10 @@ public class BaseTest {
             keyStore.load(new FileInputStream("Keystores/keystore"), passphrase);
             publicKey1 = keyStore.getCertificate("user1").getPublicKey();
             publicKey2 = keyStore.getCertificate("user2").getPublicKey();
+            publicKey3 = keyStore.getCertificate("user3").getPublicKey();
             // Register user
             clientAPI.register(publicKey1, "user1");
+            clientAPI.post(publicKey1, "This is a test message for user3 to read", null);
         } catch (Exception e) {
             e.printStackTrace();
         }
