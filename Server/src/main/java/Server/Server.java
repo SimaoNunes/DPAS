@@ -126,7 +126,9 @@ public class Server implements Runnable{
         System.out.println("Registering user: " + request.getName());
 
         if(!checkKey(request.getPublicKey())){
-            send(new Response(false, -7), outputStream);
+            System.out.println("entrei aqui");
+            send(new Response(false, -7), outputStream);  //UnknownPublicKeyException
+            return;
         }
 
         String key = Base64.getEncoder().encodeToString(request.getPublicKey().getEncoded());
@@ -135,7 +137,7 @@ public class Server implements Runnable{
         File file = new File(path);
         // Check if user is already registered
         if(file.exists()){
-            send(new Response(false, -2), outputStream);
+            send(new Response(false, -2), outputStream);    //AlreadyRegisteredException
         }
         else{
             file.mkdirs();
@@ -208,15 +210,13 @@ public class Server implements Runnable{
 
     private void post(Request request, Boolean general, ObjectOutputStream outstream) throws IOException{
         System.out.println("POST method");
-        System.out.println(request.getMessage().length());
-        System.out.println(request.getPublicKey().getEncoded().length);
         // Check if message length exceeds 255 characters
         if(request.getMessage().length() > 255){
-            send(new Response(false, -4), outstream);
+            send(new Response(false, -4), outstream);  //MessageTooBigException
         }
         // Checks if key has proper length
         else if(request.getPublicKey().getEncoded().length != 294){
-            send(new Response(false, -3), outstream);
+            send(new Response(false, -3), outstream);  //InvalidPublicKey
         }
         else{
             String key = Base64.getEncoder().encodeToString(request.getPublicKey().getEncoded());

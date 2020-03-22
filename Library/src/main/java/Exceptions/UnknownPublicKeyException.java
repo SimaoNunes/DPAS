@@ -1,8 +1,8 @@
 package Exceptions;
 
-public class UnknownKeyException extends Exception{
+public class UnknownPublicKeyException extends Exception{
 
-	public UnknownKeyException(String message){
+	public UnknownPublicKeyException(String message){
         super(message);
     }
 
