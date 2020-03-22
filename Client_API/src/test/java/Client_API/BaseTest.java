@@ -1,13 +1,18 @@
 package Client_API;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.cert.CertificateException;
 
+import Exceptions.*;
 import org.junit.*;
 
 import Client_API.ClientAPI;
@@ -33,19 +38,9 @@ public class BaseTest {
 	public static void oneTimeSetup() {
 		// Instantiate class to be tested, in this case the API that will communicate with the Server
 		clientAPI = new ClientAPI();
-        try {
-        	// Get user1 PublicKey from the KeyStore
-            keyStore = KeyStore.getInstance("JKS");
-            keyStore.load(new FileInputStream("Keystores/keystore"), passphrase);
-            publicKey1 = keyStore.getCertificate("user1").getPublicKey();
-            publicKey2 = keyStore.getCertificate("user2").getPublicKey();
-            publicKey3 = keyStore.getCertificate("user3").getPublicKey();
-            // Register user
-            clientAPI.register(publicKey1, "user1");
-            clientAPI.post(publicKey1, "This is a test message for user3 to read", null);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        initiate();
+		populate();
+
 	}
 
 	@AfterClass
@@ -56,5 +51,37 @@ public class BaseTest {
         outputStream.close();
         socket.close();
 	}
+
+	public static void initiate(){
+        try {
+            keyStore = KeyStore.getInstance("JKS");
+            keyStore.load(new FileInputStream("Keystores/keystore"), passphrase);
+            publicKey1 = keyStore.getCertificate("user1").getPublicKey();
+            publicKey2 = keyStore.getCertificate("user2").getPublicKey();
+            publicKey3 = keyStore.getCertificate("user3").getPublicKey();
+
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+	public static void populate(){
+        try {
+            clientAPI.register(publicKey1, "user1");
+            clientAPI.post(publicKey1, "This is a test message for user3 to read", null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
 	
 }

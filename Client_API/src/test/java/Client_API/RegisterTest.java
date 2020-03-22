@@ -27,6 +27,11 @@ public class RegisterTest extends BaseTest {
 	public void Should_Fail_When_UserIsAlreadyRegistered() throws AlreadyRegisteredException {
 		// This user is registered @BeforeClass
         clientAPI.register(publicKey1, "user1");
-	}	
+	}
+
+	@Test(expected = )
+	public void Should_Fail_When_Server_DoesntHave_PubKey() {
+
+	}
 	
 }
