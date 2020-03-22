@@ -4,6 +4,9 @@ import Library.Request;
 import Library.Response;
 import org.apache.commons.io.FileUtils;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -14,7 +17,6 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.Enumeration;
 import java.util.Base64;
-
 
 public class Server implements Runnable{
 
@@ -183,12 +185,17 @@ public class Server implements Runnable{
             String path = "./storage/AnnouncementBoards/" + key;
             File file = new File(path);
             if(file.exists()){
-                int totalAnnouncements = file.list().length;
-                System.out.println("Total announcements " + Integer.toString(totalAnnouncements));
                 if(general){
-                    path = "./storage/GeneralBoard/";
+                    path = "./storage/GeneralBoard";
+                    file = new File(path);
                 }
-                saveFile(path + Integer.toString(totalAnnouncements), request.getMessage());
+                int totalAnnouncements = file.list().length;
+
+                JSONObject announcementObject =  new JSONObject();
+                announcementObject.put("user", key);
+                announcementObject.put("message", request.getMessage());
+
+                saveFile(path + "/" + Integer.toString(totalAnnouncements), announcementObject.toJSONString());
                 send(new Response(true), outstream);
             } else {
             	// This user is not registered
@@ -199,7 +206,7 @@ public class Server implements Runnable{
 
 
     private void read(ObjectOutputStream outStream) {
-        System.out.println("READ method");
+        System.out.println("SEND method");
 
         Path fileLocation = Paths.get("./storage");
         if(!Files.exists(fileLocation)){
@@ -217,7 +224,8 @@ public class Server implements Runnable{
     }
 
     public void deleteUsers() throws IOException {
-        System.out.println("DELETEALL method");
+
+        System.out.println("Delete operation");
 
         String path = "./storage/AnnouncementBoards";
         FileUtils.deleteDirectory(new File(path));
