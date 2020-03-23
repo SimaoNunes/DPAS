@@ -85,7 +85,9 @@ public class Server implements Runnable{
         }
     }
 
-    public boolean checkKey(PublicKey publicKey){
+    public int checkPostsNumber(PublicKey key)
+
+    public boolean checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
 
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
@@ -133,18 +135,21 @@ public class Server implements Runnable{
         // Get key from request to open respective file
         String key = Base64.getEncoder().encodeToString(request.getPublicKey().getEncoded());
         // Check if user is already registered
-        if(userIdMap.containsKey(key)) {
-            send(new Response(false, -2), outStream);
-        }
-        // Register new user
-        else {
-        	int userId = userIdMap.size();
-            String path = "./storage/AnnouncementBoards/" + userId;
-            File file = new File(path);
-            file.mkdirs();
-            userIdMap.put(key, userId);
-            System.out.println("User " + request.getName() + " successfully registered!");
-            send(new Response("User successfully registered!", true), outStream);
+        synchronized (userIdMap){
+            if(userIdMap.containsKey(key)) {
+                send(new Response(false, -2), outStream);
+            }
+            // Register new user
+            else {
+                int userId = userIdMap.size();
+                String path = "./storage/AnnouncementBoards/" + userId;
+                File file = new File(path);
+                file.mkdirs();
+                userIdMap.put(key, userId);
+                System.out.println("User " + request.getName() + " successfully registered!");
+                send(new Response("User successfully registered!", true), outStream);
+            }
+
         }
     }
 
@@ -173,6 +178,16 @@ public class Server implements Runnable{
 
     
     private void read(Request request, ObjectOutputStream outStream) {
+        if(request.getPublicKey().getEncoded().length != 294){
+            send(new Response(false, -3), outStream);  //InvalidPublicKey
+        }
+        else if(request.getNumber() < 0){
+            send(new Response(false, -11), outStream);  //InvalidAnnouncementsNumber
+        }
+        else if(request.getNumber() > )
+
+
+
     	// FALTA FAZER VERIFICACOES DE EXCEPTIONS.... 
         // TIPO QUANDO SE PEDEM MAIS ANNOUNCEMENTS DO QUE OS QUE EXISTEM E ASSIM
         System.out.println("READ method");
