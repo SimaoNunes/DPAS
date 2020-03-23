@@ -5,11 +5,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.security.*;
 import java.security.cert.CertificateException;
 
-import Exceptions.*;
 import org.junit.*;
 
 import Client_API.ClientAPI;

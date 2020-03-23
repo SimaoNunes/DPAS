@@ -19,7 +19,6 @@ import java.security.cert.CertificateException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Base64;
 
 public class Server implements Runnable{
 
@@ -32,6 +31,12 @@ public class Server implements Runnable{
         server = ss;
         newListener();
     }
+    
+//////////////////////////////////////////
+//  								    //
+//         Main method running          //
+//    									//
+//////////////////////////////////////////
 
     public void run(){
 
@@ -85,57 +90,13 @@ public class Server implements Runnable{
             e.printStackTrace();
         }
     }
-
-    public int checkPostsNumber(PublicKey key){
-        String path = "./storage/";
-        if(key == null){
-            path += "GeneralBoard";
-        }
-        else{
-            path += "AnnouncementBoard/" + userIdMap.get(key);
-        }
-        File file = new File(path);
-        return file.list().length;
-    }
-
-    public boolean checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
-
-        char[] passphrase = "changeit".toCharArray();
-        KeyStore ks = null;
-        try {
-            ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
-
-            Enumeration aliases = ks.aliases();
-
-            for (; aliases.hasMoreElements(); ) {
-
-                String alias = (String) aliases.nextElement();
-
-
-                if (ks.isKeyEntry(alias)) {
-                    PublicKey key = ks.getCertificate(alias).getPublicKey();
-                    if (key.equals(publicKey)) {
-                        return true;
-                    }
-
-                }
-
-            }
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
+    
+//////////////////////////////////////////
+//  									//
+//             API Methods              //
+//	                                    //
+//////////////////////////////////////////
+    
     public void register(Request request, ObjectOutputStream outStream) {
         System.out.println("REGISTER Method. Registering user: " + request.getName());
         if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
@@ -164,60 +125,41 @@ public class Server implements Runnable{
         }
     }
 
-    public void send(Response response, ObjectOutputStream outputStream){
-        try {
-            outputStream.writeObject(response);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void post(Request request, Boolean general, ObjectOutputStream outStream) throws IOException{
+        System.out.println("POST method");
+        // Check if message length exceeds 255 characters
+        if(request.getMessage().length() > 255){
+            send(new Response(false, -4), outStream);  //MessageTooBigException
         }
-
-    }
-
-    private void saveFile(String completePath, String announcement) throws IOException {
-        byte[] bytesToStore = announcement.getBytes();
-        try{
-            File file = new File(completePath);
-            FileOutputStream fos = new FileOutputStream(file);
-
-            fos.write(bytesToStore);
-            fos.close();
-
-        } catch (Exception e){
-            e.printStackTrace();
+        // Checks if key has proper length
+        else if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
+            send(new Response(false, -3), outStream);  //InvalidPublicKey
         }
-    }
-    
-    private void saveUserIdMap() {
-        try {
-            FileOutputStream fileOut = new FileOutputStream("./storage/UserIdMap.ser");
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeObject(userIdMap);
-            out.close();
-            fileOut.close();
-            System.out.printf("Serialized data of user ID Mapping is saved in ./storage/UserIdMap.ser");
-         } catch (IOException i) {
-            i.printStackTrace();
-         }
-    }
-    
-    private void getUserIdMap() {
-        try {
-           FileInputStream fileIn = new FileInputStream("./storage/UserIdMap.ser");
-           ObjectInputStream in = new ObjectInputStream(fileIn);
-           userIdMap = (Map<PublicKey, Integer>) in.readObject();
-           in.close();
-           fileIn.close();
-        } catch (ClassNotFoundException c) {
-           System.out.println("Map<PublicKey, Integer> class not found");
-           c.printStackTrace();
-           return;
-        }
-        catch(FileNotFoundException e){
-            userIdMap = new HashMap<PublicKey, Integer>();
-            saveUserIdMap();
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        else{
+            if(userIdMap.containsKey(request.getPublicKey())) {
+            	String path;
+            	File file;
+            	// Check whether post is general or not, to get the proper file location
+                if(general){
+                    path = "./storage/GeneralBoard";
+                    file = new File(path);
+                }
+                else {
+                    int userId = userIdMap.get(request.getPublicKey());
+                    path = "./storage/AnnouncementBoards/" + userId;
+                    file = new File(path);
+                }
+                // Write to file
+                int totalAnnouncements = file.list().length;
+                JSONObject announcementObject =  new JSONObject();
+                announcementObject.put("user", request.getPublicKey());
+                announcementObject.put("message", request.getMessage());
+                saveFile(path + "/" + Integer.toString(totalAnnouncements), announcementObject.toJSONString());
+                send(new Response(true), outStream);
+            } else {
+            	// This user is not registered
+                send(new Response(false, -1), outStream);
+            }
         }
     }
     
@@ -261,48 +203,95 @@ public class Server implements Runnable{
         }
     }
 
-
     private void readGeneral(){
 
     }
-
-    private void post(Request request, Boolean general, ObjectOutputStream outStream) throws IOException{
-        System.out.println("POST method");
-        // Check if message length exceeds 255 characters
-        if(request.getMessage().length() > 255){
-            send(new Response(false, -4), outStream);  //MessageTooBigException
-        }
-        // Checks if key has proper length
-        else if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
-            send(new Response(false, -3), outStream);  //InvalidPublicKey
+    
+//////////////////////////////////////////
+//										//
+//           Auxiliary Methods          //
+//    									//
+//////////////////////////////////////////   
+    
+    public int checkPostsNumber(PublicKey key){
+        String path = "./storage/";
+        if(key == null){
+            path += "GeneralBoard";
         }
         else{
-            if(userIdMap.containsKey(request.getPublicKey())) {
-            	String path;
-            	File file;
-            	// Check whether post is general or not, to get the proper file location
-                if(general){
-                    path = "./storage/GeneralBoard";
-                    file = new File(path);
+            path += "AnnouncementBoard/" + userIdMap.get(key);
+        }
+        File file = new File(path);
+        return file.list().length;
+    }
+
+    public boolean checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
+
+        char[] passphrase = "changeit".toCharArray();
+        KeyStore ks = null;
+        try {
+            ks = KeyStore.getInstance("JKS");
+            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
+
+            Enumeration aliases = ks.aliases();
+
+            for (; aliases.hasMoreElements(); ) {
+
+                String alias = (String) aliases.nextElement();
+
+                if (ks.isKeyEntry(alias)) {
+                    PublicKey key = ks.getCertificate(alias).getPublicKey();
+                    if (key.equals(publicKey)) {
+                        return true;
+                    }
                 }
-                else {
-                    int userId = userIdMap.get(request.getPublicKey());
-                    path = "./storage/AnnouncementBoards/" + userId;
-                    file = new File(path);
-                }
-                // Write to file
-                int totalAnnouncements = file.list().length;
-                JSONObject announcementObject =  new JSONObject();
-                announcementObject.put("user", request.getPublicKey());
-                announcementObject.put("message", request.getMessage());
-                saveFile(path + "/" + Integer.toString(totalAnnouncements), announcementObject.toJSONString());
-                send(new Response(true), outStream);
-            } else {
-            	// This user is not registered
-                send(new Response(false, -1), outStream);
             }
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public void send(Response response, ObjectOutputStream outputStream){
+        try {
+            outputStream.writeObject(response);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void saveFile(String completePath, String announcement) throws IOException {
+        byte[] bytesToStore = announcement.getBytes();
+        try{
+            File file = new File(completePath);
+            FileOutputStream fos = new FileOutputStream(file);
+
+            fos.write(bytesToStore);
+            fos.close();
+
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
+    
+    private void newListener() {
+        (new Thread(this)).start();
+    }
+    
+/////////////////////////////////////////////
+//   									   //
+//  Method used to delete Tests' populate  //
+//										   //
+/////////////////////////////////////////////
 
     public void deleteUsers() throws IOException {
 
@@ -323,11 +312,45 @@ public class Server implements Runnable{
         files = new File(path);
         files.mkdirs();
     }
+    
+/////////////////////////////////////////////
+//										   //
+// Methods to save/get userIdMap from File //
+//										   //
+/////////////////////////////////////////////
+    
+    private void saveUserIdMap() {
+        try {
+            FileOutputStream fileOut = new FileOutputStream("./storage/UserIdMap.ser");
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(userIdMap);
+            out.close();
+            fileOut.close();
+            System.out.printf("Serialized data of user ID Mapping is saved in ./storage/UserIdMap.ser");
+         } catch (IOException i) {
+            i.printStackTrace();
+         }
+    }
+    
+    private void getUserIdMap() {
+        try {
+           FileInputStream fileIn = new FileInputStream("./storage/UserIdMap.ser");
+           ObjectInputStream in = new ObjectInputStream(fileIn);
+           userIdMap = (Map<PublicKey, Integer>) in.readObject();
+           in.close();
+           fileIn.close();
+        } catch (ClassNotFoundException c) {
+           System.out.println("Map<PublicKey, Integer> class not found");
+           c.printStackTrace();
+           return;
+        }
+        catch(FileNotFoundException e){
+            userIdMap = new HashMap<PublicKey, Integer>();
+            saveUserIdMap();
 
-
-
-    private void newListener() {
-        (new Thread(this)).start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
