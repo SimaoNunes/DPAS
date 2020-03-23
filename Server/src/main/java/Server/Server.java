@@ -24,10 +24,11 @@ import java.util.Base64;
 public class Server implements Runnable{
 
     private ServerSocket server = null;
-    private Map<String, Integer> userIdMap = new HashMap<String, Integer>();
+    private Map<String, Integer> userIdMap = null;
 
     protected Server(ServerSocket ss){
 
+    	getUserIdMap();
         server = ss;
         newListener();
     }
@@ -143,6 +144,7 @@ public class Server implements Runnable{
             File file = new File(path);
             file.mkdirs();
             userIdMap.put(key, userId);
+            saveUserIdMap();
             System.out.println("User " + request.getName() + " successfully registered!");
             send(new Response("User successfully registered!", true), outStream);
         }
@@ -170,7 +172,45 @@ public class Server implements Runnable{
             e.printStackTrace();
         }
     }
-
+    
+    private void saveUserIdMap() {
+        try {
+            FileOutputStream fileOut = new FileOutputStream("./storage/UserIdMap.ser");
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(userIdMap);
+            out.close();
+            fileOut.close();
+            System.out.printf("Serialized data of user ID Mapping is saved in ./storage/UserIdMap.ser");
+         } catch (IOException i) {
+            i.printStackTrace();
+         }
+    }
+    
+    private void getUserIdMap() {
+        try {
+        	//new HashMap<String, Integer>()
+        	/* AQUI OH FILHO DA PUTA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+        	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+           FileInputStream fileIn = new FileInputStream("./storage/UserIdMap.ser");
+           ObjectInputStream in = new ObjectInputStream(fileIn);
+           userIdMap = (Map<String, Integer>) in.readObject();
+           in.close();
+           fileIn.close();
+        } catch (IOException i) {
+           i.printStackTrace();
+           return;
+        } catch (ClassNotFoundException c) {
+           System.out.println("Map<String, Integer> class not found");
+           c.printStackTrace();
+           return;
+        }
+    }
     
     private void read(Request request, ObjectOutputStream outStream) {
     	// FALTA FAZER VERIFICACOES DE EXCEPTIONS.... 
@@ -257,6 +297,7 @@ public class Server implements Runnable{
         System.out.println("Delete operation");
 
         userIdMap.clear();
+        saveUserIdMap();
         String path = "./storage/AnnouncementBoards";
         FileUtils.deleteDirectory(new File(path));
         File files = new File(path);
