@@ -16,7 +16,7 @@ import Exceptions.InvalidPublicKeyException;
 import Exceptions.MessageTooBigException;
 import Exceptions.UserNotRegisteredException;
 
-public class PostGenerelTest extends BaseTest {
+public class PostGeneralTest extends BaseTest {
 	
 	@Test
 	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {

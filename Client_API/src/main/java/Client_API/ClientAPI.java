@@ -3,7 +3,7 @@ package Client_API;
 import Exceptions.*;
 import Library.Request;
 import Library.Response;
-import Library.Announcement;
+import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -46,14 +46,17 @@ public class ClientAPI {
  //															 //
  //////////////////////////////////////////////////////////////
     
-    public void checkRegister(Response response) throws AlreadyRegisteredException, UnknownPublicKeyException {
+    public void checkRegister(Response response) throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
-            if(error == -2){
-                throw new AlreadyRegisteredException("User with that public key already registered!");
+            if(error == -3){
+                throw new InvalidPublicKeyException("Such key is invalid for registration, must have 2048 bits");
             }
             else if(error == -7){
                 throw new UnknownPublicKeyException("Such key doesn't exist in the server side!");
+            }
+            else if(error == -2){
+                throw new AlreadyRegisteredException("User with that public key already registered!");
             }
         }
     }
@@ -84,7 +87,7 @@ public class ClientAPI {
     }
 
     public void checkRead(Response response) throws UserNotRegisteredException,
-    		InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException, InvalidPostsNumberException {
+            InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException, InvalidPostsNumberException, TooMuchAnnouncementsException {
 
         if(!response.getSuccess()){
             int error = response.getErrorCode();
@@ -100,6 +103,10 @@ public class ClientAPI {
                 throw new InvalidPostsNumberException("Invalid announcements number to be read!");
             }
 
+            else if(error == -10){
+                throw new TooMuchAnnouncementsException("There are not that much announcements to be read!");
+            }
+
         }
 
     }
@@ -111,15 +118,21 @@ public class ClientAPI {
  //	  	     		  //
  ///////////////////////
 
-    public int register(PublicKey key, String name) throws AlreadyRegisteredException, UnknownPublicKeyException {
+    public int register(PublicKey key, String name) throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
 
         Request request = new Request("REGISTER", key, name);
         try {
             Response response = sendReceive(request);
             // Check if response is bad (throws exception in case it is bad)
             checkRegister(response);
-            // On success, return 1
-            return 1;
+
+            if(response.getSuccess()){
+                // On success, return 1
+                return 1;
+            }
+            else{
+                return 0;
+            }
         } catch (IOException | ClassNotFoundException e) {
         	// On failure, return 0
             e.printStackTrace();
@@ -127,77 +140,81 @@ public class ClientAPI {
         }
     }
 
-    public int post(PublicKey key, String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException,
-    		InvalidPublicKeyException, InvalidAnnouncementException {
-        Request request = new Request("POST", key, message, announcs);
-        // Send request to Server
+    //////////////////////////////////////////////////
+    //////////////////// POST ////////////////////////
+    //////////////////////////////////////////////////
+
+    public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral) throws InvalidAnnouncementException,
+            UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException {
+        Request request;
+        if(isGeneral){
+            request = new Request("POSTGENERAL", key, message, announcs);
+        }
+        else{
+            request = new Request("POST", key, message, announcs);
+        }
+
         try {
             Response response = sendReceive(request);
-            // Check if response is bad (throws exception in case it is bad)
             checkPost(response);
-            // On success, return 1
             return 1;
-            
-        } catch (IOException | ClassNotFoundException e) {
-        	// On failure, return 0
+        } catch (IOException e) {
             e.printStackTrace();
-            return 0;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
+        return 0;
+    }
+
+    public int post(PublicKey key, String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException,
+    		InvalidPublicKeyException, InvalidAnnouncementException {
+        return postAux(key, message, announcs, false);
     }
     
     public int postGeneral(PublicKey key, String message, int[] announcs) throws UserNotRegisteredException,
             InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException {
 
-        Request request = new Request("POSTGENERAL", key, message, announcs);
-        // Send request to Server
-        try {
-           Response response = sendReceive(request);
-           // Check if response is bad (throws exception in case it is bad)
-           checkPost(response);
-           // On success, return 1
-           return 1;
-
-           // On success return 1
-        } catch (IOException | ClassNotFoundException e) {
-        	// On failure, return 0
-            e.printStackTrace();
-            return 0;
-        }
+        return postAux(key, message, announcs, true);
     }
+    //////////////////////////////////////////////////
 
-    public String read(PublicKey key, int number) throws InvalidAnnouncementException,
-            InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException {
+    //////////////////////////////////////////////////
+    //////////////////// READ ////////////////////////
+    //////////////////////////////////////////////////
 
-        Request request = new Request("READ", key, number);
-        // Send request to Server
-        try {
-           Response response = sendReceive(request);
-           // Check if response is bad (throws exception in case it is bad)
-           checkRead(response);
-           // On success, return message
-           return response.getMessage();
-        } catch (IOException | ClassNotFoundException e) {
-        	// On failure, return null
-            e.printStackTrace();
-            return null;
+    public JSONObject readAux(PublicKey key, int number, boolean isGeneral) throws UserNotRegisteredException,
+            InvalidAnnouncementException, InvalidPublicKeyException, MessageTooBigException, InvalidPostsNumberException, TooMuchAnnouncementsException {
+        Request request;
+        if(isGeneral){
+            request = new Request("READGENERAL", number);
         }
-    }
+        else{
+            request = new Request("READ", key, number);
 
-    public String readGeneral(int number) throws InvalidAnnouncementException,
-            InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException {
-
-        Request request = new Request("READGENERAL", number);
-        // Send request to Server
+        }
         try {
             Response response = sendReceive(request);
-            // Check if response is bad (throws exception in case it is bad)
             checkRead(response);
-            // On success, return message
-            return response.getMessage();
-        } catch (IOException | ClassNotFoundException e) {
-        	// On failure, return null
+            return response.getJsonObject();
+
+        } catch (IOException e) {
             e.printStackTrace();
-            return null;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
+        return null;
     }
+
+    public JSONObject read(PublicKey key, int number) throws InvalidAnnouncementException,
+            InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException, TooMuchAnnouncementsException {
+
+        return readAux(key, number, false);
+    }
+
+    public JSONObject readGeneral(int number) throws InvalidAnnouncementException,
+            InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException, TooMuchAnnouncementsException {
+
+        return readAux(null, number, true);
+    }
+    //////////////////////////////////////////////////
 }

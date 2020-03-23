@@ -1,20 +1,15 @@
 package Library;
 
+import org.json.simple.JSONObject;
+
 import java.io.Serializable;
 
 public class Response implements Serializable {
 
-    private int userID = -1;
-    private String message = null;
     private boolean success;
+    private JSONObject jsonObject;
 
     private int errorCode;
-
-    
-    public Response(String message, Boolean success){ 
-        this.message = message;
-        this.success = success;
-    }
 
     public Response(boolean success, int errorCode){
 
@@ -22,16 +17,21 @@ public class Response implements Serializable {
         this.errorCode = errorCode;
     }
 
+    public Response(boolean success, JSONObject object){
+        this.success = success;
+        this.jsonObject = object;
+    }
+
+    public JSONObject getJsonObject() {
+        return jsonObject;
+    }
+
+    public void setJsonObject(JSONObject jsonObject) {
+        this.jsonObject = jsonObject;
+    }
+
     public Response(boolean success){
         this.success = success;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
     }
 
     public boolean getSuccess() {
@@ -50,11 +50,4 @@ public class Response implements Serializable {
         this.errorCode = errorCode;
     }
 
-    public int getUserID() {
-        return userID;
-    }
-
-    public void setUserID(int userID) {
-        this.userID = userID;
-    }
 }

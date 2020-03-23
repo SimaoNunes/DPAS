@@ -39,4 +39,5 @@ Error Code                     Exception
 -7                             UnknownPublicKey
 -8                             ErrorReadingFile
 -9                             ErrorWrittingFile
+-10                            TooMuchAnnouncements
 ```

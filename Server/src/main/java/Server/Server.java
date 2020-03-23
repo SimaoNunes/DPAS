@@ -24,10 +24,11 @@ import java.util.Base64;
 public class Server implements Runnable{
 
     private ServerSocket server = null;
-    private Map<String, Integer> userIdMap = new HashMap<String, Integer>();
+    private Map<PublicKey, Integer> userIdMap = null;
 
     protected Server(ServerSocket ss){
 
+    	getUserIdMap();
         server = ss;
         newListener();
     }
@@ -85,7 +86,17 @@ public class Server implements Runnable{
         }
     }
 
-    public int checkPostsNumber(PublicKey key)
+    public int checkPostsNumber(PublicKey key){
+        String path = "./storage/";
+        if(key == null){
+            path += "GeneralBoard";
+        }
+        else{
+            path += "AnnouncementBoard/" + userIdMap.get(key);
+        }
+        File file = new File(path);
+        return file.list().length;
+    }
 
     public boolean checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
 
@@ -125,18 +136,17 @@ public class Server implements Runnable{
         return false;
     }
 
-    public void register(Request request, ObjectOutputStream outStream){
+    public void register(Request request, ObjectOutputStream outStream) {
         System.out.println("REGISTER Method. Registering user: " + request.getName());
-        // Check if key is "trustful" (aka is in Server's keystore)
-        if(!checkKey(request.getPublicKey())) {
-            send(new Response(false, -7), outStream);
+        if(request.getPublicKey().getEncoded().length != 294){
+            send(new Response(false, -3), outStream);  //InvalidPublicKey
+        }
+        else if (!checkKey(request.getPublicKey())) {
+            send(new Response(false, -7), outStream); //key not in server keystore
             return;
         }
-        // Get key from request to open respective file
-        String key = Base64.getEncoder().encodeToString(request.getPublicKey().getEncoded());
-        // Check if user is already registered
-        synchronized (userIdMap){
-            if(userIdMap.containsKey(key)) {
+        synchronized (userIdMap) {
+            if (userIdMap.containsKey(request.getPublicKey())) {
                 send(new Response(false, -2), outStream);
             }
             // Register new user
@@ -145,9 +155,10 @@ public class Server implements Runnable{
                 String path = "./storage/AnnouncementBoards/" + userId;
                 File file = new File(path);
                 file.mkdirs();
-                userIdMap.put(key, userId);
+                userIdMap.put(request.getPublicKey(), userId);
+                saveUserIdMap();
                 System.out.println("User " + request.getName() + " successfully registered!");
-                send(new Response("User successfully registered!", true), outStream);
+                send(new Response(true), outStream);
             }
 
         }
@@ -175,52 +186,81 @@ public class Server implements Runnable{
             e.printStackTrace();
         }
     }
+    
+    private void saveUserIdMap() {
+        try {
+            FileOutputStream fileOut = new FileOutputStream("./storage/UserIdMap.ser");
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(userIdMap);
+            out.close();
+            fileOut.close();
+            System.out.printf("Serialized data of user ID Mapping is saved in ./storage/UserIdMap.ser");
+         } catch (IOException i) {
+            i.printStackTrace();
+         }
+    }
+    
+    private void getUserIdMap() {
+        try {
+           FileInputStream fileIn = new FileInputStream("./storage/UserIdMap.ser");
+           ObjectInputStream in = new ObjectInputStream(fileIn);
+           userIdMap = (Map<PublicKey, Integer>) in.readObject();
+           in.close();
+           fileIn.close();
+        } catch (ClassNotFoundException c) {
+           System.out.println("Map<PublicKey, Integer> class not found");
+           c.printStackTrace();
+           return;
+        }
+        catch(FileNotFoundException e){
+            userIdMap = new HashMap<PublicKey, Integer>();
+            saveUserIdMap();
 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     
     private void read(Request request, ObjectOutputStream outStream) {
         if(request.getPublicKey().getEncoded().length != 294){
             send(new Response(false, -3), outStream);  //InvalidPublicKey
         }
+        else if(!userIdMap.containsKey(request.getPublicKey())){
+            send(new Response(false, -1), outStream);  //UserNotRegistered
+        }
         else if(request.getNumber() < 0){
-            send(new Response(false, -11), outStream);  //InvalidAnnouncementsNumber
+            send(new Response(false, -6), outStream);  //InvalidPostsNumber
         }
-        else if(request.getNumber() > )
+        else if(request.getNumber() > checkPostsNumber(request.getPublicKey())){
+            send(new Response(false, -10), outStream);  //TooMuchAnnouncements
 
+        }
 
-
-    	// FALTA FAZER VERIFICACOES DE EXCEPTIONS.... 
-        // TIPO QUANDO SE PEDEM MAIS ANNOUNCEMENTS DO QUE OS QUE EXISTEM E ASSIM
         System.out.println("READ method");
-        // Get key from request to open respective file
-        String key = Base64.getEncoder().encodeToString(request.getPublicKey().getEncoded());
-        // Check if user is registered
-        if(userIdMap.containsKey(key)) {
-        	int userId = userIdMap.get(key);
-        	String path = "./storage/AnnouncementBoards/" + userId + "/";
-            File file = new File(path);
-            int n_announcements = file.list().length;
-            JSONParser parser = new JSONParser();
-            try{
-                JSONArray annoucementsList = new JSONArray();
-                JSONObject announcement;
-                for (int i=0; i<request.getNumber(); i++) {
-                    announcement = (JSONObject) parser.parse(new FileReader(path + Integer.toString(n_announcements)));
-                    n_announcements--;
-                    annoucementsList.add(announcement);
-                }
-                JSONObject announcementsToSend =  new JSONObject();
-                announcementsToSend.put("announcementList", annoucementsList);
-                // AQUI FALTA ENVIAR O OBJETO announcementsToSend NA RESPOSTA
-                send(new Response(true), outStream);
-            } catch(Exception e){
-                e.printStackTrace();
-                send(new Response(false, -8), outStream);
+        int userId = userIdMap.get(request.getPublicKey());
+        int n_announcements = checkPostsNumber(request.getPublicKey());
+        String path = "./storage/AnnouncementsBoard/" + userId + "/";
+
+        JSONParser parser = new JSONParser();
+        try{
+            JSONArray annoucementsList = new JSONArray();
+            JSONObject announcement;
+
+            for (int i=0; i<request.getNumber(); i++) {
+                announcement = (JSONObject) parser.parse(new FileReader(path + Integer.toString(n_announcements)));
+                n_announcements--;
+                annoucementsList.add(announcement);
             }
-        }
-        else {
-            send(new Response(false, -1), outStream);
+            JSONObject announcementsToSend =  new JSONObject();
+            announcementsToSend.put("announcementList", annoucementsList);
+            // AQUI FALTA ENVIAR O OBJETO announcementsToSend NA RESPOSTA
+            send(new Response(true, announcementsToSend), outStream);
+        } catch(Exception e){
+            e.printStackTrace();
+            send(new Response(false, -8), outStream);
         }
     }
+
 
     private void readGeneral(){
 
@@ -237,26 +277,23 @@ public class Server implements Runnable{
             send(new Response(false, -3), outStream);  //InvalidPublicKey
         }
         else{
-        	// Get key from request to open respective file
-            String key = Base64.getEncoder().encodeToString(request.getPublicKey().getEncoded());
-            // Check if user is registered
-            if(userIdMap.containsKey(key)) {
+            if(userIdMap.containsKey(request.getPublicKey())) {
             	String path;
             	File file;
-            	// Check wether post is general or not, to get the proper file location
+            	// Check whether post is general or not, to get the proper file location
                 if(general){
                     path = "./storage/GeneralBoard";
                     file = new File(path);
                 }
                 else {
-                    int userId = userIdMap.get(key);
+                    int userId = userIdMap.get(request.getPublicKey());
                     path = "./storage/AnnouncementBoards/" + userId;
                     file = new File(path);
                 }
                 // Write to file
                 int totalAnnouncements = file.list().length;
                 JSONObject announcementObject =  new JSONObject();
-                announcementObject.put("user", key);
+                announcementObject.put("user", request.getPublicKey());
                 announcementObject.put("message", request.getMessage());
                 saveFile(path + "/" + Integer.toString(totalAnnouncements), announcementObject.toJSONString());
                 send(new Response(true), outStream);
@@ -272,11 +309,16 @@ public class Server implements Runnable{
         System.out.println("Delete operation");
 
         userIdMap.clear();
+        saveUserIdMap();
+
         String path = "./storage/AnnouncementBoards";
+
         FileUtils.deleteDirectory(new File(path));
         File files = new File(path);
         files.mkdirs();
+
         path = "./storage/GeneralBoard";
+
         FileUtils.deleteDirectory(new File(path));
         files = new File(path);
         files.mkdirs();
