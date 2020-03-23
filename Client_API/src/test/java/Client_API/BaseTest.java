@@ -6,10 +6,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.cert.CertificateException;
 
 import Exceptions.*;
@@ -44,12 +41,8 @@ public class BaseTest {
 	}
 
 	@AfterClass
-	public static void cleanUp() throws UnknownHostException, IOException {
-        Socket socket = new Socket("localhost", 9000);
-        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-        outputStream.writeObject(new Request("DELETEALL", null));
-        outputStream.close();
-        socket.close();
+	public static void cleanUp(){
+        deleteUsers();
 	}
 
 	public static void initiate(){
@@ -82,6 +75,38 @@ public class BaseTest {
             e.printStackTrace();
         }
 
+    }
+
+    public static PublicKey generateSmallerKey(){
+        KeyPairGenerator keyGen = null;
+        try {
+            keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
+            SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
+            keyGen.initialize(1024, random);
+            KeyPair pair = keyGen.generateKeyPair();
+            PublicKey publicKey = pair.getPublic();
+            return publicKey;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public static void deleteUsers(){
+        Socket socket = null;
+        try {
+            socket = new Socket("localhost", 9000);
+            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+            outputStream.writeObject(new Request("DELETEALL", null));
+            outputStream.close();
+            socket.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 	
 }

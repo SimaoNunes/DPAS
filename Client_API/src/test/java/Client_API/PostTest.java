@@ -44,14 +44,9 @@ public class PostTest extends BaseTest {
 
 	@Test(expected = InvalidPublicKeyException.class)
 	public void Should_Fail_When_KeyIsInvalid() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
-		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
 
-		SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
-		keyGen.initialize(1024, random);
-		KeyPair pair = keyGen.generateKeyPair();
-		PublicKey publicKey = pair.getPublic();
 
-		clientAPI.post(publicKey, "This is going to fail", null);
+		clientAPI.post(generateSmallerKey(), "This is going to fail", null);
 
 	}
 

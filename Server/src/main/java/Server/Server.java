@@ -138,7 +138,7 @@ public class Server implements Runnable{
 
     public void register(Request request, ObjectOutputStream outStream) {
         System.out.println("REGISTER Method. Registering user: " + request.getName());
-        if(request.getPublicKey().getEncoded().length != 294){
+        if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
             send(new Response(false, -3), outStream);  //InvalidPublicKey
         }
         else if (!checkKey(request.getPublicKey())) {
@@ -222,7 +222,7 @@ public class Server implements Runnable{
     }
     
     private void read(Request request, ObjectOutputStream outStream) {
-        if(request.getPublicKey().getEncoded().length != 294){
+        if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
             send(new Response(false, -3), outStream);  //InvalidPublicKey
         }
         else if(!userIdMap.containsKey(request.getPublicKey())){
@@ -273,7 +273,7 @@ public class Server implements Runnable{
             send(new Response(false, -4), outStream);  //MessageTooBigException
         }
         // Checks if key has proper length
-        else if(request.getPublicKey().getEncoded().length != 294){
+        else if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
             send(new Response(false, -3), outStream);  //InvalidPublicKey
         }
         else{
