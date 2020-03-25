@@ -7,7 +7,11 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.junit.*;
 
 import Client_API.ClientAPI;
@@ -34,7 +38,6 @@ public class BaseTest {
 		// Instantiate class to be tested, in this case the API that will communicate with the Server
 		clientAPI = new ClientAPI();
         initiate();
-		populate();
 
 	}
 
@@ -60,16 +63,6 @@ public class BaseTest {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-	public static void populate(){
-        try {
-            clientAPI.register(publicKey1, "user1");
-            clientAPI.post(publicKey1, "This is a test message for user3 to read", null);
-        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -105,6 +98,25 @@ public class BaseTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public String[] getMessagesFromJSON(JSONObject json){
+
+        JSONArray array = (JSONArray) json.get("announcementList");
+        String[] result = new String[array.size()];
+
+        int i = 0;
+
+        for (Object object : array) {
+            JSONObject obj = (JSONObject) object;
+
+            String msg = (String) obj.get("message");
+
+            result[i++] = msg;
+
+        }
+        return result;
+
     }
 	
 }

@@ -73,10 +73,10 @@ public class Server implements Runnable{
                         post(request, true, outStream);
                         break;
                     case "READ":
-                        read(request, outStream);
+                        read(request, false, outStream);
                         break;
                     case "READGENERAL":
-                        readGeneral();
+                        read(request, true, outStream);
                         break;
                     case "DELETEALL":
                         deleteUsers();
@@ -101,6 +101,7 @@ public class Server implements Runnable{
         System.out.println("REGISTER Method. Registering user: " + request.getName());
         if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
             send(new Response(false, -3), outStream);  //InvalidPublicKey
+            return;
         }
         else if (!checkKey(request.getPublicKey())) {
             send(new Response(false, -7), outStream); //key not in server keystore
@@ -124,7 +125,8 @@ public class Server implements Runnable{
 
         }
     }
-
+    // se for general, guarda no general e no do user
+    // se nao, guarda so no do user
     private void post(Request request, Boolean general, ObjectOutputStream outStream) throws IOException{
         System.out.println("POST method");
         // Check if message length exceeds 255 characters
@@ -135,75 +137,92 @@ public class Server implements Runnable{
         else if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
             send(new Response(false, -3), outStream);  //InvalidPublicKey
         }
+        else if(!userIdMap.containsKey(request.getPublicKey())){
+            send(new Response(false, -1), outStream);
+
+        }
         else{
-            if(userIdMap.containsKey(request.getPublicKey())) {
-            	String path;
-            	File file;
-            	// Check whether post is general or not, to get the proper file location
-                if(general){
-                    path = "./storage/GeneralBoard";
-                    file = new File(path);
-                }
-                else {
-                    int userId = userIdMap.get(request.getPublicKey());
-                    path = "./storage/AnnouncementBoards/" + userId;
-                    file = new File(path);
-                }
-                // Write to file
-                int totalAnnouncements = file.list().length;
-                JSONObject announcementObject =  new JSONObject();
-                announcementObject.put("user", request.getPublicKey());
-                announcementObject.put("message", request.getMessage());
-                saveFile(path + "/" + Integer.toString(totalAnnouncements), announcementObject.toJSONString());
-                send(new Response(true), outStream);
-            } else {
-            	// This user is not registered
-                send(new Response(false, -1), outStream);
+            int userId = userIdMap.get(request.getPublicKey());
+            String path = "./storage/AnnouncementBoards/" + userId;
+            File file;
+
+            file = new File(path);
+
+            // Write to file
+            int totalAnnouncements = file.list().length;
+            JSONObject announcementObject =  new JSONObject();
+            announcementObject.put("user", userId);
+            announcementObject.put("message", request.getMessage());
+            saveFile(path + "/" + Integer.toString(totalAnnouncements), announcementObject.toJSONString()); //announcementBoards
+            if(general){
+                path = "./storage/GeneralBoard/";
+                file = new File(path);
+                totalAnnouncements = file.list().length; // number of general announcs != number of private announcs
+                saveFile(path + Integer.toString(totalAnnouncements), announcementObject.toJSONString()); //announcementBoards
             }
+            send(new Response(true), outStream);
         }
     }
     
-    private void read(Request request, ObjectOutputStream outStream) {
-        if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
+    private void read(Request request, boolean isGeneral, ObjectOutputStream outStream) {
+        if (!isGeneral && (request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294)) {
             send(new Response(false, -3), outStream);  //InvalidPublicKey
-        }
-        else if(!userIdMap.containsKey(request.getPublicKey())){
+
+        } else if (!isGeneral &&(!userIdMap.containsKey(request.getPublicKey()))) {
             send(new Response(false, -1), outStream);  //UserNotRegistered
-        }
-        else if(request.getNumber() < 0){
+
+        } else if (request.getNumber() < 0) {
             send(new Response(false, -6), outStream);  //InvalidPostsNumber
-        }
-        else if(request.getNumber() > checkPostsNumber(request.getPublicKey())){
+
+        } else if (request.getNumber() > checkPostsNumber(request.getPublicKey())) { //se for general o checkPostsNumber ve o nr no general
             send(new Response(false, -10), outStream);  //TooMuchAnnouncements
 
         }
 
-        System.out.println("READ method");
-        int userId = userIdMap.get(request.getPublicKey());
-        int n_announcements = checkPostsNumber(request.getPublicKey());
-        String path = "./storage/AnnouncementsBoard/" + userId + "/";
-
-        JSONParser parser = new JSONParser();
-        try{
-            JSONArray annoucementsList = new JSONArray();
-            JSONObject announcement;
-
-            for (int i=0; i<request.getNumber(); i++) {
-                announcement = (JSONObject) parser.parse(new FileReader(path + Integer.toString(n_announcements)));
-                n_announcements--;
-                annoucementsList.add(announcement);
+        else{
+            String path = "./storage/";
+            if(!isGeneral){
+                System.out.println("READ method");
+                int userId = userIdMap.get(request.getPublicKey());
+                path += "AnnouncementBoards/" + userId + "/";
             }
-            JSONObject announcementsToSend =  new JSONObject();
-            announcementsToSend.put("announcementList", annoucementsList);
-            // AQUI FALTA ENVIAR O OBJETO announcementsToSend NA RESPOSTA
-            send(new Response(true, announcementsToSend), outStream);
-        } catch(Exception e){
-            e.printStackTrace();
-            send(new Response(false, -8), outStream);
-        }
-    }
+            else{
+                System.out.println("READGENERAL method");
+                path += "GeneralBoard/";
 
-    private void readGeneral(){
+            }
+            int total;
+
+            int n_announcements = checkPostsNumber(request.getPublicKey()); //again se for null ve no general
+
+            if(request.getNumber() == 0) { //all posts
+                total = n_announcements;
+            }
+            else{
+                total = request.getNumber();
+            }
+
+            n_announcements--; //os announcements começam em 0 !!!!!!!!!!
+
+            System.out.println(n_announcements);
+            JSONParser parser = new JSONParser();
+            try{
+                JSONArray annoucementsList = new JSONArray();
+                JSONObject announcement;
+
+                for (int i=0; i<total; i++) {
+                    announcement = (JSONObject) parser.parse(new FileReader(path + Integer.toString(n_announcements)));
+                    n_announcements--;
+                    annoucementsList.add(announcement);
+                }
+                JSONObject announcementsToSend =  new JSONObject();
+                announcementsToSend.put("announcementList", annoucementsList);
+                send(new Response(true, announcementsToSend), outStream);
+            } catch(Exception e){
+                e.printStackTrace();
+                send(new Response(false, -8), outStream);
+            }
+        }
 
     }
     
@@ -213,19 +232,20 @@ public class Server implements Runnable{
 //    									//
 //////////////////////////////////////////   
     
-    public int checkPostsNumber(PublicKey key){
+    private int checkPostsNumber(PublicKey key){
         String path = "./storage/";
         if(key == null){
-            path += "GeneralBoard";
+            path += "GeneralBoard/";
         }
         else{
-            path += "AnnouncementBoard/" + userIdMap.get(key);
+            path += "AnnouncementBoards/" + userIdMap.get(key) + "/";
         }
+
         File file = new File(path);
         return file.list().length;
     }
 
-    public boolean checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
+    private boolean checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
 
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
@@ -260,7 +280,7 @@ public class Server implements Runnable{
         return false;
     }
 
-    public void send(Response response, ObjectOutputStream outputStream){
+    private void send(Response response, ObjectOutputStream outputStream){
         try {
             outputStream.writeObject(response);
         } catch (IOException e) {

@@ -2,10 +2,7 @@ package Client_API;
 
 import static org.junit.Assert.assertEquals;
 
-import Exceptions.InvalidAnnouncementException;
-import Exceptions.InvalidPublicKeyException;
-import Exceptions.MessageTooBigException;
-import Exceptions.UserNotRegisteredException;
+import Exceptions.*;
 import org.junit.*;
 
 import java.security.*;
@@ -16,23 +13,28 @@ import java.security.*;
 //                                                                //
 ////////////////////////////////////////////////////////////////////
 
-/////////////////////////////////////////////////////////
-//													   //
-//     Only 1 user is already registered (user1)       //
-//												       //
-/////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+//													              //
+//     Only 2 users are going to be registered (1 and 2)          //
+//												                  //
+////////////////////////////////////////////////////////////////////
 
 public class PostTest extends BaseTest {
+
+	@BeforeClass
+	public static void populate() throws AlreadyRegisteredException,
+			UnknownPublicKeyException, InvalidPublicKeyException {
+		clientAPI.register(publicKey1, "user1");
+		clientAPI.register(publicKey2, "user2");
+	}
 	
 	@Test
 	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
 		assertEquals(1, clientAPI.post(publicKey1, "user1 test message", null));
+		assertEquals(1, clientAPI.post(publicKey2, "user2 test message", null));
+
 	}
 
-	/*@Test
-	public void Should_Succeed_When_AnnouncsIsValidArray() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
-		
-	}*/
 
 	@Test(expected = MessageTooBigException.class)
 	public void Should_Fail_When_MessageIsTooBig() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
@@ -52,7 +54,8 @@ public class PostTest extends BaseTest {
 
 	@Test(expected = UserNotRegisteredException.class)
 	public void Should_Fail_When_UserIsNotRegistered() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
-		clientAPI.post(publicKey2, "I am not a registered user", null);
+		clientAPI.post(publicKey3, "I am not a registered user", null);
 	}
+
 	
 }
