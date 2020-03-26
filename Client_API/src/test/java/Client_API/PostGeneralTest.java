@@ -13,6 +13,12 @@ import Exceptions.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+////////////////////////////////////////////////////////////////////
+//																  //
+//   WARNING: Server must be running in order to run these tests  //
+//																  //
+////////////////////////////////////////////////////////////////////
+
 public class PostGeneralTest extends BaseTest {
 
 	@BeforeClass

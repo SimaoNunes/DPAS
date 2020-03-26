@@ -17,12 +17,6 @@ import static org.junit.Assert.assertEquals;
 //                                                                //
 ////////////////////////////////////////////////////////////////////
 
-/////////////////////////////////////////////////////////
-//                                                     //
-//     Only 1 user is already registered (user1)       //
-//                                                     //
-/////////////////////////////////////////////////////////
-
 public class RegisterTest extends BaseTest {
 	
 	@Test

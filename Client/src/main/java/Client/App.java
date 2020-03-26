@@ -73,7 +73,7 @@ public class App {
     	}
     	System.out.println("\n=======================  End  =======================");
     }
-
+    
 	private static Boolean registerUser() throws KeyStoreException {
     	// Ask user if he is registered or not
     	Boolean goodInput = false;
@@ -104,7 +104,50 @@ public class App {
 	}
 
 	private static void runApp() {
-		System.out.println("\nGOING TO RUN APP");
+		Boolean run = true;
+		String userInput;
+		while(run) {
+			System.out.print("\nPlease choose the number of what you want to perform and press enter:\n"
+							+ "1) Post an Announcement\n"
+							+ "2) Read Announcements\n"
+							+ "0) Quit\n"
+							+ ">> ");
+
+			userInput = scanner.nextLine();
+			
+			switch(userInput) {
+				case "1":
+					post();
+					break;
+				case "2":
+					read();
+					break;
+				case "0":
+					System.out.print("\nSure you want to quit? (Y = Yes, N = No)\n>> ");
+					userInput = scanner.nextLine();
+					switch(userInput) {
+						case "y":
+						case "Y":
+						case "yes":
+						case "Yes":
+						case "YES":
+							run = false;
+							break;
+						default:
+					}				
+					break;
+				default:
+					System.out.println("\nInvalid instruction!");
+			}
+		}
+	}
+
+	private static void read() {
+		System.out.println("\nGOING TO READ");
+	}
+
+	private static void post() {
+		System.out.println("\nGOING TO POST");
 	} 
 	
 }

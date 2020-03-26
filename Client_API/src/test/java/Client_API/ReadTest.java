@@ -11,6 +11,12 @@ import org.junit.Test;
 import java.security.KeyStoreException;
 import java.security.PublicKey;
 
+////////////////////////////////////////////////////////////////////
+//																  //
+//   WARNING: Server must be running in order to run these tests  //
+//																  //
+////////////////////////////////////////////////////////////////////
+
 public class ReadTest extends BaseTest{
 
 
