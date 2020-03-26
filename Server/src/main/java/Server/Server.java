@@ -251,8 +251,6 @@ public class Server implements Runnable{
     }
 
     private boolean checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
-        System.out.println("A que se esta a registar");
-        System.out.println(publicKey.toString());
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
         try {
@@ -264,11 +262,9 @@ public class Server implements Runnable{
             for (; aliases.hasMoreElements(); ) {
 
                 String alias = (String) aliases.nextElement();
-                System.out.println(alias);
 
                 if (ks.isCertificateEntry(alias)) {
                     PublicKey key = ks.getCertificate(alias).getPublicKey();
-                    System.out.println(key.toString());
                     if (key.equals(publicKey)) {
                         return true;
                     }
