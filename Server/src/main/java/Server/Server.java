@@ -442,7 +442,7 @@ public class Server implements Runnable{
            fileIn.close();
         }
         catch(FileNotFoundException e){
-            setTotalAnnouncements(0);
+            TotalAnnouncements = new AtomicInteger(0);
             saveTotalAnnouncements();
         } catch (IOException e) {
             e.printStackTrace();
