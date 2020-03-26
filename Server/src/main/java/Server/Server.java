@@ -24,10 +24,12 @@ public class Server implements Runnable{
 
     private ServerSocket server = null;
     private Map<PublicKey, Integer> userIdMap = null;
+    private int TotalAnnouncements;
 
     protected Server(ServerSocket ss){
 
-    	getUserIdMap();
+        getUserIdMap();
+        getTotalAnnouncements();
         server = ss;
         newListener();
     }
@@ -144,27 +146,26 @@ public class Server implements Runnable{
         else{
             int userId = userIdMap.get(request.getPublicKey());
             String path = "./storage/AnnouncementBoards/" + userId;
-            File file;
-
-            file = new File(path);
 
             // Write to file
-            int totalAnnouncements = file.list().length;
             JSONObject announcementObject =  new JSONObject();
             announcementObject.put("user", userId);
             announcementObject.put("message", request.getMessage());
-            saveFile(path + "/" + Integer.toString(totalAnnouncements), announcementObject.toJSONString()); //announcementBoards
+            saveFile(path + "/" + Integer.toString(TotalAnnouncements), announcementObject.toJSONString()); //announcementBoards
+            
             if(general){
                 path = "./storage/GeneralBoard/";
-                file = new File(path);
-                totalAnnouncements = file.list().length; // number of general announcs != number of private announcs
-                saveFile(path + Integer.toString(totalAnnouncements), announcementObject.toJSONString()); //announcementBoards
+                saveFile(path + Integer.toString(TotalAnnouncements), announcementObject.toJSONString()); //announcementBoards
             }
+
+            updateTotalAnnouncements(TotalAnnouncements + 1);
+
             send(new Response(true), outStream);
         }
     }
     
-    private void read(Request request, boolean isGeneral, ObjectOutputStream outStream) {
+    private void read(Request request, boolean isGeneral, ObjectOutputStream outStream) {        
+
         if (!isGeneral && (request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294)) {
             send(new Response(false, -3), outStream);  //InvalidPublicKey
 
@@ -174,9 +175,15 @@ public class Server implements Runnable{
         } else if (request.getNumber() < 0) {
             send(new Response(false, -6), outStream);  //InvalidPostsNumber
 
-        } else if (request.getNumber() > checkPostsNumber(request.getPublicKey())) { //se for general o checkPostsNumber ve o nr no general
-            send(new Response(false, -10), outStream);  //TooMuchAnnouncements
+        }
+        
+        // get list with file names in the specific directory
+        String[] directoryList = getDirectoryList(request.getPublicKey());
+        int directorySize = directoryList.length;
 
+
+        if (request.getNumber() > directorySize) { //se for general o getDirectoryList ve o nr no general
+            send(new Response(false, -10), outStream);  //TooMuchAnnouncements
         }
 
         else{
@@ -191,28 +198,25 @@ public class Server implements Runnable{
                 path += "GeneralBoard/";
 
             }
-            int total;
 
-            int n_announcements = checkPostsNumber(request.getPublicKey()); //again se for null ve no general
-
+            int total;            
             if(request.getNumber() == 0) { //all posts
-                total = n_announcements;
+                total = directorySize;
             }
             else{
                 total = request.getNumber();
             }
 
-            n_announcements--; //os announcements começam em 0 !!!!!!!!!!
-
-            System.out.println(n_announcements);
             JSONParser parser = new JSONParser();
             try{
                 JSONArray annoucementsList = new JSONArray();
                 JSONObject announcement;
 
+                String fileToRead;
                 for (int i=0; i<total; i++) {
-                    announcement = (JSONObject) parser.parse(new FileReader(path + Integer.toString(n_announcements)));
-                    n_announcements--;
+                    fileToRead = directoryList[directorySize-1]; // -1 because arrays starts in 0
+                    announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
+                    directorySize--;
                     annoucementsList.add(announcement);
                 }
                 JSONObject announcementsToSend =  new JSONObject();
@@ -223,7 +227,6 @@ public class Server implements Runnable{
                 send(new Response(false, -8), outStream);
             }
         }
-
     }
     
 //////////////////////////////////////////
@@ -232,7 +235,7 @@ public class Server implements Runnable{
 //    									//
 //////////////////////////////////////////   
     
-    private int checkPostsNumber(PublicKey key){
+    private String[] getDirectoryList(PublicKey key){
         String path = "./storage/";
         if(key == null){
             path += "GeneralBoard/";
@@ -242,7 +245,7 @@ public class Server implements Runnable{
         }
 
         File file = new File(path);
-        return file.list().length;
+        return file.list();
     }
 
     private boolean checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
@@ -346,7 +349,7 @@ public class Server implements Runnable{
             out.writeObject(userIdMap);
             out.close();
             fileOut.close();
-            System.out.printf("Serialized data of user ID Mapping is saved in ./storage/UserIdMap.ser");
+            System.out.println("Serialized data of user ID Mapping is saved in ./storage/UserIdMap.ser");
          } catch (IOException i) {
             i.printStackTrace();
          }
@@ -373,5 +376,43 @@ public class Server implements Runnable{
         }
     }
 
+/////////////////////////////////////////////////////////
+//										               //
+// Methods to get/update total announcements from File //
+//										               //
+/////////////////////////////////////////////////////////
 
+    private void updateTotalAnnouncements(int updatedNumber) {
+        TotalAnnouncements = updatedNumber;
+        try {
+            File file = new File("./storage/TotalAnnouncements.ser"); 
+            file.delete();
+            FileOutputStream fileOut = new FileOutputStream("./storage/TotalAnnouncements.ser");
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeInt(updatedNumber);
+            out.close();
+            fileOut.close();
+            System.out.println("Total Number of announcements updated in ./storage/TotalAnnouncements.ser");
+        } catch (IOException i) {
+            i.printStackTrace();
+        }
+    }
+
+    private void getTotalAnnouncements() {
+        try {
+           FileInputStream fileIn = new FileInputStream("./storage/TotalAnnouncements.ser");
+           ObjectInputStream in = new ObjectInputStream(fileIn);
+           TotalAnnouncements = in.readInt();
+           in.close();
+           fileIn.close();
+        }
+        catch(FileNotFoundException e){
+            TotalAnnouncements = 0;
+            updateTotalAnnouncements(0);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.printf("Total announcements->");
+        System.out.println(TotalAnnouncements);
+    }
 }
