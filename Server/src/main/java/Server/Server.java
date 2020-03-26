@@ -20,6 +20,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Arrays;
 
 public class Server implements Runnable{
 
@@ -207,7 +208,7 @@ public class Server implements Runnable{
             else{
                 total = request.getNumber();
             }
-
+            Arrays.sort(directoryList);
             JSONParser parser = new JSONParser();
             try{
                 JSONArray annoucementsList = new JSONArray();
@@ -408,7 +409,7 @@ public class Server implements Runnable{
         try {
             FileOutputStream fileOut = new FileOutputStream("./storage/TotalAnnouncements.ser");
             ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeObject(TotalAnnouncements);
+            out.writeObject(TotalAnnouncements.get());
             out.close();
             fileOut.close();
             System.out.println("Serialized data of the total number of announcements is saved in ./storage/TotalAnnouncements.ser");
@@ -438,7 +439,9 @@ public class Server implements Runnable{
         try {
            FileInputStream fileIn = new FileInputStream("./storage/TotalAnnouncements.ser");
            ObjectInputStream in = new ObjectInputStream(fileIn);
-           setTotalAnnouncements(in.readInt());
+           int a = (int) in.readObject();
+           System.out.println(a);
+           TotalAnnouncements = new AtomicInteger(a);
            in.close();
            fileIn.close();
         }
@@ -446,6 +449,8 @@ public class Server implements Runnable{
             setTotalAnnouncements(0);
             saveTotalAnnouncements();
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.printf("Total announcements-> " + TotalAnnouncements);
