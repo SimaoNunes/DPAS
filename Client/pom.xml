@@ -27,13 +27,6 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.1</version>
-          <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>true</addClasspath>
-            </manifest>
-          </archive>
-        </configuration>
         </plugin>
         <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -93,10 +86,16 @@
       <version>4.11</version>
       <scope>test</scope>
     </dependency>
+      <dependency>
+          <groupId>SEC</groupId>
+          <artifactId>Client_API</artifactId>
+          <version>1.0.0-SNAPSHOT</version>
+      </dependency>
     <dependency>
-    	<groupId>SEC</groupId>
-    	<artifactId>Client_API</artifactId>
-    	<version>1.0.0-SNAPSHOT</version>
+      <groupId>SEC</groupId>
+      <artifactId>Client_API</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 </project>

@@ -106,7 +106,7 @@ public class Server implements Runnable{
             return;
         }
         else if (!checkKey(request.getPublicKey())) {
-            send(new Response(false, -7), outStream); //key not in server keystore
+            send(new Response(true), outStream); //key not in server keystore -7
             return;
         }
         synchronized (userIdMap) {
@@ -249,7 +249,8 @@ public class Server implements Runnable{
     }
 
     private boolean checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
-
+        System.out.println("A que se esta a registar");
+        System.out.println(publicKey.toString());
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
         try {
@@ -261,9 +262,11 @@ public class Server implements Runnable{
             for (; aliases.hasMoreElements(); ) {
 
                 String alias = (String) aliases.nextElement();
+                System.out.println(alias);
 
-                if (ks.isKeyEntry(alias)) {
+                if (ks.isCertificateEntry(alias)) {
                     PublicKey key = ks.getCertificate(alias).getPublicKey();
+                    System.out.println(key.toString());
                     if (key.equals(publicKey)) {
                         return true;
                     }
@@ -334,6 +337,8 @@ public class Server implements Runnable{
         FileUtils.deleteDirectory(new File(path));
         files = new File(path);
         files.mkdirs();
+
+        path = "./storage/";
     }
     
 /////////////////////////////////////////////
@@ -341,6 +346,10 @@ public class Server implements Runnable{
 // Methods to save/get userIdMap from File //
 //										   //
 /////////////////////////////////////////////
+
+    private void saveTotalAnnouncements(){
+        
+    }
     
     private void saveUserIdMap() {
         try {

@@ -1,5 +1,7 @@
 package Client;
 
+import Client_API.ClientAPI;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -11,7 +13,7 @@ import java.util.Scanner;
 public class App {
 	
 	// Client_API
-	//private static Client_API clientAPI;
+	private static ClientAPI clientAPI;
 	// Scanner to get user input
 	private static Scanner scanner;
 	// Keystore with the client keyPair and Server publicKey (FIXME the keystore has all users keyPairs)
