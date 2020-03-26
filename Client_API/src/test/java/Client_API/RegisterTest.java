@@ -6,8 +6,6 @@ import org.junit.Test;
 
 import Exceptions.AlreadyRegisteredException;
 
-import java.io.FileInputStream;
-import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.PublicKey;
 
@@ -40,22 +38,22 @@ public class RegisterTest extends BaseTest {
 	}
 
 	@Test(expected = UnknownPublicKeyException.class)
-	public void Should_Fail_When_Server_DoesntHave_PubKey() throws KeyStoreException, AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
-		PublicKey badPub = keyStore.getCertificate("userERROR").getPublicKey();
-		clientAPI.register(badPub, "userERROR");
+	public void Should_Fail_When_ServerDoesntHavePubKey() throws KeyStoreException, AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
+		PublicKey badPub = keyStore.getCertificate("usererror").getPublicKey();
+		clientAPI.register(badPub, "usererror");
 
 	}
 	@Test(expected = InvalidPublicKeyException.class)
-	public void Should_Fail_When_PubKey_is_Null() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
+	public void Should_Fail_When_PubKeyIsNull() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
 		clientAPI.register(null, "userERROR");
 	}
 	@Test(expected = InvalidPublicKeyException.class)
-	public void Should_Fail_When_Key_Is_Smaller() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
+	public void Should_Fail_When_KeyIsSmaller() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
 		clientAPI.register(generateSmallerKey(), "error");
 	}
 
 	@Test
-	public void Should_Succeed_With_Triple_Registers() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
+	public void Should_Succeed_With_TripleRegisters() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
 		deleteUsers();
 		assertEquals(1, clientAPI.register(publicKey1, "user1"));
 		assertEquals(1, clientAPI.register(publicKey2, "user2"));

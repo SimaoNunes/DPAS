@@ -106,7 +106,7 @@ public class Server implements Runnable{
             return;
         }
         else if (!checkKey(request.getPublicKey())) {
-            send(new Response(true), outStream); //key not in server keystore -7
+            send(new Response(false, -7), outStream); //key not in server keystore -7
             return;
         }
         synchronized (userIdMap) {
