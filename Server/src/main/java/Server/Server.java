@@ -19,17 +19,18 @@ import java.security.cert.CertificateException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server implements Runnable{
 
     private ServerSocket server = null;
     private Map<PublicKey, Integer> userIdMap = null;
-    private int TotalAnnouncements;
+    private AtomicInteger TotalAnnouncements;
 
     protected Server(ServerSocket ss){
 
         getUserIdMap();
-        getTotalAnnouncements();
+        getTotalAnnouncementsFromFile();
         server = ss;
         newListener();
     }
@@ -151,14 +152,14 @@ public class Server implements Runnable{
             JSONObject announcementObject =  new JSONObject();
             announcementObject.put("user", userId);
             announcementObject.put("message", request.getMessage());
-            saveFile(path + "/" + Integer.toString(TotalAnnouncements), announcementObject.toJSONString()); //announcementBoards
+            saveFile(path + "/" + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //announcementBoards
             
             if(general){
                 path = "./storage/GeneralBoard/";
-                saveFile(path + Integer.toString(TotalAnnouncements), announcementObject.toJSONString()); //announcementBoards
+                saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //announcementBoards
             }
 
-            updateTotalAnnouncements(TotalAnnouncements + 1);
+            incrementTotalAnnouncs();
 
             send(new Response(true), outStream);
         }
@@ -339,6 +340,8 @@ public class Server implements Runnable{
         files.mkdirs();
 
         path = "./storage/";
+        setTotalAnnouncements(0);
+        saveTotalAnnouncements();
     }
     
 /////////////////////////////////////////////
@@ -347,9 +350,6 @@ public class Server implements Runnable{
 //										   //
 /////////////////////////////////////////////
 
-    private void saveTotalAnnouncements(){
-        
-    }
     
     private void saveUserIdMap() {
         try {
@@ -391,6 +391,33 @@ public class Server implements Runnable{
 //										               //
 /////////////////////////////////////////////////////////
 
+
+    private void incrementTotalAnnouncs(){
+        TotalAnnouncements.incrementAndGet();
+    }
+
+    private void setTotalAnnouncements(int value){
+        TotalAnnouncements.set(value);
+    }
+
+    private int getTotalAnnouncements(){
+        return TotalAnnouncements.get();
+    }
+
+    private void saveTotalAnnouncements(){
+        try {
+            FileOutputStream fileOut = new FileOutputStream("./storage/TotalAnnouncements.ser");
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(TotalAnnouncements);
+            out.close();
+            fileOut.close();
+            System.out.println("Serialized data of the total number of announcements is saved in ./storage/TotalAnnouncements.ser");
+        } catch (IOException i) {
+            i.printStackTrace();
+        }
+    }
+    /*
+
     private void updateTotalAnnouncements(int updatedNumber) {
         TotalAnnouncements = updatedNumber;
         try {
@@ -405,23 +432,22 @@ public class Server implements Runnable{
         } catch (IOException i) {
             i.printStackTrace();
         }
-    }
+    }*/
 
-    private void getTotalAnnouncements() {
+    private void getTotalAnnouncementsFromFile() {
         try {
            FileInputStream fileIn = new FileInputStream("./storage/TotalAnnouncements.ser");
            ObjectInputStream in = new ObjectInputStream(fileIn);
-           TotalAnnouncements = in.readInt();
+           setTotalAnnouncements(in.readInt());
            in.close();
            fileIn.close();
         }
         catch(FileNotFoundException e){
-            TotalAnnouncements = 0;
-            updateTotalAnnouncements(0);
+            setTotalAnnouncements(0);
+            saveTotalAnnouncements();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.printf("Total announcements->");
-        System.out.println(TotalAnnouncements);
+        System.out.printf("Total announcements-> " + TotalAnnouncements);
     }
 }
