@@ -34,7 +34,6 @@ public class ClientAPI {
         Socket socket = createSocket();
         createOutputStream(socket).writeObject(request);
 
-
         return (Response) createInputStream(socket).readObject();
 
     }
@@ -69,47 +68,53 @@ public class ClientAPI {
             if(error == -1){
                 throw new UserNotRegisteredException("User with this public key is not registered!");
             }
-
             else if(error == -3){
                 throw new InvalidPublicKeyException("Invalid public key!");
             }
-
             else if(error == -4){
                 throw new MessageTooBigException("Message cannot have more than 255 characters!");
             }
-
             else if(error == -5){
                 throw new InvalidAnnouncementException("Announcements referenced do not exist!");
             }
-
         }
 
     }
 
     public void checkRead(Response response) throws UserNotRegisteredException,
-            InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException, InvalidPostsNumberException, TooMuchAnnouncementsException {
+            InvalidPublicKeyException, InvalidPostsNumberException, TooMuchAnnouncementsException {
 
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -1){
                 throw new UserNotRegisteredException("User with this public key is not registered!");
             }
-
             else if(error == -3){
                 throw new InvalidPublicKeyException("Invalid public key!");
             }
-
             else if(error == -6){
                 throw new InvalidPostsNumberException("Invalid announcements number to be read!");
             }
-
             else if(error == -10){
                 throw new TooMuchAnnouncementsException("There are not that much announcements to be read!");
             }
-
         }
-
+        
     }
+    
+    public void checkReadGeneral(Response response) throws InvalidPostsNumberException, TooMuchAnnouncementsException {
+
+		if(!response.getSuccess()){
+		    int error = response.getErrorCode();
+		    if(error == -6){
+		        throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+		    }
+		    else if(error == -10){
+		        throw new TooMuchAnnouncementsException("There are not that much announcements to be read!");
+		    }
+		}
+		
+	}
 
     
  ///////////////////////
@@ -117,6 +122,10 @@ public class ClientAPI {
  //   API Functions   //
  //	  	     		  //
  ///////////////////////
+    
+	//////////////////////////////////////////////////
+	//				     REGISTER  					//
+	//////////////////////////////////////////////////
 
     public int register(PublicKey key, String name) throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
 
@@ -141,7 +150,7 @@ public class ClientAPI {
     }
 
     //////////////////////////////////////////////////
-    //////////////////// POST ////////////////////////
+    //					   POST  					//
     //////////////////////////////////////////////////
 
     public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral) throws InvalidAnnouncementException,
@@ -171,30 +180,23 @@ public class ClientAPI {
         return postAux(key, message, announcs, false);
     }
     
-    public int postGeneral(PublicKey key, String message, int[] announcs) throws UserNotRegisteredException,
-            InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException {
-
+    public int postGeneral(PublicKey key, String message, int[] announcs) throws  MessageTooBigException, UserNotRegisteredException,
+            InvalidPublicKeyException, InvalidAnnouncementException {
         return postAux(key, message, announcs, true);
     }
-    //////////////////////////////////////////////////
 
     //////////////////////////////////////////////////
-    //////////////////// READ ////////////////////////
+    //				      READ						//
     //////////////////////////////////////////////////
 
-    public JSONObject readAux(PublicKey key, int number, boolean isGeneral) throws UserNotRegisteredException,
-            InvalidAnnouncementException, InvalidPublicKeyException, MessageTooBigException, InvalidPostsNumberException, TooMuchAnnouncementsException {
-        Request request;
-        if(isGeneral){
-            request = new Request("READGENERAL", number);
-        }
-        else{
-            request = new Request("READ", key, number);
+    public JSONObject read(PublicKey key, int number) throws InvalidPostsNumberException, UserNotRegisteredException,
+    		InvalidPublicKeyException, TooMuchAnnouncementsException {
 
-        }
+    	Request request = new Request("READ", key, number);
+
         try {
             Response response = sendReceive(request);
-            checkRead(response);
+			checkRead(response);
             return response.getJsonObject();
 
         } catch (IOException e) {
@@ -205,16 +207,21 @@ public class ClientAPI {
         return null;
     }
 
-    public JSONObject read(PublicKey key, int number) throws InvalidAnnouncementException,
-            InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException, TooMuchAnnouncementsException {
+    public JSONObject readGeneral(int number) throws InvalidPostsNumberException, TooMuchAnnouncementsException {
+    	
+    	Request request = new Request("READGENERAL", number);
 
-        return readAux(key, number, false);
+        try {
+            Response response = sendReceive(request);
+			checkReadGeneral(response);
+            return response.getJsonObject();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
-
-    public JSONObject readGeneral(int number) throws InvalidAnnouncementException,
-            InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException, TooMuchAnnouncementsException {
-
-        return readAux(null, number, true);
-    }
-    //////////////////////////////////////////////////
+    
 }

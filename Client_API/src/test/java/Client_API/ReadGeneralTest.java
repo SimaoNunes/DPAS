@@ -3,13 +3,8 @@ package Client_API;
 import static org.junit.Assert.assertEquals;
 
 import Exceptions.*;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.security.KeyStoreException;
-import java.security.PublicKey;
 
 ////////////////////////////////////////////////////////////////////
 //																  //
@@ -45,24 +40,18 @@ public class ReadGeneralTest extends BaseTest{
     
     
     @Test(expected = InvalidPostsNumberException.class)
-	public void Should_Fail_When_Bad_Posts_Number() throws UserNotRegisteredException,
-			InvalidAnnouncementException, InvalidPublicKeyException, MessageTooBigException, InvalidPostsNumberException, TooMuchAnnouncementsException {
+	public void Should_Fail_When_Bad_Posts_Number() throws InvalidPostsNumberException, TooMuchAnnouncementsException {
 		clientAPI.readGeneral(-301);
     }
     
     @Test(expected = TooMuchAnnouncementsException.class)
-	public void Should_Fail_When_Asking_Alot_Of_Posts() throws UserNotRegisteredException, InvalidAnnouncementException, InvalidPublicKeyException, MessageTooBigException, InvalidPostsNumberException, TooMuchAnnouncementsException {
+	public void Should_Fail_When_Asking_Alot_Of_Posts() throws InvalidPostsNumberException, TooMuchAnnouncementsException {
 		// There are only 4 posts
 		clientAPI.readGeneral(685);
 	}
 
     @Test
-	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidAnnouncementException, InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException, TooMuchAnnouncementsException {
-
-        // get most recent private post from user 1 -> should succeed even though the user didn't refer any other announcements when posting
-        String[] private_result = getMessagesFromJSON(clientAPI.read(publicKey1, 1));
-        assertEquals("private post2 from user1", private_result[0]);
-        
+	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidPostsNumberException, TooMuchAnnouncementsException {
         // get most recent general post -> should succeed even though the user didn't refer any other announcements when posting
         String[] general_result = getMessagesFromJSON(clientAPI.readGeneral(1));
         assertEquals("public post2 from user2", general_result[0]);
@@ -70,8 +59,7 @@ public class ReadGeneralTest extends BaseTest{
     
     
 	@Test
-	public void Should_Succeed_When_Asking_For_All() throws InvalidAnnouncementException,
-			UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException, TooMuchAnnouncementsException, InvalidPostsNumberException {
+	public void Should_Succeed_When_Asking_For_All() throws InvalidPostsNumberException, TooMuchAnnouncementsException {
         
         String[] general_result = getMessagesFromJSON(clientAPI.readGeneral(0));
 

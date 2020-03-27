@@ -4,8 +4,10 @@ import Client_API.ClientAPI;
 
 import Exceptions.AlreadyRegisteredException;
 import Exceptions.InvalidAnnouncementException;
+import Exceptions.InvalidPostsNumberException;
 import Exceptions.InvalidPublicKeyException;
 import Exceptions.MessageTooBigException;
+import Exceptions.TooMuchAnnouncementsException;
 import Exceptions.UnknownPublicKeyException;
 import Exceptions.UserNotRegisteredException;
 
@@ -27,8 +29,14 @@ public class App {
 	private static KeyStore keyStore;
 	// User public Key
 	private static PublicKey myPublicKey;
+	// Username
+	private static String userName;
 	
-    public static void main(String[] args) { 
+    public static void main(String[] args) {
+    	// Check if arguments are being wrongly used
+    	if(args.length > 1) {
+    		System.out.println("\nWrong way of running app. Either give a single argument with the user name or don't provide arguments and register a new user");
+    	}
     	System.out.println("\n=================  DPAS Application =================");
     	// Initialize necessary objects
     	clientAPI = new ClientAPI();
@@ -40,50 +48,35 @@ public class App {
 		} catch (NoSuchAlgorithmException | CertificateException | IOException | KeyStoreException e) {
 			e.printStackTrace();
 		}
-    	// Ask user if he is registered or not
-    	Boolean goodInput = false;
-    	String userInput;
-    	while(!goodInput) {
-			System.out.print("\nAre you a registered user? (Y = Yes, N = No)\n>> ");
-			userInput = scanner.nextLine();
-			switch(userInput) {
-				case "y":
-				case "Y":
-				case "yes":
-				case "Yes":
-				case "YES":
-					goodInput = true;
+    	// Check if user name is provided. Otherwise register a new user
+    	if(args.length == 1) {
+    		@SuppressWarnings("unused")
+			String userName = args[0]; //FIXME not sanitizing user input. User can give any username
+    		try {
+				runApp();
+			} catch (KeyStoreException e) {
+				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
+			}
+    	}
+    	else {
+			try {
+				if(registerUser()) {
 					runApp();
-					break;
-				case "n":
-				case "N":
-				case "no":
-				case "No":
-				case "NO":
-					goodInput = true;
-					try {
-						if(registerUser()) {
-							runApp();
-						}
-					} catch (KeyStoreException e) {
-						System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
-					}
-					break;
-				default:
-					System.out.println("\nYou should answer \"Yes/No\" only!");
-					break;
+				}
+			} catch (KeyStoreException e) {
+				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
 			}
     	}
     	System.out.println("\n=======================  End  =======================");
     }
     
 	private static Boolean registerUser() throws KeyStoreException {
+		System.out.println("\nPlease register yourself in the DPAS.");
     	// Ask user if he is registered or not
     	Boolean goodInput = false;
     	String inputUserName = null;
     	while(!goodInput) {
     		// Get publicKey from keystore based on user name (alias)
-			System.out.print("\nWhat's your username\n>> ");
 			inputUserName = scanner.nextLine();							//FIXME Not sanitizing user input
 			if(keyStore.containsAlias(inputUserName)) {
 				myPublicKey = keyStore.getCertificate(inputUserName).getPublicKey();
@@ -102,11 +95,20 @@ public class App {
 			System.out.println("\nThere seems to be a problem with your authentication. Make sure you have the app properly installed with your CC public key.");
 			return false;
 		}
+    	userName = inputUserName;
     	System.out.println("\nHi " + inputUserName + "! You're now registered on DPAS!");
     	return true;
 	}
 
-	private static void runApp() {
+	private static void runApp() throws KeyStoreException {
+		// Check if username is in keystore. If so, get respective public key
+		if(keyStore.containsAlias(userName)) {
+			myPublicKey = keyStore.getCertificate(userName).getPublicKey();
+		} else {
+			System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
+			return;
+		}
+		// Run App
 		Boolean run = true;
 		String userInput;
 		while(run) {
@@ -170,6 +172,34 @@ public class App {
 			}
 		}
 	}
+	
+	private static void read() {
+		Boolean run = true;
+		String userInput;
+		while(run) {
+			System.out.print("\nWhere do you want to read from?\n"
+							+ "1) An User's specific Announcement Board\n"
+							+ "2) General Board\n"
+							+ "0) Back\n"
+							+ ">> ");
+			userInput = scanner.nextLine();
+			switch(userInput) {
+				case "1":
+					readMethod(false);
+					run = false;
+					break;
+				case "2":
+					readMethod(true);
+					run = false;
+					break;
+				case "0":
+					run = false;				
+					break;
+				default:
+					System.out.println("\nInvalid instruction!");
+			}
+		}
+	}
 
 	private static void postMethod(Boolean isGeneral) {
 		Boolean goodInput = false;
@@ -188,31 +218,64 @@ public class App {
 			try {
 				clientAPI.postGeneral(myPublicKey, message, null);
 			} catch (UserNotRegisteredException e) {
-				System.out.println("\nThere was an error: user is not registered in DPAS System.");
+				System.out.println("\nERROR: User is not registered in DPAS System.");
 			} catch (InvalidPublicKeyException e) {
-				System.out.println("\nThere was an error: make sure you have the app properly installed with your CC public key.");
+				System.out.println("\nERROR: Make sure you have the app properly installed with your CC public key.");
 			} catch (MessageTooBigException e) {
-				System.out.println("\nThere was an error: Message size exceeds 255 characters.");
+				System.out.println("\nERROR: Message size exceeds 255 characters.");
 			} catch (InvalidAnnouncementException e) {
-				System.out.println("\nThere was an error: invalid announcement reference.");
+				System.out.println("\nERROR: Invalid announcement reference.");
 			}
 		} else {
 			try {
 				clientAPI.post(myPublicKey, message, null);
 			} catch (UserNotRegisteredException e) {
-				System.out.println("\nThere was an error: user is not registered in DPAS System.");
+				System.out.println("\nERROR: User is not registered in DPAS System.");
 			} catch (InvalidPublicKeyException e) {
-				System.out.println("\nThere was an error: make sure you have the app properly installed with your CC public key.");
+				System.out.println("\nERROR: Make sure you have the app properly installed with your CC public key.");
 			} catch (MessageTooBigException e) {
-				System.out.println("\nThere was an error: Message size exceeds 255 characters.");
+				System.out.println("\nERROR: Message size exceeds 255 characters.");
 			} catch (InvalidAnnouncementException e) {
-				System.out.println("\nThere was an error: invalid announcement reference.");
+				System.out.println("\nERROR: Invalid announcement reference.");
 			}
 		}
 	}
-
-	private static void read() {
-		System.out.println("\nGOING TO READ");
+	
+	private static void readMethod(boolean isGeneral) {
+		Boolean goodInput = false;
+		String numberOfPosts = null;
+		while(!goodInput) {
+			System.out.print("\nHow many announcements do you want to read?:\n>> ");
+			numberOfPosts = scanner.nextLine();
+			if(!numberOfPosts.matches("^[0-9]+$")) { 
+				System.out.println("\nPlease insert a valid number");
+			}
+			else {
+				goodInput = true;
+			}
+		}
+		if(isGeneral) {
+			try {
+				clientAPI.readGeneral(Integer.parseInt(numberOfPosts));
+			} catch (InvalidPostsNumberException e) {
+				System.out.println("\nERROR: You've inserted and invalid number");
+			} catch (TooMuchAnnouncementsException e) {
+				System.out.println("\nERROR: The number of announcements you've asked for exceeds the number of announcements existing in such board");
+			}
+		} else {
+			System.out.println("Cant read from announcement board yet.");
+			/*try {
+				clientAPI.post(myPublicKey, numberOfPosts, null);
+			} catch (UserNotRegisteredException e) {
+				System.out.println("\nERROR: user is not registered in DPAS System.");
+			} catch (InvalidPublicKeyException e) {
+				System.out.println("\nERROR: make sure you have the app properly installed with your CC public key.");
+			} catch (MessageTooBigException e) {
+				System.out.println("\nERROR: Message size exceeds 255 characters.");
+			} catch (InvalidAnnouncementException e) {
+				System.out.println("\nERROR: invalid announcement reference.");
+			}*/
+		}
 	}
 	
 }
