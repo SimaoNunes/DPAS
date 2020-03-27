@@ -1,5 +1,5 @@
 # Dependable Public Announcement Server
-High Dependable Systems Project: DPAS
+High Dependable Systems Project: DPAS.
 This is Java API that wants to solve the problems concerned with the emergence of fake news and the need for trusted sources of information. We want to make sure that relevant public information and facts can be posted, tracked and verified.
 	The main specifications are:
 - Every user of this system has his/her own Announcement Board where only he/she can post announcements.
@@ -10,7 +10,7 @@ This is Java API that wants to solve the problems concerned with the emergence o
 
 ## ClientAPI
 This is a Java API. All the methods return either Java primitive type objects or JSONs.
-There are 5 functions you can use:
+There are 5 methods you can use:
 ```bash
 register(PublicKey publicKey, String name)
 post(PublicKey key, String message, int[] announcs)
