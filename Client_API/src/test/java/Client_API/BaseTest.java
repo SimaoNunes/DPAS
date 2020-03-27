@@ -116,5 +116,20 @@ public class BaseTest {
         return result;
 
     }
+
+    public static void shutDown(){
+        Socket socket = null;
+        try {
+            socket = new Socket("localhost", 9000);
+            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+            outputStream.writeObject(new Request("SHUTDOWN", null));
+            outputStream.close();
+            socket.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 	
 }

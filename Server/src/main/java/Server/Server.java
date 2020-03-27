@@ -8,10 +8,12 @@ import org.apache.commons.io.FileUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import sun.java2d.loops.ProcessPath;
 
 import java.io.FileReader;
 
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
@@ -84,6 +86,9 @@ public class Server implements Runnable{
                         break;
                     case "DELETEALL":
                         deleteUsers();
+                        break;
+                    case "SHUTDOWN":
+                        shutDown();
                         break;
                 }
                 socket.close();
@@ -311,11 +316,11 @@ public class Server implements Runnable{
         (new Thread(this)).start();
     }
     
-/////////////////////////////////////////////
-//   									   //
-//  Method used to delete Tests' populate  //
-//										   //
-/////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//   									                                      //
+//  Method used to delete Tests' populate && Shut down Server && Start server //
+//										                                      //
+////////////////////////////////////////////////////////////////////////////////
 
     public void deleteUsers() throws IOException {
 
@@ -340,6 +345,19 @@ public class Server implements Runnable{
         setTotalAnnouncements(0);
         saveTotalAnnouncements();
     }
+
+    private void shutDown(){
+        System.out.println("Shut down operation");
+        String name = ManagementFactory.getRuntimeMXBean().getName();
+        System.out.println(name.split("@")[0]);
+
+        try {
+            Runtime.getRuntime().exec("kill -SIGINT " + name.split("@")[0]);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     
 /////////////////////////////////////////////
 //										   //
