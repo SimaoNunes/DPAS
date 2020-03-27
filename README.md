@@ -13,17 +13,9 @@ This is a Java API. All the methods return either Java primitive type objects or
 There are 5 functions you can use:
 ```bash
 register(PublicKey publicKey, String name)
-```
-```bash
 post(PublicKey key, String message, int[] announcs)
-```
-```bash
 postGeneral(PublicKey key, String message, int[] announcs)
-```
-```bash
 read(PublicKey key, int number)
-```
-```bash
 readGeneral(int number)
 ```
 
