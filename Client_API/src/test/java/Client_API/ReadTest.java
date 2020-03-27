@@ -80,7 +80,6 @@ public class ReadTest extends BaseTest{
 
 	@Test
 	public void Should_Succeed_When_AskingForAll() throws InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, TooMuchAnnouncementsException {
-		System.out.println("\n\n\n\nAQUI\n\n\n\n"+clientAPI.read(publicKey1, 0));
 		String[] result1 = getMessagesFromJSON(clientAPI.read(publicKey1, 0));
 		String[] result2 = getMessagesFromJSON(clientAPI.read(publicKey2, 0));
 

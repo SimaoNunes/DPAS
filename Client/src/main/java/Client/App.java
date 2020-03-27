@@ -20,6 +20,8 @@ import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.util.Scanner;
 
+import org.json.simple.JSONObject;
+
 public class App {
 	// Client_API
 	private static ClientAPI clientAPI;
@@ -33,11 +35,11 @@ public class App {
 	private static String userName;
 	
     public static void main(String[] args) {
-    	// Check if arguments are being wrongly used
+    	// Check if arguments are being wrongly used (should only receive username, or no arguments at all)
     	if(args.length > 1) {
     		System.out.println("\nWrong way of running app. Either give a single argument with the user name or don't provide arguments and register a new user");
     	}
-    	System.out.println("\n=================  DPAS Application =================");
+    	System.out.println("\n======================  DPAS Application ======================");
     	// Initialize necessary objects
     	clientAPI = new ClientAPI();
     	scanner = new Scanner(System.in);
@@ -67,7 +69,7 @@ public class App {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
 			}
     	}
-    	System.out.println("\n=======================  End  =======================");
+    	System.out.println("\n============================  End  ============================");
     }
     
 	private static Boolean registerUser() throws KeyStoreException {
@@ -77,6 +79,7 @@ public class App {
     	String inputUserName = null;
     	while(!goodInput) {
     		// Get publicKey from keystore based on user name (alias)
+    		System.out.print("\nInsert a username\n>> ");
 			inputUserName = scanner.nextLine();							//FIXME Not sanitizing user input
 			if(keyStore.containsAlias(inputUserName)) {
 				myPublicKey = keyStore.getCertificate(inputUserName).getPublicKey();
@@ -214,6 +217,7 @@ public class App {
 				goodInput = true;
 			}
 		}
+		// Post announcement
 		if(isGeneral) {
 			try {
 				clientAPI.postGeneral(myPublicKey, message, null);
@@ -245,7 +249,7 @@ public class App {
 		Boolean goodInput = false;
 		String numberOfPosts = null;
 		while(!goodInput) {
-			System.out.print("\nHow many announcements do you want to read?:\n>> ");
+			System.out.print("\nHow many announcements do you want to read?\n>> ");
 			numberOfPosts = scanner.nextLine();
 			if(!numberOfPosts.matches("^[0-9]+$")) { 
 				System.out.println("\nPlease insert a valid number");
@@ -254,14 +258,19 @@ public class App {
 				goodInput = true;
 			}
 		}
+		// Get JSONObject with announcements from the API
+		JSONObject jsonAnnouncs = null;
 		if(isGeneral) {
 			try {
-				clientAPI.readGeneral(Integer.parseInt(numberOfPosts));
+				jsonAnnouncs = clientAPI.readGeneral(Integer.parseInt(numberOfPosts));
 			} catch (InvalidPostsNumberException e) {
 				System.out.println("\nERROR: You've inserted and invalid number");
+				return;
 			} catch (TooMuchAnnouncementsException e) {
 				System.out.println("\nERROR: The number of announcements you've asked for exceeds the number of announcements existing in such board");
+				return;
 			}
+			printAnnouncements(jsonAnnouncs);
 		} else {
 			System.out.println("Cant read from announcement board yet.");
 			/*try {
@@ -276,6 +285,10 @@ public class App {
 				System.out.println("\nERROR: invalid announcement reference.");
 			}*/
 		}
+	}
+
+	private static void printAnnouncements(JSONObject jsonAnnouncs) {
+		
 	}
 	
 }

@@ -12,11 +12,11 @@ This is Java API that wants to solve the problems concerned with the emergence o
 This is a Java API. All the methods return either Java primitive type objects or JSONs.
 There are 5 methods you can use:
 ```bash
-register(PublicKey publicKey, String name)
-post(PublicKey key, String message, int[] announcs)
-postGeneral(PublicKey key, String message, int[] announcs)
-read(PublicKey key, int number)
-readGeneral(int number)
+register(PublicKey publicKey, String name) : returns int
+post(PublicKey key, String message, int[] announcs) : returns int
+postGeneral(PublicKey key, String message, int[] announcs) : returns int
+read(PublicKey key, int number) : returns JSONObject
+readGeneral(int number) : returns JSONObject
 ```
 
 ## Setup
