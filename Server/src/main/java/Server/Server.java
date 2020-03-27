@@ -168,6 +168,7 @@ public class Server implements Runnable{
             }
 
             incrementTotalAnnouncs();
+            saveTotalAnnouncements();
 
             send(new Response(true), outStream);
         }
