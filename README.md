@@ -59,3 +59,12 @@ Error Code                     Exception
 -9                             ErrorWrittingFile
 -10                            TooMuchAnnouncements
 ```
+
+# Client App
+
+We also developed an example of an application that uses the DPAS ClientAPI. You can find it in the Client module. Hope it helps to better understand how it works!
+
+# Contributors
+- Simão Nunes
+- Miguel Grilo
+- Miguel Francisco
