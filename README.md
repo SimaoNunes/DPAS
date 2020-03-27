@@ -8,7 +8,7 @@ This is Java API that wants to solve the problems concerned with the emergence o
 - Users can read all the announcements of other users and obtain their cronological order
 - When posting announcements, users can refer to previous announcements posted by them or other users.
 
-## ClientAPI
+# ClientAPI
 This is a Java API. All the methods return either Java primitive type objects or JSONs.
 There are 5 methods you can use:
 ```bash
@@ -60,11 +60,11 @@ Error Code                     Exception
 -10                            TooMuchAnnouncements
 ```
 
-# Client App
+## Client App
 
 We also developed an example of an application that uses the DPAS ClientAPI. You can find it in the Client module. Hope it helps to better understand how it works!
 
-# Contributors
+## Contributors
 - Simão Nunes
 - Miguel Grilo
 - Miguel Francisco
