@@ -20,6 +20,7 @@ import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.util.Scanner;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 public class App {
@@ -288,7 +289,17 @@ public class App {
 	}
 
 	private static void printAnnouncements(JSONObject jsonAnnouncs) {
-		
+        JSONArray array = (JSONArray) jsonAnnouncs.get("announcementList");
+
+        for (Object object : array) {
+            JSONObject obj = (JSONObject) object;
+
+            String msg = (String) obj.get("message");
+            String announcId = (String) obj.get("id");
+
+            System.out.println("Announcement with ID: " + announcId);
+            System.out.println("Message: " + msg + "\n");
+        }
 	}
 	
 }
