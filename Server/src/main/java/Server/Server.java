@@ -136,7 +136,7 @@ public class Server implements Runnable{
     }
     // se for general, guarda no general e no do user
     // se nao, guarda so no do user
-    private void post(Request request, Boolean general, ObjectOutputStream outStream) throws IOException{
+    private void post(Request request, Boolean general, ObjectOutputStream outStream){
         System.out.println("POST method");
         // Check if message length exceeds 255 characters
         if(request.getMessage().length() > 255){
@@ -152,7 +152,7 @@ public class Server implements Runnable{
         }
         else{
             int userId = userIdMap.get(request.getPublicKey());
-            String path = "./storage/AnnouncementBoards/" + userId;
+            String path = "./storage/AnnouncementBoards/" + userId + "/";
 
             // Write to file
             JSONObject announcementObject =  new JSONObject();
@@ -162,9 +162,12 @@ public class Server implements Runnable{
             
             if(general){
                 path = "./storage/GeneralBoard/";
-                saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //announcementBoards
-            } else {
-                saveFile(path + "/" + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //announcementBoards
+            }
+
+            try {
+                saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
+            } catch (IOException e) {
+                send(new Response(false, -9), outStream);
             }
 
             incrementTotalAnnouncs();
@@ -303,16 +306,19 @@ public class Server implements Runnable{
 
     private void saveFile(String completePath, String announcement) throws IOException {
         byte[] bytesToStore = announcement.getBytes();
-        try{
-            File file = new File(completePath);
-            FileOutputStream fos = new FileOutputStream(file);
+        File file = new File(completePath);
 
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(file);
             fos.write(bytesToStore);
             fos.close();
 
-        } catch (Exception e){
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
+
     }
     
     private void newListener() {
@@ -371,12 +377,19 @@ public class Server implements Runnable{
     
     private void saveUserIdMap() {
         try {
-            FileOutputStream fileOut = new FileOutputStream("./storage/UserIdMap.ser");
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            FileOutputStream fileCopy = new FileOutputStream("./storage/UserIdMap_copy.ser");
+            ObjectOutputStream out = new ObjectOutputStream(fileCopy);
             out.writeObject(userIdMap);
             out.close();
-            fileOut.close();
-            System.out.println("Serialized data of user ID Mapping is saved in ./storage/UserIdMap.ser");
+            fileCopy.close();
+            System.out.println("Created updated copy of the userIdMap");
+
+            File original = new File("./storage/UserIdMap.ser");
+            File copy = new File("./storage/UserIdMap_copy.ser");
+
+            if(original.delete()){
+                copy.renameTo(original);
+            }
          } catch (IOException i) {
             i.printStackTrace();
          }
@@ -424,12 +437,19 @@ public class Server implements Runnable{
 
     private void saveTotalAnnouncements(){
         try {
-            FileOutputStream fileOut = new FileOutputStream("./storage/TotalAnnouncements.ser");
+            FileOutputStream fileOut = new FileOutputStream("./storage/TotalAnnouncements_copy.ser");
             ObjectOutputStream out = new ObjectOutputStream(fileOut);
             out.writeObject(TotalAnnouncements.get());
             out.close();
             fileOut.close();
-            System.out.println("Serialized data of the total number of announcements is saved in ./storage/TotalAnnouncements.ser");
+            System.out.println("Serialized data saved in copy");
+
+            File original = new File("./storage/TotalAnnouncements.ser");
+            File copy = new File("./storage/TotalAnnouncements_copy.ser");
+
+            if(original.delete()){
+                copy.renameTo(original);
+            }
         } catch (IOException i) {
             i.printStackTrace();
         }
