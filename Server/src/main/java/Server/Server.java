@@ -158,11 +158,12 @@ public class Server implements Runnable{
             JSONObject announcementObject =  new JSONObject();
             announcementObject.put("user", userId);
             announcementObject.put("message", request.getMessage());
-            saveFile(path + "/" + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //announcementBoards
             
             if(general){
                 path = "./storage/GeneralBoard/";
                 saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //announcementBoards
+            } else {
+                saveFile(path + "/" + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //announcementBoards
             }
 
             incrementTotalAnnouncs();
