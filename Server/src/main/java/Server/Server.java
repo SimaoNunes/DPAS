@@ -189,57 +189,60 @@ public class Server implements Runnable{
             send(new Response(false, -6), outStream);  //InvalidPostsNumber
 
         }
-        
-        // get list with file names in the specific directory
-        String[] directoryList = getDirectoryList(request.getPublicKey());
-        int directorySize = directoryList.length;
-
-
-        if (request.getNumber() > directorySize) { //se for general o getDirectoryList ve o nr no general
-            send(new Response(false, -10), outStream);  //TooMuchAnnouncements
-        }
-
         else{
-            String path = "./storage/";
-            if(!isGeneral){
-                System.out.println("READ method");
-                int userId = userIdMap.get(request.getPublicKey());
-                path += "AnnouncementBoards/" + userId + "/";
+            // get list with file names in the specific directory
+            String[] directoryList = getDirectoryList(request.getPublicKey());
+            int directorySize = directoryList.length;
+
+
+            if (request.getNumber() > directorySize) { //se for general o getDirectoryList ve o nr no general
+                send(new Response(false, -10), outStream);  //TooMuchAnnouncements
             }
+
             else{
-                System.out.println("READGENERAL method");
-                path += "GeneralBoard/";
-
-            }
-
-            int total;            
-            if(request.getNumber() == 0) { //all posts
-                total = directorySize;
-            }
-            else{
-                total = request.getNumber();
-            }
-            Arrays.sort(directoryList);
-            JSONParser parser = new JSONParser();
-            try{
-                JSONArray annoucementsList = new JSONArray();
-                JSONObject announcement;
-
-                String fileToRead;
-                for (int i=0; i<total; i++) {
-                    fileToRead = directoryList[directorySize-1]; // -1 because arrays starts in 0
-                    announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
-                    directorySize--;
-                    annoucementsList.add(announcement);
+                String path = "./storage/";
+                if(!isGeneral){
+                    System.out.println("READ method");
+                    int userId = userIdMap.get(request.getPublicKey());
+                    path += "AnnouncementBoards/" + userId + "/";
                 }
-                JSONObject announcementsToSend =  new JSONObject();
-                announcementsToSend.put("announcementList", annoucementsList);
-                send(new Response(true, announcementsToSend), outStream);
-            } catch(Exception e){
-                e.printStackTrace();
-                send(new Response(false, -8), outStream);
+                else{
+                    System.out.println("READGENERAL method");
+                    path += "GeneralBoard/";
+
+                }
+
+                int total;
+                if(request.getNumber() == 0) { //all posts
+                    total = directorySize;
+                }
+                else{
+                    total = request.getNumber();
+                }
+                Arrays.sort(directoryList);
+                JSONParser parser = new JSONParser();
+                try{
+                    JSONArray annoucementsList = new JSONArray();
+                    JSONObject announcement;
+
+                    String fileToRead;
+                    for (int i=0; i<total; i++) {
+                        fileToRead = directoryList[directorySize-1]; // -1 because arrays starts in 0
+                        announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
+                        directorySize--;
+                        annoucementsList.add(announcement);
+                    }
+                    JSONObject announcementsToSend =  new JSONObject();
+                    announcementsToSend.put("announcementList", annoucementsList);
+                    send(new Response(true, announcementsToSend), outStream);
+                } catch(Exception e){
+                    e.printStackTrace();
+                    send(new Response(false, -8), outStream);
+                }
             }
+
         }
+
     }
     
 //////////////////////////////////////////
