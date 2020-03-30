@@ -557,23 +557,6 @@ public class Server implements Runnable{
             i.printStackTrace();
         }
     }
-    /*
-
-    private void updateTotalAnnouncements(int updatedNumber) {
-        TotalAnnouncements = updatedNumber;
-        try {
-            File file = new File("./storage/TotalAnnouncements.ser"); 
-            file.delete();
-            FileOutputStream fileOut = new FileOutputStream("./storage/TotalAnnouncements.ser");
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeInt(updatedNumber);
-            out.close();
-            fileOut.close();
-            System.out.println("Total Number of announcements updated in ./storage/TotalAnnouncements.ser");
-        } catch (IOException i) {
-            i.printStackTrace();
-        }
-    }*/
 
     private void getTotalAnnouncementsFromFile() {
         try {
