@@ -8,8 +8,13 @@ public class Response implements Serializable {
 
     private boolean success;
     private JSONObject jsonObject;
+    private byte[] nonce = null;
 
     private int errorCode;
+
+    public Response(byte[] nonce){
+        this.nonce = nonce;
+    }
 
     public Response(boolean success, int errorCode){
 
@@ -50,4 +55,11 @@ public class Response implements Serializable {
         this.errorCode = errorCode;
     }
 
+    public byte[] getNonce() {
+        return nonce;
+    }
+
+    public void setNonce(byte[] nonce) {
+        this.nonce = nonce;
+    }
 }

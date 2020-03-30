@@ -54,7 +54,7 @@ public class App {
     	// Check if user name is provided. Otherwise register a new user
     	if(args.length == 1) {
     		@SuppressWarnings("unused")
-			String userName = args[0]; //FIXME not sanitizing user input. User can give any username
+			String userName = args[0]; //FIXME not sanitizing user input. User can give any username (Miguel) but he will only have the password for his alias.
     		try {
 				runApp();
 			} catch (KeyStoreException e) {
