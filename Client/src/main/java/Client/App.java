@@ -154,7 +154,7 @@ public class App {
 	}
 
 	
-	
+
 	private static void post() {
 		Boolean run = true;
 		String userInput;
@@ -229,30 +229,20 @@ public class App {
 			}
 		}
 		// Post announcement
-		if(isGeneral) {
-			try {
+		try{
+			if(isGeneral){
 				clientAPI.postGeneral(myPublicKey, message, null);
-			} catch (UserNotRegisteredException e) {
-				System.out.println("\nERROR: User is not registered in DPAS System.");
-			} catch (InvalidPublicKeyException e) {
-				System.out.println("\nERROR: Make sure you have the app properly installed with your CC public key.");
-			} catch (MessageTooBigException e) {
-				System.out.println("\nERROR: Message size exceeds 255 characters.");
-			} catch (InvalidAnnouncementException e) {
-				System.out.println("\nERROR: Invalid announcement reference.");
-			}
-		} else {
-			try {
+			} else {
 				clientAPI.post(myPublicKey, message, null);
-			} catch (UserNotRegisteredException e) {
-				System.out.println("\nERROR: User is not registered in DPAS System.");
-			} catch (InvalidPublicKeyException e) {
-				System.out.println("\nERROR: Make sure you have the app properly installed with your CC public key.");
-			} catch (MessageTooBigException e) {
-				System.out.println("\nERROR: Message size exceeds 255 characters.");
-			} catch (InvalidAnnouncementException e) {
-				System.out.println("\nERROR: Invalid announcement reference.");
 			}
+		} catch (UserNotRegisteredException e) {
+			System.out.println("\nERROR: User is not registered in DPAS System.");
+		} catch (InvalidPublicKeyException e) {
+			System.out.println("\nERROR: Make sure you have the app properly installed with your CC public key.");
+		} catch (MessageTooBigException e) {
+			System.out.println("\nERROR: Message size exceeds 255 characters.");
+		} catch (InvalidAnnouncementException e) {
+			System.out.println("\nERROR: Invalid announcement reference.");
 		}
 	}
 	
