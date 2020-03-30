@@ -73,6 +73,8 @@ public class App {
     	System.out.println("\n============================  End  ============================");
     }
     
+    
+    
 	private static Boolean registerUser() throws KeyStoreException {
 		System.out.println("\nPlease register yourself in the DPAS.");
     	// Ask user if he is registered or not
@@ -104,6 +106,8 @@ public class App {
     	return true;
 	}
 
+	
+	
 	private static void runApp() throws KeyStoreException {
 		// Check if username is in keystore. If so, get respective public key
 		if(keyStore.containsAlias(userName)) {
@@ -149,6 +153,8 @@ public class App {
 		}
 	}
 
+	
+	
 	private static void post() {
 		Boolean run = true;
 		String userInput;
@@ -176,6 +182,8 @@ public class App {
 			}
 		}
 	}
+	
+	
 	
 	private static void read() {
 		Boolean run = true;
@@ -205,6 +213,8 @@ public class App {
 		}
 	}
 
+	
+	
 	private static void postMethod(Boolean isGeneral) {
 		Boolean goodInput = false;
 		String message = null;
@@ -245,6 +255,8 @@ public class App {
 			}
 		}
 	}
+	
+	
 	
 	private static void readMethod(boolean isGeneral) {
 		Boolean goodInput = false;
@@ -288,6 +300,8 @@ public class App {
 		}
 	}
 
+	
+	
 	private static void printAnnouncements(JSONObject jsonAnnouncs) {
         JSONArray array = (JSONArray) jsonAnnouncs.get("announcementList");
 
@@ -301,6 +315,7 @@ public class App {
             System.out.println("Message: " + msg + "\n");
         }
 	}
+	
 	
 }
 
