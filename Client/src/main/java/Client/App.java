@@ -28,12 +28,12 @@ public class App {
 	private static ClientAPI clientAPI;
 	// Scanner to get user input
 	private static Scanner scanner;
-	// Keystore with the client keyPair and Server publicKey (FIXME the keystore has all users keyPairs)
+	// Keystore with the client keyPair and Server publicKey
 	private static KeyStore keyStore;
 	// User public Key
 	private static PublicKey myPublicKey;
 	// Username
-	private static String userName;
+	// I wanted the user name global but not being able to do so so I'm passing it to the runApp method...
 	
     public static void main(String[] args) {
     	// Check if arguments are being wrongly used (should only receive username, or no arguments at all)
@@ -54,17 +54,18 @@ public class App {
     	// Check if user name is provided. Otherwise register a new user
     	if(args.length == 1) {
     		@SuppressWarnings("unused")
-			String userName = args[0]; //FIXME not sanitizing user input. User can give any username (Miguel) but he will only have the password for his alias.
+    		String userName = args[0]; //FIXME not sanitizing user input. User can give any username (Miguel) but he will only have the password for his alias.
     		try {
-				runApp();
+				runApp(userName);
 			} catch (KeyStoreException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
 			}
     	}
     	else {
 			try {
-				if(registerUser()) {
-					runApp();
+				String userName = registerUser();
+				if(!(userName == null)) {
+					runApp(userName);
 				}
 			} catch (KeyStoreException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
@@ -75,7 +76,7 @@ public class App {
     
     
     
-	private static Boolean registerUser() throws KeyStoreException {
+	private static String registerUser() {
 		System.out.println("\nPlease register yourself in the DPAS.");
     	// Ask user if he is registered or not
     	Boolean goodInput = false;
@@ -84,15 +85,19 @@ public class App {
     		// Get publicKey from keystore based on user name (alias)
     		System.out.print("\nInsert a username\n>> ");
 			inputUserName = scanner.nextLine();							//FIXME Not sanitizing user input
-			if(keyStore.containsAlias(inputUserName)) {
-				if(keyStore.entryInstanceOf(inputUserName, KeyStore.PrivateKeyEntry.class)) {
-				myPublicKey = keyStore.getCertificate(inputUserName).getPublicKey();
-				goodInput = true;
+			try {
+				if(keyStore.containsAlias(inputUserName)) {
+					if(keyStore.entryInstanceOf(inputUserName, KeyStore.PrivateKeyEntry.class)) {
+					myPublicKey = keyStore.getCertificate(inputUserName).getPublicKey();
+					goodInput = true;
+					} else {
+						System.out.println("\nYou're not the owner of this account!");
+					}
 				} else {
-					System.out.println("\nYou're not the owner of this account!");
+					System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
 				}
-			} else {
-				System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
+			} catch (KeyStoreException e) {
+				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
 			}
     	}
     	// Register user
@@ -100,19 +105,18 @@ public class App {
 			clientAPI.register(myPublicKey, inputUserName);
 		} catch (AlreadyRegisteredException e) {
 			System.out.println("\nUser with such username is already registered in DPAS!");
-			return false;
+			return null;
 		} catch (UnknownPublicKeyException | InvalidPublicKeyException e) {
 			System.out.println("\nThere seems to be a problem with your authentication. Make sure you have the app properly installed with your CC public key.");
-			return false;
+			return null;
 		}
-    	userName = inputUserName;
     	System.out.println("\nHi " + inputUserName + "! You're now registered on DPAS!");
-    	return true;
+    	return inputUserName;
 	}
 
 	
 	
-	private static void runApp() throws KeyStoreException {
+	private static void runApp(String userName) throws KeyStoreException {
 		// Check if username is in keystore. If so, get respective public key
 		if(keyStore.containsAlias(userName)) {
 			myPublicKey = keyStore.getCertificate(userName).getPublicKey();
@@ -123,6 +127,7 @@ public class App {
 		// Run App
 		Boolean run = true;
 		String userInput;
+		System.out.println("\nWelcome " + userName + "!");
 		while(run) {
 			System.out.print("\nPlease choose the number of what you want to perform and press enter:\n"
 							+ "1) Post an Announcement\n"
@@ -270,43 +275,72 @@ public class App {
 		if(isGeneral) {
 			try {
 				jsonAnnouncs = clientAPI.readGeneral(Integer.parseInt(numberOfPosts));
+				printAnnouncements(jsonAnnouncs, true);
 			} catch (InvalidPostsNumberException e) {
 				System.out.println("\nERROR: You've inserted and invalid number");
-				return;
 			} catch (TooMuchAnnouncementsException e) {
 				System.out.println("\nERROR: The number of announcements you've asked for exceeds the number of announcements existing in such board");
-				return;
 			}
-			printAnnouncements(jsonAnnouncs);
 		} else {
-			System.out.println("Cant read from announcement board yet.");
-			/*try {
-				clientAPI.post(myPublicKey, numberOfPosts, null);
+			System.out.println("\nWhich User's Announcement Board you want to read from?\n>> ");
+			String userName = scanner.nextLine();													//FIXME NOT SANITIZING USER INPUT
+			try {
+				if(keyStore.containsAlias(userName)) {
+					PublicKey  publicKey = keyStore.getCertificate(userName).getPublicKey();
+					jsonAnnouncs = clientAPI.read(publicKey, Integer.parseInt(numberOfPosts));
+					printAnnouncements(jsonAnnouncs, false);
+				} else {
+					System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
+				}
+			} catch (NumberFormatException e) {
+				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
+			} catch (InvalidPostsNumberException e) {
+				System.out.println("\nERROR: You've inserted and invalid number");
 			} catch (UserNotRegisteredException e) {
-				System.out.println("\nERROR: user is not registered in DPAS System.");
+				System.out.println("\nERROR: User is not registered in DPAS System.");
 			} catch (InvalidPublicKeyException e) {
-				System.out.println("\nERROR: make sure you have the app properly installed with your CC public key.");
-			} catch (MessageTooBigException e) {
-				System.out.println("\nERROR: Message size exceeds 255 characters.");
-			} catch (InvalidAnnouncementException e) {
-				System.out.println("\nERROR: invalid announcement reference.");
-			}*/
+				System.out.println("\nERROR: Make sure you have the app properly installed with your CC public key.");
+			} catch (TooMuchAnnouncementsException e) {
+				System.out.println("\nERROR: The number of announcements you've asked for exceeds the number of announcements existing in such board");
+			} catch (KeyStoreException e) {
+				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
+			}
 		}
 	}
 
 	
 	
-	private static void printAnnouncements(JSONObject jsonAnnouncs) {
+	private static void printAnnouncements(JSONObject jsonAnnouncs, Boolean isGeneral) {
+		// Get array of announcements in JSON format, iterate over them and print them
         JSONArray array = (JSONArray) jsonAnnouncs.get("announcementList");
+        int i = 0;
+        // ReadGeneral
+        if(isGeneral) {
+            for (Object object : array) {
+                JSONObject obj = (JSONObject) object;
 
-        for (Object object : array) {
-            JSONObject obj = (JSONObject) object;
+                String user = (String) obj.get("user");
+                String announcId = (String) obj.get("id");
+                String msg = (String) obj.get("message");
 
-            String msg = (String) obj.get("message");
-            String announcId = (String) obj.get("id");
+                System.out.println("\n" + i++ + ")");
+                System.out.println("Announcement From User: " + user);
+                System.out.println("Id: " + announcId);
+                System.out.println("Message: " + msg + "\n");
+            }
+        // Read
+        } else {
+        	System.out.println("\nAnnouncs From User: " + (String) array.get(0));
+            for (Object object : array) {
+                JSONObject obj = (JSONObject) object;
 
-            System.out.println("Announcement with ID: " + announcId);
-            System.out.println("Message: " + msg + "\n");
+                String msg = (String) obj.get("message");
+                String announcId = (String) obj.get("id");
+
+                System.out.println("\n" + i++ + ")");
+                System.out.println("Id: " + announcId);
+                System.out.println("Message: " + msg + "\n");
+            }	
         }
 	}
 	
