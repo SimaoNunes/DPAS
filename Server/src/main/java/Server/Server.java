@@ -162,7 +162,7 @@ public class Server implements Runnable{
 
             // Write to file
             JSONObject announcementObject =  new JSONObject();
-            announcementObject.put("id", getTotalAnnouncements());
+            announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
             announcementObject.put("user", userId);
             announcementObject.put("message", request.getMessage());
             
