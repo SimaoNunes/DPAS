@@ -152,9 +152,13 @@ public class Server implements Runnable{
         else if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
             send(new Response(false, -3), outStream);  //InvalidPublicKey
         }
+        // Checks if user is registered 
         else if(!userIdMap.containsKey(request.getPublicKey())){
-            send(new Response(false, -1), outStream);
-
+            send(new Response(false, -1), outStream);       //UserNotRegistered
+        }
+        // Checks if announcements refered by the user are valid 
+        else if(request.getAnnouncements() != null && !checkValidAnnouncements(request.getAnnouncements())){
+            send(new Response(false, -5), outStream);       //Invalid Announcements refered by the user
         }
         else{
             String username = userIdMap.get(request.getPublicKey());
@@ -165,6 +169,8 @@ public class Server implements Runnable{
             announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
             announcementObject.put("user", username);
             announcementObject.put("message", request.getMessage());
+            announcementObject.put("ref_announcements", (Object) request.getAnnouncements());
+
             
             if(general){
                 path = "./storage/GeneralBoard/";
@@ -347,7 +353,17 @@ public class Server implements Runnable{
 //										//
 //           Auxiliary Methods          //
 //    									//
-//////////////////////////////////////////   
+//////////////////////////////////////////
+
+    private Boolean checkValidAnnouncements(int[] announcs){
+        int total = getTotalAnnouncements();
+        for (int i = 0; i < total; i++) { 		      
+            if (announcs[i] >= total ) {
+                return false;
+            }		
+        } 	
+        return true;
+    }
     
     private String[] getDirectoryList(PublicKey key){
         String path = "./storage/";
