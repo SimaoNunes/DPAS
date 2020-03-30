@@ -34,7 +34,6 @@ Error Code                     Exception
 -8                             ErrorReadingFile
 -9                             ErrorWrittingFile
 -10                            TooMuchAnnouncements
-```
 
 ## Application Example
 
