@@ -83,7 +83,7 @@ public class App {
     	String inputUserName = null;
     	while(!goodInput) {
     		// Get publicKey from keystore based on user name (alias)
-    		System.out.print("\nInsert a username\n>> ");
+    		System.out.print("\nInsert a username:\n>> ");
 			inputUserName = scanner.nextLine();							//FIXME Not sanitizing user input
 			try {
 				if(keyStore.containsAlias(inputUserName)) {
@@ -326,11 +326,10 @@ public class App {
                 System.out.println("\n" + i++ + ")");
                 System.out.println("Announcement From User: " + user);
                 System.out.println("Id: " + announcId);
-                System.out.println("Message: " + msg + "\n");
+                System.out.println("Message: " + msg);
             }
         // Read
         } else {
-        	System.out.println("\nAnnouncs From User: " + (String) array.get(0));
             for (Object object : array) {
                 JSONObject obj = (JSONObject) object;
 
@@ -339,7 +338,7 @@ public class App {
 
                 System.out.println("\n" + i++ + ")");
                 System.out.println("Id: " + announcId);
-                System.out.println("Message: " + msg + "\n");
+                System.out.println("Message: " + msg);
             }	
         }
 	}

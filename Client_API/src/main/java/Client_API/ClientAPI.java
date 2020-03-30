@@ -188,7 +188,6 @@ public class ClientAPI {
 
     public int post(PublicKey key, String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException,
     		InvalidPublicKeyException, InvalidAnnouncementException {
-        System.out.println(generateNonce());
         return postAux(key, message, announcs, false);
     }
     
