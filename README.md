@@ -19,30 +19,6 @@ read(PublicKey key, int number) : returns JSONObject
 readGeneral(int number) : returns JSONObject
 ```
 
-## Setup
-
-```bash
-mvn archetype:generate -DgroupId=SEC -DartifactId=DPAS -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.4 -DinteractiveMode=false
-cd DPAS
-mvn package
-```
-
-## To Run
-```bash
-java -cp target/DPAS-1.0-SNAPSHOT.jar SEC.App
-```
-or
-```bash
-mvn compile
-mvn exec:java -DmainClass=SEC.App
-```
-or (if main class is defined at pom.xml)
-```bash
-mvn compile
-mvn exec:java 
-
-
-
 # Exceptions Guide
 
 Each error code sent by the server is translated into an exception client side.
@@ -68,3 +44,10 @@ We also developed an example of an application that uses the DPAS ClientAPI. You
 - Simão Nunes
 - Miguel Grilo
 - Miguel Francisco
+
+
+## note to remove later
+1) cliente manda mensagem ao server a dizer que quer uma nounce para um pedido x
+2) server diz ok e da uma nonce (random com 128bitts)
+3) o cliente recebe a nonce, e faz o seu Request com a nonce appended, e manda tambem uma cnonce (client nonce)
+4) o server recebe o pedido, verifica a nonce, faz o que é suposto e cria o objeto response, e responde ao cliente com o q ele quer mais a nova cnonce para haver freshness para os dois lados
