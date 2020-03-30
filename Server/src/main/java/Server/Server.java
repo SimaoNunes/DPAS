@@ -8,8 +8,11 @@ import org.apache.commons.io.FileUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import sun.java2d.loops.ProcessPath;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.FileReader;
 
 import java.io.*;
@@ -83,6 +86,9 @@ public class Server implements Runnable{
                         break;
                     case "READGENERAL":
                         read(request, true, outStream);
+                        break;
+                    case "NONCE":
+                        sendRandomNonce(outStream);
                         break;
                     case "DELETEALL":
                         deleteUsers();
@@ -244,6 +250,98 @@ public class Server implements Runnable{
         }
 
     }
+
+
+//////////////////////////////////////////
+//										//
+//           Crypto Methods             //
+//    									//
+//////////////////////////////////////////
+
+
+    public byte[] generateRandomNonce(){
+        SecureRandom random = new SecureRandom();
+        byte[] nonce = new byte[16];
+        random.nextBytes(nonce);
+        System.out.println(nonce);
+        return nonce;
+    }
+
+
+    public void sendRandomNonce(ObjectOutputStream outputStream){
+        send(new Response(generateRandomNonce()), outputStream);
+    }
+
+    public PrivateKey getPrivateKey(){
+        char[] passphrase = "changeit".toCharArray();
+        KeyStore ks = null;
+
+        KeyStore.PrivateKeyEntry entry = null;
+        try {
+            entry = (KeyStore.PrivateKeyEntry) ks.getEntry("server", null);
+            ks = KeyStore.getInstance("JKS");
+            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnrecoverableEntryException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return entry.getPrivateKey();
+
+    }
+
+    public byte[] cipher(byte[] bytes, PrivateKey key){
+        byte[] final_bytes = null;
+        try {
+            Cipher cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+            final_bytes = cipher.doFinal(bytes);
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+
+        return final_bytes;
+
+    }
+
+    public byte[] decipher(byte[] bytes, PublicKey key){
+        byte[] final_bytes = null;
+        Cipher cipher = null;
+        try {
+            cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.DECRYPT_MODE, key);
+            final_bytes = cipher.doFinal(bytes);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        return final_bytes;
+
+    }
     
 //////////////////////////////////////////
 //										//
@@ -393,6 +491,7 @@ public class Server implements Runnable{
             if(original.delete()){
                 copy.renameTo(original);
             }
+
          } catch (IOException i) {
             i.printStackTrace();
          }
@@ -453,6 +552,7 @@ public class Server implements Runnable{
             if(original.delete()){
                 copy.renameTo(original);
             }
+
         } catch (IOException i) {
             i.printStackTrace();
         }

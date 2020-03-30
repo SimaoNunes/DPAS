@@ -37,6 +37,17 @@ public class ClientAPI {
         return (Response) createInputStream(socket).readObject();
 
     }
+
+    private byte[] generateNonce(){
+        try {
+             return sendReceive(new Request("NONCE")).getNonce();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
     
     
  //////////////////////////////////////////////////////////////
@@ -177,6 +188,7 @@ public class ClientAPI {
 
     public int post(PublicKey key, String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException,
     		InvalidPublicKeyException, InvalidAnnouncementException {
+        System.out.println(generateNonce());
         return postAux(key, message, announcs, false);
     }
     

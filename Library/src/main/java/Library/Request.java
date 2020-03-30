@@ -6,6 +6,7 @@ import java.security.PublicKey;
 public class Request implements Serializable {
 	
     private String operation;
+    private byte[] nonce = null;
     private PublicKey publicKey = null;
     private String message = null;
     private int number = -1;
@@ -17,7 +18,11 @@ public class Request implements Serializable {
     //   Different constructors that allow different operations   //
     //	  	     		                                          //
     ////////////////////////////////////////////////////////////////
-    
+
+    public Request(String operation){
+        this.operation = operation;
+    }
+
     // Register or ??? Read ???
     public Request(String operation, PublicKey key, String name){
         this.publicKey = key;
@@ -100,4 +105,11 @@ public class Request implements Serializable {
         this.name = name;
     }
 
+    public byte[] getNonce() {
+        return nonce;
+    }
+
+    public void setNonce(byte[] nonce) {
+        this.nonce = nonce;
+    }
 }
