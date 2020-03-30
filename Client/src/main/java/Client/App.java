@@ -85,8 +85,12 @@ public class App {
     		System.out.print("\nInsert a username\n>> ");
 			inputUserName = scanner.nextLine();							//FIXME Not sanitizing user input
 			if(keyStore.containsAlias(inputUserName)) {
+				if(keyStore.entryInstanceOf(inputUserName, KeyStore.PrivateKeyEntry.class)) {
 				myPublicKey = keyStore.getCertificate(inputUserName).getPublicKey();
 				goodInput = true;
+				} else {
+					System.out.println("\nYou're not the owner of this account!");
+				}
 			} else {
 				System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
 			}
