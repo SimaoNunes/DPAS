@@ -157,13 +157,13 @@ public class Server implements Runnable{
 
         }
         else{
-            String userId = userIdMap.get(request.getPublicKey());
-            String path = "./storage/AnnouncementBoards/" + userId + "/";
+            String username = userIdMap.get(request.getPublicKey());
+            String path = "./storage/AnnouncementBoards/" + username + "/";
 
             // Write to file
             JSONObject announcementObject =  new JSONObject();
             announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
-            announcementObject.put("user", userId);
+            announcementObject.put("user", username);
             announcementObject.put("message", request.getMessage());
             
             if(general){
@@ -209,8 +209,8 @@ public class Server implements Runnable{
                 String path = "./storage/";
                 if(!isGeneral){
                     System.out.println("READ method");
-                    String userId = userIdMap.get(request.getPublicKey());
-                    path += "AnnouncementBoards/" + userId + "/";
+                    String username = userIdMap.get(request.getPublicKey());
+                    path += "AnnouncementBoards/" + username + "/";
                 }
                 else{
                     System.out.println("READGENERAL method");
