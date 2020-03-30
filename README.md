@@ -62,7 +62,7 @@ Error Code                     Exception
 
 ## Application Example
 
-We also developed an example of an application that uses the DPAS ClientAPI. You can find it in the Client module. Hope it helps to better understand how it works!
+We also developed an example of an application that uses the DPAS ClientAPI. You can find it in the Client module. Hope it helps to better understand how it works! (The application is currently "installed on user1 pc". This means that the app only knows user1 keypair. All the other keys are the public keys of the server and other users so, in order to try our app, you can only use it as user1).
 
 ## Contributors
 - Simão Nunes
