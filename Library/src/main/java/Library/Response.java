@@ -16,15 +16,17 @@ public class Response implements Serializable {
         this.nonce = nonce;
     }
 
-    public Response(boolean success, int errorCode){
+    public Response(boolean success, int errorCode, byte[] nonce){
 
         this.success = success;
         this.errorCode = errorCode;
+        this.nonce = nonce;
     }
 
-    public Response(boolean success, JSONObject object){
+    public Response(boolean success, JSONObject object, byte[] nonce){
         this.success = success;
         this.jsonObject = object;
+        this.nonce = nonce;
     }
 
     public JSONObject getJsonObject() {

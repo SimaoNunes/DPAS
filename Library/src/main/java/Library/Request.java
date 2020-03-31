@@ -6,7 +6,8 @@ import java.security.PublicKey;
 public class Request implements Serializable {
 	
     private String operation;
-    private byte[] nonce = null;
+    private byte[] nonceServer = null;   //server generated the nonce
+    private byte[] nonceClient = null;   //client generated the nonce
     private PublicKey publicKey = null;
     private String message = null;
     private int number = -1;
@@ -23,14 +24,26 @@ public class Request implements Serializable {
         this.operation = operation;
     }
 
-    // Register or ??? Read ???
-    public Request(String operation, PublicKey key, String name){
+
+    public Request(String operation, PublicKey key, String message,  int[] announcs, byte[] nonceServer, byte[] nonceClient){
+        this.operation = operation;
+        this.publicKey = key;
+        this.message = message;
+        this.announcements = announcs;
+        this.nonceServer = nonceServer;
+        this.nonceClient = nonceClient;
+    }
+
+    // Register
+    public Request(String operation, PublicKey key, String name, byte[] nonceServer, byte[] nonceClient){
         this.publicKey = key;
         this.operation = operation;
         this.name = name;
+        this.nonceServer = nonceServer;
+        this.nonceClient = nonceClient;
     }
     
-    // Register (DELETEALL)
+    // Register (DELETEALL) (ASK FOR NONCE)
     public Request(String operation, PublicKey key){
         this.publicKey = key;
         this.operation = operation;
@@ -45,10 +58,12 @@ public class Request implements Serializable {
     }
     
     // Read
-    public Request(String operation, PublicKey key, int number) {
+    public Request(String operation, PublicKey key, int number, byte[] nonceServer, byte[] nonceClient) {
         this.publicKey = key;
         this.number = number;
         this.operation = operation;
+        this.nonceServer = nonceServer;
+        this.nonceClient = nonceClient;
     }
     
     // Read
@@ -105,11 +120,19 @@ public class Request implements Serializable {
         this.name = name;
     }
 
-    public byte[] getNonce() {
-        return nonce;
+    public byte[] getNonceServer() {
+        return nonceServer;
     }
 
-    public void setNonce(byte[] nonce) {
-        this.nonce = nonce;
+    public void setNonceServer(byte[] nonceServer) {
+        this.nonceServer = nonceServer;
+    }
+
+    public byte[] getNonceClient() {
+        return nonceClient;
+    }
+
+    public void setNonceClient(byte[] nonceClient) {
+        this.nonceClient = nonceClient;
     }
 }

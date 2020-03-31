@@ -1,5 +1,6 @@
 package Server;
 
+import Library.Envelope;
 import Library.Request;
 import Library.Response;
 
@@ -21,16 +22,14 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.Arrays;
 
 public class Server implements Runnable{
 
     private ServerSocket server = null;
     private Map<PublicKey, Integer> userIdMap = null;
+    private HashMap<PublicKey, byte[]> nonces = null;
     private AtomicInteger TotalAnnouncements;
 
     protected Server(ServerSocket ss){
@@ -38,6 +37,7 @@ public class Server implements Runnable{
         getUserIdMap();
         getTotalAnnouncementsFromFile();
         server = ss;
+        nonces = new HashMap<>();
         newListener();
     }
     
@@ -67,28 +67,43 @@ public class Server implements Runnable{
             outStream = new ObjectOutputStream(socket.getOutputStream());
             try {
                 System.out.println("User connected.");
+                Envelope envelope = (Envelope) inStream.readObject();
+
+
+                //AQUI VERIFICA-SE SE O NONCE ESTA NA LISTA
+
+
+                if(checkHash(envelope)){         //INTEGRITY GUARANTEED
+
+
+                }
 
                 //aqui decifra-se
 
-                Request request = (Request) inStream.readObject();
-                switch(request.getOperation()) {
+                switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
-                        register(request, outStream);
+                        if(checkHash(envelope) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())){
+                            register(envelope.getRequest(), outStream);
+                        }
                         break;
                     case "POST":
-                        post(request, false, outStream);
+                        if (checkHash(envelope) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())) {
+                            post(envelope.getRequest(), false, outStream);
+                        }
                         break;
                     case "POSTGENERAL":
-                        post(request, true, outStream);
+                        if(checkHash(envelope) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())){
+                            post(envelope.getRequest(), true, outStream);
+                        }
                         break;
                     case "READ":
-                        read(request, false, outStream);
+                        read(envelope.getRequest(), false, outStream);
                         break;
                     case "READGENERAL":
-                        read(request, true, outStream);
+                        read(envelope.getRequest(), true, outStream);
                         break;
                     case "NONCE":
-                        sendRandomNonce(outStream);
+                        sendRandomNonce(envelope.getRequest().getPublicKey(), outStream);
                         break;
                     case "DELETEALL":
                         deleteUsers();
@@ -115,16 +130,16 @@ public class Server implements Runnable{
     public void register(Request request, ObjectOutputStream outStream) {
         System.out.println("REGISTER Method. Registering user: " + request.getName());
         if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
-            send(new Response(false, -3), outStream);  //InvalidPublicKey
+            send(new Response(false, -3, request.getNonceClient()), outStream);  //InvalidPublicKey
             return;
         }
         else if (!checkKey(request.getPublicKey())) {
-            send(new Response(false, -7), outStream); //key not in server keystore -7
+            send(new Response(false, -7, request.getNonceClient()), outStream); //key not in server keystore -7
             return;
         }
         synchronized (userIdMap) {
             if (userIdMap.containsKey(request.getPublicKey())) {
-                send(new Response(false, -2), outStream);
+                send(new Response(false, -2, request.getNonceClient()), outStream);
             }
             // Register new user
             else {
@@ -146,14 +161,14 @@ public class Server implements Runnable{
         System.out.println("POST method");
         // Check if message length exceeds 255 characters
         if(request.getMessage().length() > 255){
-            send(new Response(false, -4), outStream);  //MessageTooBigException
+            send(new Response(false, -4, request.getNonceClient()), outStream);  //MessageTooBigException
         }
         // Checks if key has proper length
         else if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
-            send(new Response(false, -3), outStream);  //InvalidPublicKey
+            send(new Response(false, -3, request.getNonceClient()), outStream);  //InvalidPublicKey
         }
         else if(!userIdMap.containsKey(request.getPublicKey())){
-            send(new Response(false, -1), outStream);
+            send(new Response(false, -1, request.getNonceClient()), outStream);
 
         }
         else{
@@ -173,7 +188,7 @@ public class Server implements Runnable{
             try {
                 saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
             } catch (IOException e) {
-                send(new Response(false, -9), outStream);
+                send(new Response(false, -9, request.getNonceClient()), outStream);
             }
 
             incrementTotalAnnouncs();
@@ -186,13 +201,13 @@ public class Server implements Runnable{
     private void read(Request request, boolean isGeneral, ObjectOutputStream outStream) {        
 
         if (!isGeneral && (request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294)) {
-            send(new Response(false, -3), outStream);  //InvalidPublicKey
+            send(new Response(false, -3, request.getNonceClient()), outStream);  //InvalidPublicKey
 
         } else if (!isGeneral &&(!userIdMap.containsKey(request.getPublicKey()))) {
-            send(new Response(false, -1), outStream);  //UserNotRegistered
+            send(new Response(false, -1, request.getNonceClient()), outStream);  //UserNotRegistered
 
         } else if (request.getNumber() < 0) {
-            send(new Response(false, -6), outStream);  //InvalidPostsNumber
+            send(new Response(false, -6, request.getNonceClient()), outStream);  //InvalidPostsNumber
 
         }
         else{
@@ -202,7 +217,7 @@ public class Server implements Runnable{
 
 
             if (request.getNumber() > directorySize) { //se for general o getDirectoryList ve o nr no general
-                send(new Response(false, -10), outStream);  //TooMuchAnnouncements
+                send(new Response(false, -10, request.getNonceClient()), outStream);  //TooMuchAnnouncements
             }
 
             else{
@@ -240,10 +255,10 @@ public class Server implements Runnable{
                     }
                     JSONObject announcementsToSend =  new JSONObject();
                     announcementsToSend.put("announcementList", annoucementsList);
-                    send(new Response(true, announcementsToSend), outStream);
+                    send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
                 } catch(Exception e){
                     e.printStackTrace();
-                    send(new Response(false, -8), outStream);
+                    send(new Response(false, -8, request.getNonceClient()), outStream);
                 }
             }
 
@@ -258,18 +273,60 @@ public class Server implements Runnable{
 //    									//
 //////////////////////////////////////////
 
+    public boolean checkNonce(PublicKey key, byte[] nonce){
+        if(getNonces().containsKey(key)){
+            if(getNonces().get(key).equals(nonce)){
+                getNonces().remove(key);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean checkHash(Envelope envelope){
+
+        MessageDigest md ;
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream out = null;
+
+
+        byte[] hash = decipher(envelope.getHash(), envelope.getRequest().getPublicKey());
+
+        try {
+            md = MessageDigest.getInstance("SHA-256");
+
+            out = new ObjectOutputStream(bos);
+            out.writeObject(envelope.getRequest());
+            out.flush();
+            byte[] request_bytes = bos.toByteArray();
+
+            return md.digest(request_bytes).equals(hash);
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
     public byte[] generateRandomNonce(){
         SecureRandom random = new SecureRandom();
         byte[] nonce = new byte[16];
         random.nextBytes(nonce);
-        System.out.println(nonce);
         return nonce;
     }
 
 
-    public void sendRandomNonce(ObjectOutputStream outputStream){
+    public void sendRandomNonce(PublicKey key, ObjectOutputStream outputStream){
+
+        byte[] serverNonce = generateRandomNonce();
+        getNonces().put(key, serverNonce);
+
         send(new Response(generateRandomNonce()), outputStream);
+
     }
 
     public PrivateKey getPrivateKey(){
@@ -397,9 +454,39 @@ public class Server implements Runnable{
     }
 
     private void send(Response response, ObjectOutputStream outputStream){
+        MessageDigest md ;
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream out = null;
+
+        Cipher cipher;
+
         try {
-            outputStream.writeObject(response);
+            md = MessageDigest.getInstance("SHA-256");
+            out = new ObjectOutputStream(bos);
+            out.writeObject(response);
+            out.flush();
+
+            byte[] request_bytes = bos.toByteArray();
+            byte[] response_hash = md.digest(request_bytes);
+
+            cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.ENCRYPT_MODE, getPrivateKey());
+
+            byte[] final_bytes = cipher.doFinal(response_hash);
+
+            outputStream.writeObject(new Envelope(response, final_bytes));
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
             e.printStackTrace();
         }
 
@@ -421,6 +508,12 @@ public class Server implements Runnable{
 
 
     }
+
+    private HashMap<PublicKey, byte[]> getNonces(){
+        return nonces;
+    }
+
+
     
     private void newListener() {
         (new Thread(this)).start();
