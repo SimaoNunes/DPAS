@@ -26,6 +26,9 @@ public class BaseTest {
 	
 	static ClientAPI clientAPI;
 	static KeyStore keyStore;
+	static PrivateKey privateKey1;
+	static PrivateKey privateKey2;
+	static PrivateKey privateKey3;
 	static PublicKey publicKey1;
 	static PublicKey publicKey2;
 	static PublicKey publicKey3;
@@ -45,25 +48,19 @@ public class BaseTest {
 	}
 
 	public static void initiate(){
-        try {
-            keyStore = KeyStore.getInstance("JKS");
-            keyStore.load(new FileInputStream("Keystores/keystore"), passphrase);
-            publicKey1 = keyStore.getCertificate("user1").getPublicKey();
-            publicKey2 = keyStore.getCertificate("user2").getPublicKey();
-            publicKey3 = keyStore.getCertificate("user3").getPublicKey();
-
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+	        try {
+				keyStore = KeyStore.getInstance("JKS");
+				keyStore.load(new FileInputStream("Keystores/keystore"), passphrase);
+				privateKey1 = (PrivateKey) keyStore.getKey("user1", passphrase);
+				privateKey2 = (PrivateKey) keyStore.getKey("user2", passphrase);
+				privateKey3 = (PrivateKey) keyStore.getKey("user3", passphrase);
+				publicKey1 = keyStore.getCertificate("user1").getPublicKey();
+				publicKey2 = keyStore.getCertificate("user2").getPublicKey();
+				publicKey3 = keyStore.getCertificate("user3").getPublicKey();
+			} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | CertificateException
+					| IOException e) {
+				e.printStackTrace();
+			}
     }
 
     public static PublicKey generateSmallerKey(){
