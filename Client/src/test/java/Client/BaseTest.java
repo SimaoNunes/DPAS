@@ -1,4 +1,12 @@
-package Client_API;
+package Client;
+
+import Client_API.Client_Endpoint;
+import Library.Envelope;
+import Library.Request;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -6,13 +14,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.*;
 import java.security.cert.CertificateException;
-
-import Library.Envelope;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.junit.*;
-
-import Library.Request;
 
 ////////////////////////////////////////////////////////////////////
 //															      //
@@ -23,7 +24,7 @@ import Library.Request;
 
 public class BaseTest {
 	
-	static Client_Endpoint clientAPI;
+	static Client_API.Client_Endpoint clientAPI;
 	static KeyStore keyStore;
 	static PrivateKey privateKey1;
 	static PrivateKey privateKey2;

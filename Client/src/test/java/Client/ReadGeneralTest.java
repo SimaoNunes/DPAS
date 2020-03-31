@@ -1,10 +1,10 @@
-package Client_API;
-
-import static org.junit.Assert.assertEquals;
+package Client;
 
 import Exceptions.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 ////////////////////////////////////////////////////////////////////
 //																  //

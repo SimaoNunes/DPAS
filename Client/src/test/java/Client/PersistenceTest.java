@@ -1,10 +1,9 @@
-package Client_API;
+package Client;
 
-import Exceptions.*;
+import Exceptions.AlreadyRegisteredException;
+import Exceptions.InvalidPublicKeyException;
+import Exceptions.UnknownPublicKeyException;
 import org.junit.BeforeClass;
-import org.junit.Test;
-
-import static junit.framework.TestCase.assertEquals;
 
 public class PersistenceTest extends BaseTest{
 

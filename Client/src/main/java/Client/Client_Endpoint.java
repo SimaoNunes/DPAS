@@ -20,9 +20,24 @@ public class Client_Endpoint {
     private byte[] serverNonce = null;
     private byte[] clientNonce = null;
 
+    private PrivateKey privateKey = null;
+    private PublicKey publicKey = null;
+    private String username = null;
 
-    public Client_Endpoint(){
 
+    public Client_Endpoint(String username){
+        setPrivateKey(getPrivateKeyFromKs(username));
+        setPublicKey(getPublicKeyFromKs(username));
+        setUsername(username);
+
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public byte[] getServerNonce() {
@@ -39,6 +54,22 @@ public class Client_Endpoint {
 
     public void setClientNonce(byte[] clientNonce) {
         this.clientNonce = clientNonce;
+    }
+
+    public PrivateKey getPrivateKey(){
+        return this.privateKey;
+    }
+
+    public void setPrivateKey(PrivateKey privateKey) {
+        this.privateKey = privateKey;
+    }
+
+    public PublicKey getPublicKey() {
+        return publicKey;
+    }
+
+    public void setPublicKey(PublicKey publicKey) {
+        this.publicKey = publicKey;
     }
 
     private Socket createSocket() throws IOException {
@@ -88,15 +119,15 @@ public class Client_Endpoint {
         return false;
     }
 
-    public PrivateKey getPrivateKey(){
+    private PrivateKey getPrivateKeyFromKs(String username){
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
+        PrivateKey key = null;
 
-        KeyStore.PrivateKeyEntry entry = null;
         try {
-            entry = (KeyStore.PrivateKeyEntry) ks.getEntry("", null);
             ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
+            ks.load(new FileInputStream("Keystores/" + username + "_keystore"), passphrase);
+            key = (PrivateKey) ks.getKey(username, passphrase);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (UnrecoverableEntryException e) {
@@ -111,9 +142,35 @@ public class Client_Endpoint {
             e.printStackTrace();
         }
 
-        return entry.getPrivateKey();
+        return key;
 
     }
+
+    private PublicKey getPublicKeyFromKs(String username){
+        char[] passphrase = "changeit".toCharArray();
+        KeyStore ks = null;
+
+        PublicKey key = null;
+
+        try{
+            ks = KeyStore.getInstance("JKS");
+            ks.load(new FileInputStream("Keystores/" + username + "_keystore"), passphrase);
+            return ks.getCertificate(username).getPublicKey();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
 
     private byte[] askForServerNonce(PublicKey key){
         try {
@@ -321,13 +378,13 @@ public class Client_Endpoint {
 	//				     REGISTER  					//
 	//////////////////////////////////////////////////
 
-    public int register(PublicKey key, String name, PrivateKey privateKey) throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
+    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
 
-        startHandshake(key);
+        startHandshake(getPublicKey());
 
-        Request request = new Request("REGISTER", key, name, getServerNonce(), getClientNonce());
+        Request request = new Request("REGISTER", getPublicKey(), getUsername(), getServerNonce(), getClientNonce());
 
-        Envelope envelope_req = new Envelope(request, cipherRequest(request, privateKey));
+        Envelope envelope_req = new Envelope(request, cipherRequest(request, getPrivateKey()));
 
         System.out.println(getClientNonce());
         System.out.println(getServerNonce());
@@ -392,20 +449,20 @@ public class Client_Endpoint {
         return 0;
     }
 
-    public int post(PublicKey key, String message, int[] announcs, PrivateKey privateKey) throws MessageTooBigException, UserNotRegisteredException,
+    public int post(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException,
     		InvalidPublicKeyException, InvalidAnnouncementException {
 
-        startHandshake(key);
+        startHandshake(getPublicKey());
 
-        return postAux(key, message, announcs, false, getServerNonce(), getClientNonce(), privateKey);
+        return postAux(getPublicKey(), message, announcs, false, getServerNonce(), getClientNonce(), getPrivateKey());
     }
     
-    public int postGeneral(PublicKey key, String message, int[] announcs, PrivateKey privateKey) throws  MessageTooBigException, UserNotRegisteredException,
+    public int postGeneral(String message, int[] announcs) throws  MessageTooBigException, UserNotRegisteredException,
             InvalidPublicKeyException, InvalidAnnouncementException {
 
-        startHandshake(key);
+        startHandshake(getPublicKey());
 
-        return postAux(key, message, announcs, true, getServerNonce(), getClientNonce(), privateKey);
+        return postAux(getPublicKey(), message, announcs, true, getServerNonce(), getClientNonce(), getPrivateKey());
     }
 
     //////////////////////////////////////////////////
@@ -415,11 +472,11 @@ public class Client_Endpoint {
     public JSONObject read(PublicKey key, int number, PrivateKey privateKey) throws InvalidPostsNumberException, UserNotRegisteredException,
     		InvalidPublicKeyException, TooMuchAnnouncementsException {
 
-        startHandshake(key);
+        startHandshake(getPublicKey());
 
     	Request request = new Request("READ", key, number, getServerNonce(), getClientNonce());
 
-        Envelope envelope_req = new Envelope(request, cipherRequest(request, privateKey));
+        Envelope envelope_req = new Envelope(request, cipherRequest(request, getPrivateKey()));
 
         try {
             Envelope envelope_resp = sendReceive(envelope_req);

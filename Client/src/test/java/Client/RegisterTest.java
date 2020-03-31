@@ -1,10 +1,9 @@
-package Client_API;
+package Client;
 
+import Exceptions.AlreadyRegisteredException;
 import Exceptions.InvalidPublicKeyException;
 import Exceptions.UnknownPublicKeyException;
 import org.junit.Test;
-
-import Exceptions.AlreadyRegisteredException;
 
 import java.security.KeyStoreException;
 import java.security.PublicKey;
