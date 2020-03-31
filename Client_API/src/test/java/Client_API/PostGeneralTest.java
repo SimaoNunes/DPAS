@@ -35,8 +35,16 @@ public class PostGeneralTest extends BaseTest {
 
 	}
 
+	@Test
+	public void Should_Succeed_When_ReferenceExistingAnnounce() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
+		int[] announcs1 = {0};
+		int[] announcs2 = {0,1,2};
+		assertEquals(1, clientAPI.post(publicKey1, "user1 test message", announcs1));
+		assertEquals(1, clientAPI.post(publicKey2, "user2 test message", announcs2));
+	}
+	
 	/*@Test
-	public void Should_Succeed_When_AnnouncsIsValidArray() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
+	public void Should_Fail_When_AnnouncDoesntExist() {
 		
 	}*/
 

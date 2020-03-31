@@ -28,8 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Server implements Runnable{
 
     private ServerSocket server = null;
-    private Map<PublicKey, Integer> userIdMap = null;
     private HashMap<PublicKey, byte[]> nonces = null;
+    private Map<PublicKey, String> userIdMap = null;
     private AtomicInteger TotalAnnouncements;
 
     protected Server(ServerSocket ss){
@@ -69,16 +69,6 @@ public class Server implements Runnable{
                 System.out.println("User connected.");
                 Envelope envelope = (Envelope) inStream.readObject();
 
-
-                //AQUI VERIFICA-SE SE O NONCE ESTA NA LISTA
-
-
-                if(checkHash(envelope)){         //INTEGRITY GUARANTEED
-
-
-                }
-
-                //aqui decifra-se
 
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
@@ -133,7 +123,9 @@ public class Server implements Runnable{
             send(new Response(false, -3, request.getNonceClient()), outStream);  //InvalidPublicKey
             return;
         }
-        else if (!checkKey(request.getPublicKey())) {
+
+        String username = checkKey(request.getPublicKey());
+        if (username == "") {
             send(new Response(false, -7, request.getNonceClient()), outStream); //key not in server keystore -7
             return;
         }
@@ -143,11 +135,10 @@ public class Server implements Runnable{
             }
             // Register new user
             else {
-                int userId = userIdMap.size();
-                String path = "./storage/AnnouncementBoards/" + userId;
+                String path = "./storage/AnnouncementBoards/" + username;
                 File file = new File(path);
                 file.mkdirs();
-                userIdMap.put(request.getPublicKey(), userId);
+                userIdMap.put(request.getPublicKey(), username);
                 saveUserIdMap();
                 System.out.println("User " + request.getName() + " successfully registered!");
                 send(new Response(true), outStream);
@@ -167,19 +158,26 @@ public class Server implements Runnable{
         else if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
             send(new Response(false, -3, request.getNonceClient()), outStream);  //InvalidPublicKey
         }
+        // Checks if user is registered 
         else if(!userIdMap.containsKey(request.getPublicKey())){
             send(new Response(false, -1, request.getNonceClient()), outStream);
 
         }
+        // Checks if announcements refered by the user are valid 
+        else if(request.getAnnouncements() != null && !checkValidAnnouncements(request.getAnnouncements())){
+            send(new Response(false, -5, request.getNonceClient()), outStream);       //Invalid Announcements refered by the user
+        }
         else{
-            int userId = userIdMap.get(request.getPublicKey());
-            String path = "./storage/AnnouncementBoards/" + userId + "/";
+            String username = userIdMap.get(request.getPublicKey());
+            String path = "./storage/AnnouncementBoards/" + username + "/";
 
             // Write to file
             JSONObject announcementObject =  new JSONObject();
-            announcementObject.put("id", getTotalAnnouncements());
-            announcementObject.put("user", userId);
+            announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
+            announcementObject.put("user", username);
             announcementObject.put("message", request.getMessage());
+            announcementObject.put("ref_announcements", (Object) request.getAnnouncements());
+
             
             if(general){
                 path = "./storage/GeneralBoard/";
@@ -224,8 +222,8 @@ public class Server implements Runnable{
                 String path = "./storage/";
                 if(!isGeneral){
                     System.out.println("READ method");
-                    int userId = userIdMap.get(request.getPublicKey());
-                    path += "AnnouncementBoards/" + userId + "/";
+                    String username = userIdMap.get(request.getPublicKey());
+                    path += "AnnouncementBoards/" + username + "/";
                 }
                 else{
                     System.out.println("READGENERAL method");
@@ -404,7 +402,17 @@ public class Server implements Runnable{
 //										//
 //           Auxiliary Methods          //
 //    									//
-//////////////////////////////////////////   
+//////////////////////////////////////////
+
+    private Boolean checkValidAnnouncements(int[] announcs){
+        int total = getTotalAnnouncements();
+        for (int i = 0; i < total; i++) { 		      
+            if (announcs[i] >= total ) {
+                return false;
+            }		
+        } 	
+        return true;
+    }
     
     private String[] getDirectoryList(PublicKey key){
         String path = "./storage/";
@@ -419,7 +427,7 @@ public class Server implements Runnable{
         return file.list();
     }
 
-    private boolean checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
+    private String checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
         try {
@@ -435,7 +443,7 @@ public class Server implements Runnable{
                 if (ks.isCertificateEntry(alias)) {
                     PublicKey key = ks.getCertificate(alias).getPublicKey();
                     if (key.equals(publicKey)) {
-                        return true;
+                        return alias;
                     }
                 }
             }
@@ -450,7 +458,7 @@ public class Server implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return false;
+        return "";
     }
 
     private void send(Response response, ObjectOutputStream outputStream){
@@ -594,16 +602,16 @@ public class Server implements Runnable{
         try {
            FileInputStream fileIn = new FileInputStream("./storage/UserIdMap.ser");
            ObjectInputStream in = new ObjectInputStream(fileIn);
-           userIdMap = (Map<PublicKey, Integer>) in.readObject();
+           userIdMap = (Map<PublicKey, String>) in.readObject();
            in.close();
            fileIn.close();
         } catch (ClassNotFoundException c) {
-           System.out.println("Map<PublicKey, Integer> class not found");
+           System.out.println("Map<PublicKey, String> class not found");
            c.printStackTrace();
            return;
         }
         catch(FileNotFoundException e){
-            userIdMap = new HashMap<PublicKey, Integer>();
+            userIdMap = new HashMap<PublicKey, String>();
             saveUserIdMap();
 
         } catch (IOException e) {
@@ -650,23 +658,6 @@ public class Server implements Runnable{
             i.printStackTrace();
         }
     }
-    /*
-
-    private void updateTotalAnnouncements(int updatedNumber) {
-        TotalAnnouncements = updatedNumber;
-        try {
-            File file = new File("./storage/TotalAnnouncements.ser"); 
-            file.delete();
-            FileOutputStream fileOut = new FileOutputStream("./storage/TotalAnnouncements.ser");
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeInt(updatedNumber);
-            out.close();
-            fileOut.close();
-            System.out.println("Total Number of announcements updated in ./storage/TotalAnnouncements.ser");
-        } catch (IOException i) {
-            i.printStackTrace();
-        }
-    }*/
 
     private void getTotalAnnouncementsFromFile() {
         try {
