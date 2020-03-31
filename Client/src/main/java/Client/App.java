@@ -2,14 +2,6 @@ package Client;
 
 import Client.ClientEndpoint;
 
-import Library.Exceptions.AlreadyRegisteredException;
-import Library.Exceptions.InvalidAnnouncementException;
-import Library.Exceptions.InvalidPostsNumberException;
-import Library.Exceptions.InvalidPublicKeyException;
-import Library.Exceptions.MessageTooBigException;
-import Library.Exceptions.TooMuchAnnouncementsException;
-import Library.Exceptions.UnknownPublicKeyException;
-import Library.Exceptions.UserNotRegisteredException;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -17,6 +9,7 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.Scanner;
 
+import Exceptions.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
