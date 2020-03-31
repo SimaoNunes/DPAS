@@ -33,7 +33,6 @@ public class Server implements Runnable{
     private AtomicInteger TotalAnnouncements;
 
     protected Server(ServerSocket ss){
-
         getUserIdMap();
         getTotalAnnouncementsFromFile();
         server = ss;
@@ -532,8 +531,6 @@ public class Server implements Runnable{
     private HashMap<PublicKey, byte[]> getNonces(){
         return nonces;
     }
-
-
     
     private void newListener() {
         (new Thread(this)).start();

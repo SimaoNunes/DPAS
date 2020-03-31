@@ -5,13 +5,11 @@ import Exceptions.InvalidPublicKeyException;
 import Exceptions.UnknownPublicKeyException;
 import org.junit.BeforeClass;
 
-public class PersistenceTest extends BaseTest{
+public class PersistenceTest extends BaseTest {
 
     @BeforeClass
     public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
-        clientAPI.register(publicKey1, "Miguel", privateKey1);
-        clientAPI.register(publicKey2, "Grilo", privateKey2);
-        clientAPI.register(publicKey3, "Simao", privateKey3);
+        clientEndpoint1.register();
     }
 
     /*@Test(expected = AlreadyRegisteredException.class)

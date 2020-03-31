@@ -15,7 +15,7 @@ import java.net.Socket;
 import java.security.*;
 import java.security.cert.CertificateException;
 
-public class Client_Endpoint {
+public class ClientEndpoint {
 
     private byte[] serverNonce = null;
     private byte[] clientNonce = null;
@@ -25,7 +25,7 @@ public class Client_Endpoint {
     private String username = null;
 
 
-    public Client_Endpoint(String username){
+    public ClientEndpoint(String username){
         setPrivateKey(getPrivateKeyFromKs(username));
         setPublicKey(getPublicKeyFromKs(username));
         setUsername(username);
@@ -290,6 +290,7 @@ public class Client_Endpoint {
         return false;
     }
 
+    
  //////////////////////////////////////////////////////////////
  //															 //
  //   Methods that check if responses must throw exceptions  //
@@ -469,12 +470,24 @@ public class Client_Endpoint {
     //				      READ						//
     //////////////////////////////////////////////////
 
-    public JSONObject read(PublicKey key, int number, PrivateKey privateKey) throws InvalidPostsNumberException, UserNotRegisteredException,
+    public JSONObject read(String userName, int number) throws InvalidPostsNumberException, UserNotRegisteredException,
     		InvalidPublicKeyException, TooMuchAnnouncementsException {
 
         startHandshake(getPublicKey());
+        
+        PublicKey pubKey = null;
+		try {
+			char[] passphrase = "changeit".toCharArray();
+			KeyStore ks = null;
+			pubKey = null;
+			ks = KeyStore.getInstance("JKS");
+			ks.load(new FileInputStream("Keystores/" + username + "_keystore"), passphrase);
+			pubKey = ks.getCertificate(userName).getPublicKey();
+		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e1) {
+			e1.printStackTrace();
+		}
 
-    	Request request = new Request("READ", key, number, getServerNonce(), getClientNonce());
+    	Request request = new Request("READ", pubKey, number, getServerNonce(), getClientNonce());
 
         Envelope envelope_req = new Envelope(request, cipherRequest(request, getPrivateKey()));
 

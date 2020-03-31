@@ -19,15 +19,15 @@ public class ReadTest extends BaseTest{
 	public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException,
 			MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException {
 
-		clientAPI.register(publicKey1, "user1", privateKey1);
-		clientAPI.register(publicKey2, "user2", privateKey2);
-		clientAPI.post(publicKey1, "message1 user1", null, privateKey1);
-		clientAPI.post(publicKey1, "message2 user1", null, privateKey1);
-		clientAPI.post(publicKey1, "message3 user1", null, privateKey1);
+		clientEndpoint1.register();
+		//clientEndpoint1.register("user2");
+		clientEndpoint1.post("message1 user1", null);
+		clientEndpoint1.post("message2 user1", null);
+		clientEndpoint1.post("message3 user1", null);
 
-		clientAPI.post(publicKey2, "message1 user2", null, privateKey2);
-		clientAPI.post(publicKey2, "message2 user2", null, privateKey2);
-		clientAPI.post(publicKey2, "message3 user2", null, privateKey2);
+		//clientEndpoint1.post(publicKey2, "message1 user2", null, privateKey2);
+		//clientEndpoint1.post(publicKey2, "message2 user2", null, privateKey2);
+		//clientEndpoint1.post(publicKey2, "message3 user2", null, privateKey2);
 
 
 	}
@@ -35,12 +35,12 @@ public class ReadTest extends BaseTest{
 	public void Should_Succeed_When_AnnouncsIsNull_With_1Post() throws InvalidPostsNumberException, UserNotRegisteredException,
 			InvalidPublicKeyException, TooMuchAnnouncementsException {
 
-		String[] result = getMessagesFromJSON(clientAPI.read(publicKey1, 1, privateKey1));
+		String[] result = getMessagesFromJSON(clientEndpoint1.read("user1", 1));
 
 		assertEquals("message3 user1", result[0]);
 	}
 
-	@Test
+	/*@Test
 	public void Should_Succeed_When_AnnouncsIsNull_With_3Post_2Users() throws InvalidPostsNumberException, UserNotRegisteredException,
 			InvalidPublicKeyException, TooMuchAnnouncementsException  {
 
@@ -53,32 +53,32 @@ public class ReadTest extends BaseTest{
 		assertEquals(result2[0], "message3 user2");
 		assertEquals(result2[1], "message2 user2");
 
-	}
+	}*/
 
 
-	@Test(expected = InvalidPublicKeyException.class)
+	/*@Test(expected = InvalidPublicKeyException.class)
 	public void Should_Fail_With_SmallerKey() throws InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, TooMuchAnnouncementsException {
-		clientAPI.read(generateSmallerKey(), 1, privateKey1);
-	}
+		clientEndpoint1.read(generateSmallerKey(), 1, privateKey1);
+	}*/
 
-	@Test(expected = UserNotRegisteredException.class)
+	/*@Test(expected = UserNotRegisteredException.class)
 	public void Should_Fail_When_UserNotRegistered() throws InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, TooMuchAnnouncementsException {
 		//user 3 is not registered
 		clientAPI.read(publicKey3, 1, privateKey3);
-	}
+	}*/
 
 	@Test(expected = InvalidPostsNumberException.class)
 	public void Should_Fail_When_BadPostsNumber() throws InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, TooMuchAnnouncementsException {
-		clientAPI.read(publicKey1, -301, privateKey1);
+		clientEndpoint1.read("user1", -301);
 	}
 
 	@Test(expected = TooMuchAnnouncementsException.class)
 	public void Should_Fail_When_AskingAlotOfPosts() throws InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, TooMuchAnnouncementsException {
 		//There are only 2 posts
-		clientAPI.read(publicKey1, 685, privateKey1);
+		clientEndpoint1.read("user1", 685);
 	}
 
-	@Test
+	/*@Test
 	public void Should_Succeed_When_AskingForAll() throws InvalidPostsNumberException, UserNotRegisteredException, InvalidPublicKeyException, TooMuchAnnouncementsException {
 		String[] result1 = getMessagesFromJSON(clientAPI.read(publicKey1, 0, privateKey1));
 		String[] result2 = getMessagesFromJSON(clientAPI.read(publicKey2, 0, privateKey2));
@@ -91,6 +91,6 @@ public class ReadTest extends BaseTest{
 		assertEquals(result2[1], "message2 user2");
 		assertEquals(result2[2], "message1 user2");
 
-	}
+	}*/
 
 }

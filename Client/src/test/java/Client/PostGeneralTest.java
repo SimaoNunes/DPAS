@@ -17,25 +17,22 @@ import static org.junit.Assert.assertEquals;
 public class PostGeneralTest extends BaseTest {
 
 	@BeforeClass
-	public static void populate() throws AlreadyRegisteredException,
-			UnknownPublicKeyException, InvalidPublicKeyException {
-		clientAPI.register(publicKey1, "user1", privateKey1);
-		clientAPI.register(publicKey2, "user2", privateKey2);
+	public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
+		clientEndpoint1.register();
 	}
 	
 	@Test
-	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
-		assertEquals(1, clientAPI.postGeneral(publicKey1, "user1 test message", null, privateKey1));
-		assertEquals(1, clientAPI.postGeneral(publicKey2, "user2 test message", null, privateKey2));
-
+	public void Should_Succeed_When_AnnouncsIsNull() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
+		assertEquals(1, clientEndpoint1.postGeneral("user1 test message", null));
+		//assertEquals(1, clientEndpoint.postGeneral(publicKey2, "user2 test message", null, privateKey2));
 	}
 
 	@Test
 	public void Should_Succeed_When_ReferenceExistingAnnounce() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
 		int[] announcs1 = {0};
-		int[] announcs2 = {0,1,2};
-		assertEquals(1, clientAPI.post(publicKey1, "user1 test message", announcs1, privateKey1));
-		assertEquals(1, clientAPI.post(publicKey2, "user2 test message", announcs2, privateKey2));
+		//int[] announcs2 = {0,1,2};
+		assertEquals(1, clientEndpoint1.post("user1 test message", announcs1));
+		//assertEquals(1, clientAPI.post(publicKey2, "user2 test message", announcs2, privateKey2));
 	}
 	
 	/*@Test
@@ -44,14 +41,14 @@ public class PostGeneralTest extends BaseTest {
 	}*/
 
 	@Test(expected = MessageTooBigException.class)
-	public void Should_Fail_When_MessageIsTooBig() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
-		clientAPI.postGeneral(publicKey1, "Has 256 charssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
-										  "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
-										  "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
-										  "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", null, privateKey1);
+	public void Should_Fail_When_MessageIsTooBig() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
+		clientEndpoint1.postGeneral("Has 256 charssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
+									"sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
+									"sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
+									"ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", null);
 	}
 
-	@Test(expected = InvalidPublicKeyException.class)
+	/*@Test(expected = InvalidPublicKeyException.class)
 	public void Should_Fail_When_KeyIsInvalid() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
 
@@ -62,11 +59,11 @@ public class PostGeneralTest extends BaseTest {
 
 		clientAPI.postGeneral(pub, "This is going to fail", null, privateKey2);
 
-	}
+	}*/
 	
-	@Test(expected = UserNotRegisteredException.class)
+	/*@Test(expected = UserNotRegisteredException.class)
 	public void Should_Fail_When_UserIsNotRegistered() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
 		clientAPI.post(publicKey3, "I am not a registered user", null, privateKey3);
-	}
+	}*/
 
 }

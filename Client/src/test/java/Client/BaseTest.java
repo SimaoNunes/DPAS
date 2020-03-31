@@ -1,6 +1,6 @@
 package Client;
 
-import Client_API.Client_Endpoint;
+import Client.ClientEndpoint;
 import Library.Envelope;
 import Library.Request;
 import org.json.simple.JSONArray;
@@ -8,12 +8,10 @@ import org.json.simple.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.*;
-import java.security.cert.CertificateException;
 
 ////////////////////////////////////////////////////////////////////
 //															      //
@@ -24,44 +22,21 @@ import java.security.cert.CertificateException;
 
 public class BaseTest {
 	
-	static Client_API.Client_Endpoint clientAPI;
+	static ClientEndpoint clientEndpoint1;
 	static KeyStore keyStore;
-	static PrivateKey privateKey1;
-	static PrivateKey privateKey2;
-	static PrivateKey privateKey3;
-	static PublicKey publicKey1;
-	static PublicKey publicKey2;
-	static PublicKey publicKey3;
 	static char[] passphrase = "changeit".toCharArray();
 
 	@BeforeClass
 	public static void oneTimeSetup() {
 		// Instantiate class to be tested, in this case the API that will communicate with the Server
-		clientAPI = new Client_Endpoint();
-        initiate();
-
+		clientEndpoint1 = new ClientEndpoint("user1");
 	}
 
 	@AfterClass
 	public static void cleanUp(){
         deleteUsers();
 	}
-
-	public static void initiate(){
-	        try {
-				keyStore = KeyStore.getInstance("JKS");
-				keyStore.load(new FileInputStream("Keystores/keystore"), passphrase);
-				privateKey1 = (PrivateKey) keyStore.getKey("user1", passphrase);
-				privateKey2 = (PrivateKey) keyStore.getKey("user2", passphrase);
-				privateKey3 = (PrivateKey) keyStore.getKey("user3", passphrase);
-				publicKey1 = keyStore.getCertificate("user1").getPublicKey();
-				publicKey2 = keyStore.getCertificate("user2").getPublicKey();
-				publicKey3 = keyStore.getCertificate("user3").getPublicKey();
-			} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | CertificateException
-					| IOException e) {
-				e.printStackTrace();
-			}
-    }
+	
 
     public static PublicKey generateSmallerKey(){
         KeyPairGenerator keyGen = null;

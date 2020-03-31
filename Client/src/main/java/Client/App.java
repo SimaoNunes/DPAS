@@ -1,46 +1,36 @@
 package Client;
 
-import Client_API.Client_Endpoint;
+import Client.ClientEndpoint;
 
-import Exceptions.AlreadyRegisteredException;
-import Exceptions.InvalidAnnouncementException;
-import Exceptions.InvalidPostsNumberException;
-import Exceptions.InvalidPublicKeyException;
-import Exceptions.MessageTooBigException;
-import Exceptions.TooMuchAnnouncementsException;
-import Exceptions.UnknownPublicKeyException;
-import Exceptions.UserNotRegisteredException;
+import Library.Exceptions.AlreadyRegisteredException;
+import Library.Exceptions.InvalidAnnouncementException;
+import Library.Exceptions.InvalidPostsNumberException;
+import Library.Exceptions.InvalidPublicKeyException;
+import Library.Exceptions.MessageTooBigException;
+import Library.Exceptions.TooMuchAnnouncementsException;
+import Library.Exceptions.UnknownPublicKeyException;
+import Library.Exceptions.UserNotRegisteredException;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.Scanner;
 
-import Library.Request;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 
 public class App {
-	// Client_API
-	private static Client_Endpoint clientAPI;
+	// ClientEndpoint
+	private static ClientEndpoint clientEndpoint;
 	// Scanner to get user input
-	private static Scanner scanner;
+	private static Scanner scanner = new Scanner(System.in);
 	// Keystore with the client keyPair and Server publicKey
 	private static KeyStore keyStore;
-	// User public Key
-	private static PublicKey myPublicKey;
 	// Username
 	private static String userName;
-
-	// I wanted the user name global but not being able to do so so I'm passing it to the runApp method...
+	
 	
     public static void main(String[] args) {
     	// Check if arguments are being wrongly used (should only receive username, or no arguments at all)
@@ -48,10 +38,7 @@ public class App {
     		System.out.println("\nWrong way of running app. Either give a single argument with the user name or don't provide arguments and register a new user");
     	}
     	System.out.println("\n======================  DPAS Application ======================");
-    	// Initialize necessary objects
-    	clientAPI = new Client_Endpoint();
-    	scanner = new Scanner(System.in);
-    	myPublicKey = null;
+    	// Load user's keystore
         try {
         	keyStore = KeyStore.getInstance("JKS");
 			keyStore.load(new FileInputStream("Keystores/keystore"), "changeit".toCharArray());
@@ -60,21 +47,28 @@ public class App {
 		}
     	// Check if user name is provided. Otherwise register a new user
     	if(args.length == 1) {
-    		userName = args[0]; //FIXME not sanitizing user input. User can give any username (Miguel) but he will only have the password for his alias.
-    		try {
-				runApp();
-			} catch (KeyStoreException e) {
-				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
-			}
-    	}
-    	else {
+    		userName = args[0]; 																						//FIXME not sanitizing user input
+    		// Check if username is in keystore and if this user is the owner of the account
 			try {
-				userName = registerUser();
-				if(!(userName == null)) {
-					runApp();
+				if(keyStore.containsAlias(userName)) {
+					if(keyStore.entryInstanceOf(userName, KeyStore.PrivateKeyEntry.class)) {
+						clientEndpoint = new ClientEndpoint(userName);
+						runApp();
+					} else {
+						System.out.println("\nYou're not the owner of this account!");
+					}
+				}
+				else {
+					System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
 				}
 			} catch (KeyStoreException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
+			}
+    	} 
+    	else {
+			if(registerUser()) {
+				clientEndpoint = new ClientEndpoint(userName);
+				runApp();
 			}
     	}
     	System.out.println("\n============================  End  ============================");
@@ -82,55 +76,47 @@ public class App {
     
     
     
-	private static String registerUser() {
+	private static Boolean registerUser() {
 		System.out.println("\nPlease register yourself in the DPAS.");
     	// Ask user if he is registered or not
     	Boolean goodInput = false;
     	String inputUserName = null;
     	while(!goodInput) {
-    		// Get publicKey from keystore based on user name (alias)
+    		// Check if username is trusted (aka if username alias is in keyStore)
     		System.out.print("\nInsert a username:\n>> ");
-			inputUserName = scanner.nextLine();							//FIXME Not sanitizing user input
+			inputUserName = scanner.nextLine();																			//FIXME Not sanitizing user input
+			/*try {*/
 			try {
 				if(keyStore.containsAlias(inputUserName)) {
 					if(keyStore.entryInstanceOf(inputUserName, KeyStore.PrivateKeyEntry.class)) {
-					myPublicKey = keyStore.getCertificate(inputUserName).getPublicKey();
 					goodInput = true;
+					userName = inputUserName;
+					clientEndpoint.register();
 					} else {
 						System.out.println("\nYou're not the owner of this account!");
+						return false;
 					}
 				} else {
 					System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
 				}
 			} catch (KeyStoreException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
-			}
+				return false;
+			} catch (AlreadyRegisteredException e) {
+				System.out.println("\nUser with such username is already registered in DPAS!");
+				return false;
+			} catch (UnknownPublicKeyException | InvalidPublicKeyException e) {
+				System.out.println("\nThere seems to be a problem with your authentication. Make sure you have the app properly installed with your CC public key.");
+				return false;
+			} 
     	}
-    	// Register user
-    	try {
-
-			clientAPI.register(myPublicKey, inputUserName, getPrivateKey(inputUserName));
-		} catch (AlreadyRegisteredException e) {
-			System.out.println("\nUser with such username is already registered in DPAS!");
-			return null;
-		} catch (UnknownPublicKeyException | InvalidPublicKeyException e) {
-			System.out.println("\nThere seems to be a problem with your authentication. Make sure you have the app properly installed with your CC public key.");
-			return null;
-		}
-    	System.out.println("\nHi " + inputUserName + "! You're now registered on DPAS!");
-    	return inputUserName;
+    	System.out.println("\nHi " + userName + "! You're now registered on DPAS!");
+    	return true;
 	}
 
 	
 	
-	private static void runApp() throws KeyStoreException {
-		// Check if username is in keystore. If so, get respective public key
-		if(keyStore.containsAlias(userName)) {
-			myPublicKey = keyStore.getCertificate(userName).getPublicKey();
-		} else {
-			System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
-			return;
-		}
+	private static void runApp(){
 		// Run App
 		Boolean run = true;
 		String userInput;
@@ -239,17 +225,16 @@ public class App {
 			message = scanner.nextLine();
 			if(message.length() > 255) { 
 				System.out.println("\nMessage size exceeds 255 characters.");
-			}
-			else {
+			} else {
 				goodInput = true;
 			}
 		}
 		// Post announcement
 		try{
 			if(isGeneral){
-				clientAPI.postGeneral(myPublicKey, message, null, getPrivateKey(userName));
+				clientEndpoint.postGeneral(message, null);
 			} else {
-				clientAPI.post(myPublicKey, message, null, getPrivateKey(userName));
+				clientEndpoint.post(message, null);
 			}
 		} catch (UserNotRegisteredException e) {
 			System.out.println("\nERROR: User is not registered in DPAS System.");
@@ -277,41 +262,32 @@ public class App {
 				goodInput = true;
 			}
 		}
-		// Get JSONObject with announcements from the API
+		// Ask for JSONObject with announcements to the Server
 		JSONObject jsonAnnouncs = null;
-		if(isGeneral) {
-			try {
-				jsonAnnouncs = clientAPI.readGeneral(Integer.parseInt(numberOfPosts));
+		try {
+			if(isGeneral) {
+				jsonAnnouncs = clientEndpoint.readGeneral(Integer.parseInt(numberOfPosts));
 				printAnnouncements(jsonAnnouncs, true);
-			} catch (InvalidPostsNumberException e) {
-				System.out.println("\nERROR: You've inserted and invalid number");
-			} catch (TooMuchAnnouncementsException e) {
-				System.out.println("\nERROR: The number of announcements you've asked for exceeds the number of announcements existing in such board");
-			}
-		} else {
-			System.out.println("\nWhich User's Announcement Board you want to read from?\n>> ");
-			String userName = scanner.nextLine();													//FIXME NOT SANITIZING USER INPUT
-			try {
+			} else {
+				System.out.println("\nWhich User's Announcement Board you want to read from?\n>> ");
+				String userName = scanner.nextLine();																	//FIXME NOT SANITIZING USER INPUT
 				if(keyStore.containsAlias(userName)) {
-					PublicKey  publicKey = keyStore.getCertificate(userName).getPublicKey();
-					jsonAnnouncs = clientAPI.read(publicKey, Integer.parseInt(numberOfPosts), getPrivateKey(userName));
+					jsonAnnouncs = clientEndpoint.read(userName, Integer.parseInt(numberOfPosts));
 					printAnnouncements(jsonAnnouncs, false);
 				} else {
 					System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
 				}
-			} catch (NumberFormatException e) {
-				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
-			} catch (InvalidPostsNumberException e) {
-				System.out.println("\nERROR: You've inserted and invalid number");
-			} catch (UserNotRegisteredException e) {
-				System.out.println("\nERROR: User is not registered in DPAS System.");
-			} catch (InvalidPublicKeyException e) {
-				System.out.println("\nERROR: Make sure you have the app properly installed with your CC public key.");
-			} catch (TooMuchAnnouncementsException e) {
-				System.out.println("\nERROR: The number of announcements you've asked for exceeds the number of announcements existing in such board");
-			} catch (KeyStoreException e) {
-				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
 			}
+		} catch (KeyStoreException e) {
+			System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
+		} catch (InvalidPostsNumberException e) {
+			System.out.println("\nERROR: You've inserted and invalid number of announcements to read.");
+		} catch (TooMuchAnnouncementsException e) {
+			System.out.println("\nERROR: The number of announcements you've asked for exceeds the number of announcements existing in such board");
+		} catch (UserNotRegisteredException e) {
+			System.out.println("\nERROR: User is not registered in DPAS System.");
+		} catch (InvalidPublicKeyException e) {
+			System.out.println("\nERROR: Make sure you have the app properly installed with your CC public key.");
 		}
 	}
 
@@ -348,61 +324,6 @@ public class App {
                 System.out.println("Message: " + msg);
             }	
         }
-	}
-
-	private static PrivateKey getPrivateKey(String username){
-
-    	PrivateKey key = null;
-
-    	char[] passphrase = "changeit".toCharArray();
-    	try{
-    		key = (PrivateKey) keyStore.getKey(username, passphrase);
-		} catch (UnrecoverableKeyException e) {
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} catch (KeyStoreException e) {
-			e.printStackTrace();
-		}
-
-    	return key;
-	}
-
-	private static byte[] cipherRequest(Request request, PrivateKey key){
-
-		MessageDigest md ;
-
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ObjectOutputStream out = null;
-
-		Cipher cipher;
-
-		try{
-			md = MessageDigest.getInstance("SHA-256");
-			out = new ObjectOutputStream(bos);
-			out.writeObject(request);
-			out.flush();
-			byte[] request_bytes = bos.toByteArray();
-			byte[] request_hash = md.digest(request_bytes);
-
-			cipher = Cipher.getInstance("RSA");
-			cipher.init(Cipher.ENCRYPT_MODE, key);
-			return cipher.doFinal(request_hash);
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
-		} catch (NoSuchPaddingException e) {
-			e.printStackTrace();
-		} catch (BadPaddingException e) {
-			e.printStackTrace();
-		} catch (IllegalBlockSizeException e) {
-			e.printStackTrace();
-		}
-		return null;
 	}
 
 }

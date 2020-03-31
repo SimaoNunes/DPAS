@@ -23,17 +23,16 @@ readGeneral(int number) : returns JSONObject
 
 Each error code sent by the server is translated into an exception client side.
 
-Error Code                     Exception
--1                             UserNotRegistered
--2                             AlreadyRegistered
--3                             InvalidPublicKey
--4                             MessageTooBig
--5                             InvalidAnnouncement
--6                             InvalidPostsNumber
--7                             UnknownPublicKey
--8                             ErrorReadingFile
--9                             ErrorWrittingFile
--10                            TooMuchAnnouncements
+- -1 -> UserNotRegistered
+- -2 -> AlreadyRegistered
+- -3 -> InvalidPublicKey
+- -4 -> MessageTooBig
+- -5 -> InvalidAnnouncement
+- -6 -> InvalidPostsNumber
+- -7 -> UnknownPublicKey
+- -8 -> ErrorReadingFile
+- -9 -> ErrorWrittingFile
+- -10 ->  TooMuchAnnouncements
 
 ## Application Example
 
@@ -43,10 +42,3 @@ We also developed an example of an application that uses the DPAS ClientAPI. You
 - Simão Nunes
 - Miguel Grilo
 - Miguel Francisco
-
-
-## note to remove later
-1) cliente manda mensagem ao server a dizer que quer uma nounce para um pedido x
-2) server diz ok e da uma nonce (random com 128bitts)
-3) o cliente recebe a nonce, e faz o seu Request com a nonce appended, e manda tambem uma cnonce (client nonce)
-4) o server recebe o pedido, verifica a nonce, faz o que é suposto e cria o objeto response, e responde ao cliente com o q ele quer mais a nova cnonce para haver freshness para os dois lados
