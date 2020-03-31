@@ -143,7 +143,6 @@ public class ClientEndpoint {
         }
 
         return key;
-
     }
 
     private PublicKey getPublicKeyFromKs(String username){
@@ -256,7 +255,7 @@ public class ClientEndpoint {
 
         try {
             ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
+            ks.load(new FileInputStream("Keystores/" + username + "_keystore"), passphrase);
             return ks.getCertificate("server").getPublicKey();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -386,9 +385,6 @@ public class ClientEndpoint {
         Request request = new Request("REGISTER", getPublicKey(), getUsername(), getServerNonce(), getClientNonce());
 
         Envelope envelope_req = new Envelope(request, cipherRequest(request, getPrivateKey()));
-
-        System.out.println(getClientNonce());
-        System.out.println(getServerNonce());
 
         try {
             Envelope envelope_resp = sendReceive(envelope_req);

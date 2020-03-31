@@ -1,8 +1,5 @@
 package Client;
 
-import Client.ClientEndpoint;
-
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.*;

@@ -8,7 +8,7 @@ This is Java API that wants to solve the problems concerned with the emergence o
 - Users can read all the announcements of other users and obtain their cronological order
 - When posting announcements, users can refer to previous announcements posted by them or other users.
 
-## ClientAPI
+## Server API
 This is a Java API. All the methods return either Java primitive type objects or JSONs.
 There are 5 methods you can use:
 ```bash
@@ -19,7 +19,7 @@ read(PublicKey key, int number) : returns JSONObject
 readGeneral(int number) : returns JSONObject
 ```
 
-# Exceptions Guide
+## Exceptions Guide
 
 Each error code sent by the server is translated into an exception client side.
 
@@ -36,7 +36,7 @@ Each error code sent by the server is translated into an exception client side.
 
 ## Application Example
 
-We also developed an example of an application that uses the DPAS ClientAPI. You can find it in the Client module. Hope it helps to better understand how it works! (The application is currently "installed on user1 pc". This means that the app only knows user1 keypair. All the other keys are the public keys of the server and other users so, in order to try our app, you can only use it as user1).
+We also developed an example of an application that uses the DPAS API. You can find it in the Client module. Hope it helps to better understand how it works! (The application is currently "installed on user1 pc". This means that the app only knows user1 keypair. All the other keys are the public keys of the server and other users so, in order to try our app, you can only use it as user1).
 
 ## Contributors
 - Simão Nunes
