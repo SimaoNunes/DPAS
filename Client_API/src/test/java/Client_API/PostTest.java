@@ -18,22 +18,22 @@ public class PostTest extends BaseTest {
 	@BeforeClass
 	public static void populate() throws AlreadyRegisteredException,
 			UnknownPublicKeyException, InvalidPublicKeyException {
-		clientAPI.register(publicKey1, "user1");
-		clientAPI.register(publicKey2, "user2");
+		clientAPI.register(publicKey1, "user1", privateKey1);
+		clientAPI.register(publicKey2, "user2", privateKey2);
 	}
 	
 	@Test
 	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
-		assertEquals(1, clientAPI.post(publicKey1, "user1 test message", null));
-		assertEquals(1, clientAPI.post(publicKey2, "user2 test message", null));
+		assertEquals(1, clientAPI.post(publicKey1, "user1 test message", null, privateKey1));
+		assertEquals(1, clientAPI.post(publicKey2, "user2 test message", null, privateKey2));
 	}
 	
 	@Test
 	public void Should_Succeed_When_ReferenceExistingAnnounce() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
 		int[] announcs1 = {0};
 		int[] announcs2 = {0,1,2};
-		assertEquals(1, clientAPI.post(publicKey1, "user1 test message", announcs1));
-		assertEquals(1, clientAPI.post(publicKey2, "user2 test message", announcs2));
+		assertEquals(1, clientAPI.post(publicKey1, "user1 test message", announcs1, privateKey1));
+		assertEquals(1, clientAPI.post(publicKey2, "user2 test message", announcs2, privateKey2));
 	}
 	
 	/*@Test
@@ -47,20 +47,20 @@ public class PostTest extends BaseTest {
 		clientAPI.post(publicKey1, "Has 256 charssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
 									"sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
 									"sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
-									"ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", null);
+									"ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", null, privateKey1);
 	}
 
 	@Test(expected = InvalidPublicKeyException.class)
 	public void Should_Fail_When_KeyIsInvalid() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAnnouncementException, UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException {
 
 
-		clientAPI.post(generateSmallerKey(), "This is going to fail", null);
+		clientAPI.post(generateSmallerKey(), "This is going to fail", null, privateKey1);
 
 	}
 
 	@Test(expected = UserNotRegisteredException.class)
 	public void Should_Fail_When_UserIsNotRegistered() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
-		clientAPI.post(publicKey3, "I am not a registered user", null);
+		clientAPI.post(publicKey3, "I am not a registered user", null, privateKey3);
 	}
 
 	

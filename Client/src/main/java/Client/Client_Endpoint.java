@@ -1,4 +1,4 @@
-package Client_API;
+package Client;
 
 import Exceptions.*;
 import Library.Envelope;
@@ -6,20 +6,22 @@ import Library.Request;
 import Library.Response;
 import org.json.simple.JSONObject;
 
-import javax.crypto.*;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.net.Socket;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.util.Base64;
 
-public class ClientAPI {
+public class Client_Endpoint {
 
     private byte[] serverNonce = null;
     private byte[] clientNonce = null;
 
 
-    public ClientAPI(){
+    public Client_Endpoint(){
 
     }
 
@@ -326,6 +328,9 @@ public class ClientAPI {
         Request request = new Request("REGISTER", key, name, getServerNonce(), getClientNonce());
 
         Envelope envelope_req = new Envelope(request, cipherRequest(request, privateKey));
+
+        System.out.println(getClientNonce());
+        System.out.println(getServerNonce());
 
         try {
             Envelope envelope_resp = sendReceive(envelope_req);

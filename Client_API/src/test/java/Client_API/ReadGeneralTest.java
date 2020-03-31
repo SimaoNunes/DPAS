@@ -18,24 +18,24 @@ public class ReadGeneralTest extends BaseTest{
 	public static void populate() throws InvalidAnnouncementException,
 			UserNotRegisteredException, MessageTooBigException, InvalidPublicKeyException, UnknownPublicKeyException, AlreadyRegisteredException {
 
-		clientAPI.register(publicKey1, "user1");
-        clientAPI.register(publicKey2, "user2");
+		clientAPI.register(publicKey1, "user1", privateKey1);
+        clientAPI.register(publicKey2, "user2", privateKey2);
     
         // some private posts first, to test order of posting
         //user 1      
-		clientAPI.post(publicKey1, "private post1 from user1", null);
-		clientAPI.post(publicKey1, "private post2 from user1", null);
+		clientAPI.post(publicKey1, "private post1 from user1", null, privateKey1);
+		clientAPI.post(publicKey1, "private post2 from user1", null, privateKey1);
         //user 2
-        clientAPI.post(publicKey2, "private post1 from user2", null);
-		clientAPI.post(publicKey2, "private post2 from user2", null);
+        clientAPI.post(publicKey2, "private post1 from user2", null, privateKey2);
+		clientAPI.post(publicKey2, "private post2 from user2", null, privateKey2);
 
         // public posts now
         //user 1
-        clientAPI.postGeneral(publicKey1, "public post1 from user1", null);
-		clientAPI.postGeneral(publicKey1, "public post2 from user1", null);
+        clientAPI.postGeneral(publicKey1, "public post1 from user1", null, privateKey1);
+		clientAPI.postGeneral(publicKey1, "public post2 from user1", null, privateKey1);
         //user 2      
-        clientAPI.postGeneral(publicKey2, "public post1 from user2", null);
-        clientAPI.postGeneral(publicKey2, "public post2 from user2", null);
+        clientAPI.postGeneral(publicKey2, "public post1 from user2", null, privateKey2);
+        clientAPI.postGeneral(publicKey2, "public post2 from user2", null, privateKey2);
     }
     
     

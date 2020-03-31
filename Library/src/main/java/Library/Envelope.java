@@ -1,8 +1,9 @@
 package Library;
 
 import javax.crypto.SealedObject;
+import java.io.Serializable;
 
-public class Envelope {
+public class Envelope implements Serializable {
 
     private Request request = null;
     private Response response = null;

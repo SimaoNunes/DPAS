@@ -72,22 +72,24 @@ public class Server implements Runnable{
 
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
-                        if(checkHash(envelope) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())){
+                        if(checkHash(envelope, outStream) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())){
                             register(envelope.getRequest(), outStream);
                         }
                         break;
                     case "POST":
-                        if (checkHash(envelope) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())) {
+                        if (checkHash(envelope, outStream) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())) {
                             post(envelope.getRequest(), false, outStream);
                         }
                         break;
                     case "POSTGENERAL":
-                        if(checkHash(envelope) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())){
+                        if(checkHash(envelope, outStream) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())){
                             post(envelope.getRequest(), true, outStream);
                         }
                         break;
                     case "READ":
-                        read(envelope.getRequest(), false, outStream);
+                        if (checkHash(envelope, outStream) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())){
+                            read(envelope.getRequest(), false, outStream);
+                        }
                         break;
                     case "READGENERAL":
                         read(envelope.getRequest(), true, outStream);
@@ -281,13 +283,22 @@ public class Server implements Runnable{
         return false;
     }
 
-    public boolean checkHash(Envelope envelope){
+    public boolean checkHash(Envelope envelope, ObjectOutputStream outStream){
 
         MessageDigest md ;
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream out = null;
+        if(envelope.getRequest().getPublicKey() == null || envelope.getRequest().getPublicKey().getEncoded().length != 294){
+            send(new Response(false, -3, envelope.getRequest().getNonceClient()), outStream);  //InvalidPublicKey
+            return false;
+        }
 
+        String username = checkKey(envelope.getRequest().getPublicKey());
+        if (username.equals("")) {
+            send(new Response(false, -7, envelope.getRequest().getNonceClient()), outStream); //key not in server keystore -7
+            return false;
+        }
 
         byte[] hash = decipher(envelope.getHash(), envelope.getRequest().getPublicKey());
 
@@ -330,12 +341,12 @@ public class Server implements Runnable{
     public PrivateKey getPrivateKey(){
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
+        PrivateKey key = null;
 
-        KeyStore.PrivateKeyEntry entry = null;
         try {
-            entry = (KeyStore.PrivateKeyEntry) ks.getEntry("server", null);
             ks = KeyStore.getInstance("JKS");
             ks.load(new FileInputStream("Keystores/keystore"), passphrase);
+            key = (PrivateKey) ks.getKey("server", passphrase);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (UnrecoverableEntryException e) {
@@ -350,7 +361,7 @@ public class Server implements Runnable{
             e.printStackTrace();
         }
 
-        return entry.getPrivateKey();
+        return key;
 
     }
 
@@ -484,6 +495,7 @@ public class Server implements Runnable{
             byte[] final_bytes = cipher.doFinal(response_hash);
 
             outputStream.writeObject(new Envelope(response, final_bytes));
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (NoSuchPaddingException e) {

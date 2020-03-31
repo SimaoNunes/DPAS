@@ -1,6 +1,6 @@
 package Client;
 
-import Client_API.ClientAPI;
+import Client_API.Client_Endpoint;
 
 import Exceptions.AlreadyRegisteredException;
 import Exceptions.InvalidAnnouncementException;
@@ -11,21 +11,26 @@ import Exceptions.TooMuchAnnouncementsException;
 import Exceptions.UnknownPublicKeyException;
 import Exceptions.UserNotRegisteredException;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
+import java.io.ObjectOutputStream;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.Scanner;
 
+import Library.Request;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+
 public class App {
 	// Client_API
-	private static ClientAPI clientAPI;
+	private static Client_Endpoint clientAPI;
 	// Scanner to get user input
 	private static Scanner scanner;
 	// Keystore with the client keyPair and Server publicKey
@@ -33,6 +38,8 @@ public class App {
 	// User public Key
 	private static PublicKey myPublicKey;
 	// Username
+	private static String userName;
+
 	// I wanted the user name global but not being able to do so so I'm passing it to the runApp method...
 	
     public static void main(String[] args) {
@@ -42,7 +49,7 @@ public class App {
     	}
     	System.out.println("\n======================  DPAS Application ======================");
     	// Initialize necessary objects
-    	clientAPI = new ClientAPI();
+    	clientAPI = new Client_Endpoint();
     	scanner = new Scanner(System.in);
     	myPublicKey = null;
         try {
@@ -53,19 +60,18 @@ public class App {
 		}
     	// Check if user name is provided. Otherwise register a new user
     	if(args.length == 1) {
-    		@SuppressWarnings("unused")
-    		String userName = args[0]; //FIXME not sanitizing user input. User can give any username (Miguel) but he will only have the password for his alias.
+    		userName = args[0]; //FIXME not sanitizing user input. User can give any username (Miguel) but he will only have the password for his alias.
     		try {
-				runApp(userName);
+				runApp();
 			} catch (KeyStoreException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
 			}
     	}
     	else {
 			try {
-				String userName = registerUser();
+				userName = registerUser();
 				if(!(userName == null)) {
-					runApp(userName);
+					runApp();
 				}
 			} catch (KeyStoreException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
@@ -102,7 +108,8 @@ public class App {
     	}
     	// Register user
     	try {
-			clientAPI.register(myPublicKey, inputUserName);
+
+			clientAPI.register(myPublicKey, inputUserName, getPrivateKey(inputUserName));
 		} catch (AlreadyRegisteredException e) {
 			System.out.println("\nUser with such username is already registered in DPAS!");
 			return null;
@@ -116,7 +123,7 @@ public class App {
 
 	
 	
-	private static void runApp(String userName) throws KeyStoreException {
+	private static void runApp() throws KeyStoreException {
 		// Check if username is in keystore. If so, get respective public key
 		if(keyStore.containsAlias(userName)) {
 			myPublicKey = keyStore.getCertificate(userName).getPublicKey();
@@ -240,9 +247,9 @@ public class App {
 		// Post announcement
 		try{
 			if(isGeneral){
-				clientAPI.postGeneral(myPublicKey, message, null);
+				clientAPI.postGeneral(myPublicKey, message, null, getPrivateKey(userName));
 			} else {
-				clientAPI.post(myPublicKey, message, null);
+				clientAPI.post(myPublicKey, message, null, getPrivateKey(userName));
 			}
 		} catch (UserNotRegisteredException e) {
 			System.out.println("\nERROR: User is not registered in DPAS System.");
@@ -287,7 +294,7 @@ public class App {
 			try {
 				if(keyStore.containsAlias(userName)) {
 					PublicKey  publicKey = keyStore.getCertificate(userName).getPublicKey();
-					jsonAnnouncs = clientAPI.read(publicKey, Integer.parseInt(numberOfPosts));
+					jsonAnnouncs = clientAPI.read(publicKey, Integer.parseInt(numberOfPosts), getPrivateKey(userName));
 					printAnnouncements(jsonAnnouncs, false);
 				} else {
 					System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
@@ -342,7 +349,61 @@ public class App {
             }	
         }
 	}
-	
-	
+
+	private static PrivateKey getPrivateKey(String username){
+
+    	PrivateKey key = null;
+
+    	char[] passphrase = "changeit".toCharArray();
+    	try{
+    		key = (PrivateKey) keyStore.getKey(username, passphrase);
+		} catch (UnrecoverableKeyException e) {
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		} catch (KeyStoreException e) {
+			e.printStackTrace();
+		}
+
+    	return key;
+	}
+
+	private static byte[] cipherRequest(Request request, PrivateKey key){
+
+		MessageDigest md ;
+
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutputStream out = null;
+
+		Cipher cipher;
+
+		try{
+			md = MessageDigest.getInstance("SHA-256");
+			out = new ObjectOutputStream(bos);
+			out.writeObject(request);
+			out.flush();
+			byte[] request_bytes = bos.toByteArray();
+			byte[] request_hash = md.digest(request_bytes);
+
+			cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.ENCRYPT_MODE, key);
+			return cipher.doFinal(request_hash);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		} catch (InvalidKeyException e) {
+			e.printStackTrace();
+		} catch (NoSuchPaddingException e) {
+			e.printStackTrace();
+		} catch (BadPaddingException e) {
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 }
 

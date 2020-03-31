@@ -10,9 +10,9 @@ public class PersistenceTest extends BaseTest{
 
     @BeforeClass
     public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
-        clientAPI.register(publicKey1, "Miguel");
-        clientAPI.register(publicKey2, "Grilo");
-        clientAPI.register(publicKey3, "Simao");
+        clientAPI.register(publicKey1, "Miguel", privateKey1);
+        clientAPI.register(publicKey2, "Grilo", privateKey2);
+        clientAPI.register(publicKey3, "Simao", privateKey3);
     }
 
     /*@Test(expected = AlreadyRegisteredException.class)

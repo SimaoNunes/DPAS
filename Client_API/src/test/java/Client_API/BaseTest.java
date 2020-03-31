@@ -1,18 +1,17 @@
 package Client_API;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.*;
 import java.security.cert.CertificateException;
 
+import Library.Envelope;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.junit.*;
 
-import Client_API.ClientAPI;
 import Library.Request;
 
 ////////////////////////////////////////////////////////////////////
@@ -24,7 +23,7 @@ import Library.Request;
 
 public class BaseTest {
 	
-	static ClientAPI clientAPI;
+	static Client_Endpoint clientAPI;
 	static KeyStore keyStore;
 	static PrivateKey privateKey1;
 	static PrivateKey privateKey2;
@@ -37,7 +36,7 @@ public class BaseTest {
 	@BeforeClass
 	public static void oneTimeSetup() {
 		// Instantiate class to be tested, in this case the API that will communicate with the Server
-		clientAPI = new ClientAPI();
+		clientAPI = new Client_Endpoint();
         initiate();
 
 	}
@@ -86,7 +85,7 @@ public class BaseTest {
         try {
             socket = new Socket("localhost", 9000);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            outputStream.writeObject(new Request("DELETEALL", null));
+            outputStream.writeObject(new Envelope(new Request("DELETEALL", null)));
             outputStream.close();
             socket.close();
 
