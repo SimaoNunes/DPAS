@@ -18,7 +18,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <mainclass>Client.App</mainclass>
+    <mainclass>Client.ClientApp</mainclass>
   </properties>
 
   <build>

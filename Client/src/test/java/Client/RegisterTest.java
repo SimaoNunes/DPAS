@@ -36,11 +36,10 @@ public class RegisterTest extends BaseTest {
 		clientEndpoint1.register();
 	}
 
-	/*@Test(expected = UnknownPublicKeyException.class)
+	@Test(expected = UnknownPublicKeyException.class)
 	public void Should_Fail_When_ServerDoesntHavePubKey() throws KeyStoreException, AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
-		PublicKey badPub = keyStore.getCertificate("usererror").getPublicKey();
-		clientAPI.register(badPub, "usererror", privateKey1);
-	}*/
+		clientEndpointError.register();
+	}
 	
 	/*@Test(expected = InvalidPublicKeyException.class)
 	public void Should_Fail_When_PubKeyIsNull() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {

@@ -19,23 +19,23 @@ public class ReadGeneralTest extends BaseTest{
 			UserNotRegisteredException, InvalidAnnouncementException {
 
 		clientEndpoint1.register();
-        //clientAPI.register(publicKey2, "user2", privateKey2);
+        clientEndpoint2.register();
     
         // some private posts first, to test order of posting
         //user 1      
 		clientEndpoint1.post("private post1 from user1", null);
-		//clientAPI.post(publicKey1, "private post2 from user1", null, privateKey1);
+		clientEndpoint1.post("private post2 from user1", null);
         //user 2
-        //clientAPI.post(publicKey2, "private post1 from user2", null, privateKey2);
-		//clientAPI.post(publicKey2, "private post2 from user2", null, privateKey2);
+        clientEndpoint2.post("private post1 from user2", null);
+		clientEndpoint2.post("private post2 from user2", null);
 
         // public posts now
         //user 1
         clientEndpoint1.postGeneral("public post1 from user1", null);
 		clientEndpoint1.postGeneral("public post2 from user1", null);
         //user 2      
-        //clientAPI.postGeneral(publicKey2, "public post1 from user2", null, privateKey2);
-        //clientAPI.postGeneral(publicKey2, "public post2 from user2", null, privateKey2);
+		clientEndpoint2.postGeneral("public post1 from user2", null);
+		clientEndpoint2.postGeneral("public post2 from user2", null);
     }
     
     
@@ -50,22 +50,20 @@ public class ReadGeneralTest extends BaseTest{
 		clientEndpoint1.readGeneral(685);
 	}
 
-    /*@Test
+    @Test
 	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidPostsNumberException, TooMuchAnnouncementsException {
         // get most recent general post -> should succeed even though the user didn't refer any other announcements when posting
         String[] general_result = getMessagesFromJSON(clientEndpoint1.readGeneral(1));
         assertEquals("public post2 from user2", general_result[0]);
-    }*/    
+    }
     
-	/*@Test
+	@Test
 	public void Should_Succeed_When_Asking_For_All() throws InvalidPostsNumberException, TooMuchAnnouncementsException {
-        
         String[] general_result = getMessagesFromJSON(clientEndpoint1.readGeneral(0));
 
 		assertEquals(general_result[0], "public post2 from user2");
 		assertEquals(general_result[1], "public post1 from user2");
         assertEquals(general_result[2], "public post2 from user1");
         assertEquals(general_result[3], "public post1 from user1");
-        
-	}*/
+	}
 }

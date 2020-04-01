@@ -21,20 +21,21 @@ public class PostTest extends BaseTest {
 	public static void populate() throws AlreadyRegisteredException,
 			UnknownPublicKeyException, InvalidPublicKeyException {
 		clientEndpoint1.register();
+		clientEndpoint2.register();
 	}
 	
 	@Test
 	public void Should_Succeed_When_AnnouncsIsNull() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException  {
 		assertEquals(1, clientEndpoint1.post("user1 test message", null));
-		//assertEquals(1, clientAPI.post(publicKey2, "user2 test message", null, privateKey2));
+		assertEquals(1, clientEndpoint2.post("user2 test message", null));
 	}
 	
 	@Test
 	public void Should_Succeed_When_ReferenceExistingAnnounce() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
 		int[] announcs1 = {0};
-		//int[] announcs2 = {0,1,2};
+		int[] announcs2 = {0,1,2};
 		assertEquals(1, clientEndpoint1.post("user1 test message", announcs1));
-		//assertEquals(1, clientAPI.post(publicKey2, "user2 test message", announcs2, privateKey2));
+		assertEquals(1, clientEndpoint2.post("user2 test message", announcs2));
 	}
 	
 	/*@Test
@@ -56,9 +57,9 @@ public class PostTest extends BaseTest {
 		clientAPI.post(generateSmallerKey(), "This is going to fail", null, privateKey1);
 	}*/
 
-	/*@Test(expected = UserNotRegisteredException.class)
+	@Test(expected = UserNotRegisteredException.class)
 	public void Should_Fail_When_UserIsNotRegistered() throws MessageTooBigException, UserNotRegisteredException, InvalidPublicKeyException, InvalidAnnouncementException {
-		clientAPI.post(publicKey3, "I am not a registered user", null, privateKey3);
-	}*/
+		clientEndpoint3.post("I am not a registered user", null);
+	}
 	
 }

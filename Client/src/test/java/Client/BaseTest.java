@@ -23,13 +23,19 @@ import java.security.*;
 public class BaseTest {
 	
 	static ClientEndpoint clientEndpoint1;
+	static ClientEndpoint clientEndpoint2;
+	static ClientEndpoint clientEndpoint3;
+	static ClientEndpoint clientEndpointError;
 	static KeyStore keyStore;
 	static char[] passphrase = "changeit".toCharArray();
 
 	@BeforeClass
 	public static void oneTimeSetup() {
-		// Instantiate class to be tested, in this case the API that will communicate with the Server
+		// Instantiate class to be tested, in this case the ClientEndpoint that will communicate with the Server
 		clientEndpoint1 = new ClientEndpoint("user1");
+		clientEndpoint2 = new ClientEndpoint("user2");
+		clientEndpoint3 = new ClientEndpoint("user3");
+		clientEndpointError = new ClientEndpoint("usererror");
 	}
 
 	@AfterClass
