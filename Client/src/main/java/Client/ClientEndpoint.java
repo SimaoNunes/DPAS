@@ -95,7 +95,7 @@ public class ClientEndpoint {
     private Envelope sendReceive(Envelope envelope) throws IOException, ClassNotFoundException {
         Socket socket = createSocket();
         createOutputStream(socket).writeObject(envelope);
-        socket.setSoTimeout(100);
+        socket.setSoTimeout(4000);
 
         return (Envelope) createInputStream(socket).readObject();
     }
@@ -209,7 +209,7 @@ public class ClientEndpoint {
 	//				     REGISTER  					//
 	//////////////////////////////////////////////////
 
-    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException {
+    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
         startHandshake(getPublicKey());
 
@@ -221,10 +221,10 @@ public class ClientEndpoint {
             Envelope envelope_resp = sendReceive(envelope_req);
 
             if(!checkNonce(envelope_resp.getResponse()))          {
-                //lançar exceçao, old message
+                throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
             if(!criptoManager.checkHash(envelope_resp, userName)) {
-                //lançar exceção, ataque à integridade física do jogador
+                throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
             checkRegister(envelope_resp.getResponse());
             if(envelope_resp.getResponse().getSuccess()){
@@ -238,7 +238,7 @@ public class ClientEndpoint {
             e.printStackTrace();
             return 0;
         } catch(SocketTimeoutException e){
-            throw new OperationTimeoutException("There was a problem in the connection we cannot infer precisely if te register was successful. Please try to log in");
+            throw new OperationTimeoutException("There was a problem in the connection we cannot infer precisely if the register was successful. Please try to log in");
         } catch (IOException e) {
             e.printStackTrace();
             return 0;
@@ -250,7 +250,7 @@ public class ClientEndpoint {
     //////////////////////////////////////////////////
 
     public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey) throws InvalidAnnouncementException,
-            UserNotRegisteredException, MessageTooBigException {
+                                                                                                                                                                       UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
         if(isGeneral){
             request = new Request("POSTGENERAL", key, message, announcs, serverNonce, clientNonce);
@@ -264,28 +264,31 @@ public class ClientEndpoint {
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
             if(!checkNonce(envelope_resp.getResponse())){
-                //lançar execeção, replay attack
+                throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
 
             if(!criptoManager.checkHash(envelope_resp, userName)){
-                //lançar exceção
+                throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
             checkPost(envelope_resp.getResponse());
             return 1;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (SocketTimeoutException e) {
+            throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        } catch(IOException e){
+            e.printStackTrace();
         }
+
         return 0;
     }
 
-    public int post(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException {
+    public int post(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(getPublicKey());
         return postAux(getPublicKey(), message, announcs, false, getServerNonce(), getClientNonce(), getPrivateKey());
     }
     
-    public int postGeneral(String message, int[] announcs) throws  MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException {
+    public int postGeneral(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(getPublicKey());
         return postAux(getPublicKey(), message, announcs, true, getServerNonce(), getClientNonce(), getPrivateKey());
     }
@@ -294,7 +297,7 @@ public class ClientEndpoint {
     //				      READ						//
     //////////////////////////////////////////////////
 
-    public JSONObject read(String announcUserName, int number) throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException {
+    public JSONObject read(String announcUserName, int number) throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
         startHandshake(getPublicKey());
         
@@ -307,17 +310,16 @@ public class ClientEndpoint {
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
 
-            if(!checkNonce(envelope_resp.getResponse())){
-                //lançar execeção, replay attack
-            }
+            if (!checkNonce(envelope_resp.getResponse())) {
+                throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");            }
 
-            if(!criptoManager.checkHash(envelope_resp, userName)){
-                //lançar exceção
-            }
+            if (!criptoManager.checkHash(envelope_resp, userName)) {
+                throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");            }
 
-			checkRead(envelope_resp.getResponse());
+            checkRead(envelope_resp.getResponse());
             return envelope_resp.getResponse().getJsonObject();
-
+        } catch (SocketTimeoutException e){
+            throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -326,7 +328,7 @@ public class ClientEndpoint {
         return null;
     }
 
-    public JSONObject readGeneral(int number) throws InvalidPostsNumberException, TooMuchAnnouncementsException {
+    public JSONObject readGeneral(int number) throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException {
 
         Request request = new Request("READGENERAL", number);
 
@@ -334,7 +336,7 @@ public class ClientEndpoint {
             Envelope envelope = sendReceive(new Envelope(request, null));
 
             if(!criptoManager.checkHash(envelope, userName)){
-                //lançar exceção
+                throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
 			checkReadGeneral(envelope.getResponse());
             return envelope.getResponse().getJsonObject();

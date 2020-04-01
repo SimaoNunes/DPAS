@@ -1,9 +1,6 @@
 package Client;
 
-import Exceptions.AlreadyRegisteredException;
-import Exceptions.NonceTimeoutException;
-import Exceptions.OperationTimeoutException;
-import Exceptions.UnknownPublicKeyException;
+import Exceptions.*;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -26,18 +23,18 @@ public class RegisterTest extends BaseTest {
 	}
 	
 	@Test
-	public void SimpleRegisterSuccess() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException {
+	public void SimpleRegisterSuccess() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		clientEndpoint1.register();
 	}
 	
 	@Test(expected = AlreadyRegisteredException.class)
-	public void Should_Fail_When_UserIsAlreadyRegistered() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException {
+	public void Should_Fail_When_UserIsAlreadyRegistered() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		clientEndpoint1.register();
 		clientEndpoint1.register();
 	}
 
 	@Test(expected = UnknownPublicKeyException.class)
-	public void Should_Fail_When_ServerDoesntHavePubKey() throws KeyStoreException, AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException {
+	public void Should_Fail_When_ServerDoesntHavePubKey() throws KeyStoreException, AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		clientEndpointError.register();
 	}
 	
@@ -48,7 +45,7 @@ public class RegisterTest extends BaseTest {
 	}*/
 
 	@Test
-	public void Should_Succeed_With_TripleRegisters() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException {
+	public void Should_Succeed_With_TripleRegisters() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		assertEquals(1, clientEndpoint1.register());
 		assertEquals(1, clientEndpoint2.register());
 		assertEquals(1, clientEndpoint3.register());

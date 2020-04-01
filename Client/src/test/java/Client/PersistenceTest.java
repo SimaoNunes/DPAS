@@ -1,15 +1,12 @@
 package Client;
 
-import Exceptions.AlreadyRegisteredException;
-import Exceptions.NonceTimeoutException;
-import Exceptions.OperationTimeoutException;
-import Exceptions.UnknownPublicKeyException;
+import Exceptions.*;
 import org.junit.BeforeClass;
 
 public class PersistenceTest extends BaseTest {
 
     @BeforeClass
-    public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException {
+    public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         clientEndpoint1.register();
     }
 

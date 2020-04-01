@@ -17,7 +17,7 @@ public class ReadTest extends BaseTest{
 
 	@BeforeClass
 	public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException,
-			MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException {
+												 MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
 		clientEndpoint1.register();
 		clientEndpoint2.register();
@@ -32,7 +32,7 @@ public class ReadTest extends BaseTest{
 
 	}
 	@Test
-	public void Should_Succeed_When_AnnouncsIsNull_With_1Post() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException {
+	public void Should_Succeed_When_AnnouncsIsNull_With_1Post() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
 		String[] result = getMessagesFromJSON(clientEndpoint1.read("user1", 1));
 
@@ -40,7 +40,7 @@ public class ReadTest extends BaseTest{
 	}
 
 	@Test
-	public void Should_Succeed_When_AnnouncsIsNull_With_3Post_2Users() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException  {
+	public void Should_Succeed_When_AnnouncsIsNull_With_3Post_2Users() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
 		String[] result1 = getMessagesFromJSON(clientEndpoint1.read("user1", 2));
 		String[] result2 = getMessagesFromJSON(clientEndpoint2.read("user2", 2));
@@ -60,24 +60,24 @@ public class ReadTest extends BaseTest{
 	}*/
 
 	@Test(expected = UserNotRegisteredException.class)
-	public void Should_Fail_When_UserNotRegistered() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException {
+	public void Should_Fail_When_UserNotRegistered() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		//user 3 is not registered
 		clientEndpoint3.read("user3", 1);
 	}
 
 	@Test(expected = InvalidPostsNumberException.class)
-	public void Should_Fail_When_BadPostsNumber() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException {
+	public void Should_Fail_When_BadPostsNumber() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		clientEndpoint1.read("user1", -301);
 	}
 
 	@Test(expected = TooMuchAnnouncementsException.class)
-	public void Should_Fail_When_AskingAlotOfPosts() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException {
+	public void Should_Fail_When_AskingAlotOfPosts() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		//There are only 2 posts
 		clientEndpoint1.read("user1", 685);
 	}
 
 	@Test
-	public void Should_Succeed_When_AskingForAll() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException {
+	public void Should_Succeed_When_AskingForAll() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		String[] result1 = getMessagesFromJSON(clientEndpoint1.read("user1", 0));
 		String[] result2 = getMessagesFromJSON(clientEndpoint2.read("user2", 0));
 

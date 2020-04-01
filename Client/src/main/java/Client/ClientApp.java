@@ -83,8 +83,12 @@ public class ClientApp {
 		} catch (OperationTimeoutException e) {
 			System.out.println("\n"+e.getMessage());
 			return false;
+		} catch (IntegrityException e) {
+			System.out.println("\n" + e.getMessage());
+		} catch (FreshnessException e) {
+			System.out.println("\n" + e.getMessage());
 		}
-    	System.out.println("\nHi " + userName + "! You're now registered on DPAS!");
+		System.out.println("\nHi " + userName + "! You're now registered on DPAS!");
     	return true;
 	}
 
@@ -218,7 +222,13 @@ public class ClientApp {
 			System.out.println("\n"+e.getMessage());
 		} catch (NonceTimeoutException e) {
 			System.out.println("\n"+e.getMessage());
-		} 
+		} catch (OperationTimeoutException e) {
+			System.out.println("\n" + e.getMessage());
+		} catch (IntegrityException e) {
+			System.out.println("\n" + e.getMessage());
+		} catch (FreshnessException e) {
+			System.out.println("\n" + e.getMessage());
+		}
 	}
 	
 	
@@ -262,6 +272,12 @@ public class ClientApp {
 			System.out.println("\n"+e.getMessage());
 		} catch (NonceTimeoutException e) {
 			System.out.println("\n"+e.getMessage());
+		} catch (OperationTimeoutException e) {
+			System.out.println("\n" + e.getMessage());
+		} catch (IntegrityException e) {
+			System.out.println("\n" + e.getMessage());
+		} catch (FreshnessException e) {
+			System.out.println("\n" + e.getMessage());
 		}
 	}
 
