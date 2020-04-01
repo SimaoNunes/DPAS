@@ -72,6 +72,7 @@ public class Server implements Runnable{
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
                         if(checkHash(envelope, outStream) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())){
+                            System.out.println("toca a entrar aqui");
                             register(envelope.getRequest(), outStream);
                         }
                         break;
@@ -131,18 +132,20 @@ public class Server implements Runnable{
             return;
         }
         synchronized (userIdMap) {
+            System.out.println("tou fixe");
             if (userIdMap.containsKey(request.getPublicKey())) {
                 send(new Response(false, -2, request.getNonceClient()), outStream);
             }
             // Register new user
             else {
+                System.out.println("tou fixe v2");
                 String path = "./storage/AnnouncementBoards/" + username;
                 File file = new File(path);
                 file.mkdirs();
                 userIdMap.put(request.getPublicKey(), username);
                 saveUserIdMap();
                 System.out.println("User " + request.getName() + " successfully registered!");
-                send(new Response(true), outStream);
+                send(new Response(true, request.getNonceClient()), outStream);
             }
 
         }
@@ -274,7 +277,7 @@ public class Server implements Runnable{
 
     public boolean checkNonce(PublicKey key, byte[] nonce){
         if(getNonces().containsKey(key)){
-            if(getNonces().get(key).equals(nonce)){
+            if(Arrays.equals(getNonces().get(key), nonce)){
                 getNonces().remove(key);
                 return true;
             }
@@ -309,7 +312,7 @@ public class Server implements Runnable{
             out.flush();
             byte[] request_bytes = bos.toByteArray();
 
-            return md.digest(request_bytes).equals(hash);
+            return Arrays.equals(md.digest(request_bytes), hash);
 
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -331,9 +334,12 @@ public class Server implements Runnable{
     public void sendRandomNonce(PublicKey key, ObjectOutputStream outputStream){
 
         byte[] serverNonce = generateRandomNonce();
+
         getNonces().put(key, serverNonce);
 
-        send(new Response(generateRandomNonce()), outputStream);
+        System.out.println("A gerar random nonce");
+
+        send(new Response(serverNonce), outputStream);
 
     }
 
