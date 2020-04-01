@@ -117,7 +117,7 @@ public class Server implements Runnable{
                         break;
                 }
                 socket.close();
-            }catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }catch (Exception e) {
@@ -155,7 +155,7 @@ public class Server implements Runnable{
     //////////////////////////////////////////////////
     
     private void post(Request request, Boolean general, ObjectOutputStream outStream){
-      
+        // Get userName from keystore
         String username = userIdMap.get(request.getPublicKey());
         String path = "./storage/AnnouncementBoards/" + username + "/";
 
@@ -254,10 +254,10 @@ public class Server implements Runnable{
     
     private String[] getDirectoryList(PublicKey key){
         String path = "./storage/";
-        if(key == null){
+        if(key == null) {
             path += "GeneralBoard/";
         }
-        else{
+        else {
             path += "AnnouncementBoards/" + userIdMap.get(key) + "/";
         }
 
@@ -530,7 +530,7 @@ public class Server implements Runnable{
                         return false;
                     }
                     break;
-                // UnknownPublicKey
+                // UnknownPublicKey 
                 case -7:
                     if (criptoManager.checkKey(request.getPublicKey()) == "") {
                         send(new Response(false, -7, request.getNonceClient()), outStream);

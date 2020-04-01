@@ -41,7 +41,7 @@ public class CriptoManager {
 
         Cipher cipher;
 
-        try{
+        try {
             md = MessageDigest.getInstance("SHA-256");
             out = new ObjectOutputStream(bos);
             out.writeObject(request);
@@ -73,7 +73,7 @@ public class CriptoManager {
         byte[] final_bytes = null;
         Cipher cipher;
 
-        try{
+        try {
             cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, key);
             final_bytes = cipher.doFinal(bytes);
@@ -106,7 +106,7 @@ public class CriptoManager {
 
         byte[] hash = this.decipher(envelope.getHash(), getPublicKeyFromKs(userName, "server"));
 
-        try{
+        try {
             md = MessageDigest.getInstance("SHA-256");
 
             out = new ObjectOutputStream(bos);
@@ -130,7 +130,7 @@ public class CriptoManager {
 //							//
 //////////////////////////////
     
-    byte[] generateClientNonce(){
+    byte[] generateClientNonce() {
         SecureRandom random = new SecureRandom();
         byte[] nonce = new byte[16];
         random.nextBytes(nonce);

@@ -15,7 +15,7 @@ import static org.junit.Assert.assertEquals;
 public class ReadGeneralTest extends BaseTest{
 
     @BeforeClass
-	public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException, MessageTooBigException,
+	public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, MessageTooBigException,
 			UserNotRegisteredException, InvalidAnnouncementException {
 
 		clientEndpoint1.register();
@@ -66,4 +66,5 @@ public class ReadGeneralTest extends BaseTest{
         assertEquals(general_result[2], "public post2 from user1");
         assertEquals(general_result[3], "public post1 from user1");
 	}
+	
 }

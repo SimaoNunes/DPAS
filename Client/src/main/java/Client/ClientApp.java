@@ -95,7 +95,7 @@ public class ClientApp {
 			} catch (AlreadyRegisteredException e) {
 				System.out.println("\nUser with such username is already registered in DPAS!");
 				return false;
-			} catch (UnknownPublicKeyException | InvalidPublicKeyException e) {
+			} catch (UnknownPublicKeyException e) {
 				System.out.println("\nThere seems to be a problem with your authentication. Make sure you have the app properly installed with your CC public key.");
 				return false;
 			} 
@@ -228,8 +228,6 @@ public class ClientApp {
 			}
 		} catch (UserNotRegisteredException e) {
 			System.out.println("\nERROR: User is not registered in DPAS System.");
-		} catch (InvalidPublicKeyException e) {
-			System.out.println("\nERROR: Make sure you have the app properly installed with your CC public key.");
 		} catch (MessageTooBigException e) {
 			System.out.println("\nERROR: Message size exceeds 255 characters.");
 		} catch (InvalidAnnouncementException e) {
@@ -276,8 +274,6 @@ public class ClientApp {
 			System.out.println("\nERROR: The number of announcements you've asked for exceeds the number of announcements existing in such board");
 		} catch (UserNotRegisteredException e) {
 			System.out.println("\nERROR: User is not registered in DPAS System.");
-		} catch (InvalidPublicKeyException e) {
-			System.out.println("\nERROR: Make sure you have the app properly installed with your CC public key.");
 		}
 	}
 

@@ -42,7 +42,6 @@ public class BaseTest {
 	public static void cleanUp(){
         deleteUsers();
 	}
-	
 
     public static PublicKey generateSmallerKey(){
         KeyPairGenerator keyGen = null;
