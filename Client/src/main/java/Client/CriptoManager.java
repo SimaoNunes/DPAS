@@ -15,6 +15,7 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -114,7 +115,7 @@ public class CriptoManager {
             out.flush();
             byte[] response_bytes = bos.toByteArray();
 
-            return md.digest(response_bytes).equals(hash);
+            return Arrays.equals(md.digest(response_bytes), hash);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (IOException e) {
