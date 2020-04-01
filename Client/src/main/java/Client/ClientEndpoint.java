@@ -89,7 +89,6 @@ public class ClientEndpoint {
         createOutputStream(socket).writeObject(envelope);
 
         return (Envelope) createInputStream(socket).readObject();
-
     }
 
     //Crypto part
@@ -148,8 +147,6 @@ public class ClientEndpoint {
     private PublicKey getPublicKeyFromKs(String username){
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
-
-        PublicKey key = null;
 
         try{
             ks = KeyStore.getInstance("JKS");
