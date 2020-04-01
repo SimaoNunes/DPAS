@@ -34,10 +34,11 @@ public class PostTest extends BaseTest {
 		assertEquals(1, clientEndpoint2.post("user2 test message", announcs2));
 	}
 	
-	/*@Test
-	public void Should_Fail_When_AnnouncDoesntExist() {
-		
-	}*/
+	@Test(expected = InvalidAnnouncementException.class)
+	public void Should_Fail_When_AnnouncDoesntExist() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+		int[] announcs1 = {20};
+		assertEquals(1, clientEndpoint1.post("user1 test message", announcs1));
+	}
 
 	@Test(expected = MessageTooBigException.class)
 	public void Should_Fail_When_MessageIsTooBig() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {

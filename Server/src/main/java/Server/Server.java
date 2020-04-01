@@ -111,7 +111,6 @@ public class Server implements Runnable{
                         break;
                     case "NONCE":
                         byte[] randomNonce = criptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
-                        System.out.print(randomNonce);
                         send(new Response(randomNonce), outStream);
                         break;
                     case "DELETEALL":
