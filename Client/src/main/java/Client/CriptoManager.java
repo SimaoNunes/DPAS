@@ -21,6 +21,8 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
+import java.util.Arrays;
+
 import Library.Envelope;
 import Library.Request;
 
@@ -114,7 +116,7 @@ public class CriptoManager {
             out.flush();
             byte[] response_bytes = bos.toByteArray();
 
-            return md.digest(response_bytes).equals(hash);
+            return Arrays.equals(md.digest(response_bytes), hash);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (IOException e) {
