@@ -6,16 +6,10 @@ import Library.Request;
 import Library.Response;
 import org.json.simple.JSONObject;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.net.Socket;
 import java.security.*;
-import java.security.cert.CertificateException;
 import java.util.Arrays;
-import java.util.Base64;
 
 public class ClientEndpoint {
 
@@ -24,22 +18,26 @@ public class ClientEndpoint {
 
     private PrivateKey privateKey = null;
     private PublicKey publicKey = null;
-    private String username = null;
+    private PublicKey serverPublicKey = null;
+    private String userName = null;
+    private CriptoManager criptoManager = null;
 
 
-    public ClientEndpoint(String username){
-        setPrivateKey(getPrivateKeyFromKs(username));
-        setPublicKey(getPublicKeyFromKs(username));
-        setUsername(username);
+    public ClientEndpoint(String userName){
+    	criptoManager = new CriptoManager();
+        setPrivateKey(criptoManager.getPrivateKeyFromKs(userName));
+        setPublicKey(criptoManager.getPublicKeyFromKs(userName, userName));
+        setServerPublicKey(criptoManager.getPublicKeyFromKs(userName, "server"));
+        setUsername(userName);
 
     }
 
     public String getUsername() {
-        return username;
+        return userName;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUsername(String userName) {
+        this.userName = userName;
     }
 
     public byte[] getServerNonce() {
@@ -73,6 +71,14 @@ public class ClientEndpoint {
     public void setPublicKey(PublicKey publicKey) {
         this.publicKey = publicKey;
     }
+    
+    public PublicKey getServerPublicKey() {
+        return serverPublicKey;
+    }
+
+    public void setServerPublicKey(PublicKey serverPublicKey) {
+        this.serverPublicKey = serverPublicKey;
+    }
 
     private Socket createSocket() throws IOException {
         return new Socket("localhost",9000);
@@ -93,82 +99,11 @@ public class ClientEndpoint {
         return (Envelope) createInputStream(socket).readObject();
     }
 
-    //Crypto part
-
-    public boolean checkHash(Envelope envelope){
-        MessageDigest md;
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = null;
-
-        byte[] hash = decipher(envelope.getHash(), getServerPublicKey());
-
-        try{
-            md = MessageDigest.getInstance("SHA-256");
-
-            out = new ObjectOutputStream(bos);
-            out.writeObject(envelope.getResponse());
-            out.flush();
-            byte[] response_bytes = bos.toByteArray();
-
-            return md.digest(response_bytes).equals(hash);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    private PrivateKey getPrivateKeyFromKs(String username){
-        char[] passphrase = "changeit".toCharArray();
-        KeyStore ks = null;
-        PrivateKey key = null;
-
-        try {
-            ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/" + username + "_keystore"), passphrase);
-            key = (PrivateKey) ks.getKey(username, passphrase);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnrecoverableEntryException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return key;
-    }
-
-    private PublicKey getPublicKeyFromKs(String username){
-        char[] passphrase = "changeit".toCharArray();
-        KeyStore ks = null;
-
-        try{
-            ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/" + username + "_keystore"), passphrase);
-            return ks.getCertificate(username).getPublicKey();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-
+//////////////////////////
+//						//
+//	Handshake Methods	//
+//						//
+//////////////////////////
 
     private byte[] askForServerNonce(PublicKey key){
         try {
@@ -181,102 +116,9 @@ public class ClientEndpoint {
         return null;
     }
 
-    private byte[] generateClientNonce(){
-        SecureRandom random = new SecureRandom();
-        byte[] nonce = new byte[16];
-        random.nextBytes(nonce);
-        return nonce;
-    }
-
-    private byte[] cipherRequest(Request request, PrivateKey key){
-
-        MessageDigest md;
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = null;
-
-        Cipher cipher;
-
-        try{
-            md = MessageDigest.getInstance("SHA-256");
-            out = new ObjectOutputStream(bos);
-            out.writeObject(request);
-            out.flush();
-            byte[] request_bytes = bos.toByteArray();
-            byte[] request_hash = md.digest(request_bytes);
-
-            cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            return cipher.doFinal(request_hash);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public byte[] decipher(byte[] bytes, PublicKey key){
-        byte[] final_bytes = null;
-        Cipher cipher;
-
-        try{
-            cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            final_bytes = cipher.doFinal(bytes);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        }
-
-        return final_bytes;
-    }
-
-    public PublicKey getServerPublicKey(){
-        char[] passphrase = "changeit".toCharArray();
-        KeyStore ks = null;
-
-        try {
-            ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/" + username + "_keystore"), passphrase);
-            return ks.getCertificate("server").getPublicKey();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-
-
     private void startHandshake(PublicKey publicKey) {
-
         setServerNonce(askForServerNonce(publicKey));
-        setClientNonce(generateClientNonce());
-
+        setClientNonce(criptoManager.generateClientNonce());
     }
 
     private boolean checkNonce(Response response){
@@ -291,7 +133,7 @@ public class ClientEndpoint {
     
  //////////////////////////////////////////////////////////////
  //															 //
- //   Methods that check if responses must throw exceptions  //
+ //   Methods that check if Responses must throw exceptions  //
  //															 //
  //////////////////////////////////////////////////////////////
     
@@ -312,7 +154,6 @@ public class ClientEndpoint {
 
     public void checkPost(Response response) throws UserNotRegisteredException,
             InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException {
-
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -1){
@@ -328,12 +169,10 @@ public class ClientEndpoint {
                 throw new InvalidAnnouncementException("Announcements referenced do not exist!");
             }
         }
-
     }
 
     public void checkRead(Response response) throws UserNotRegisteredException,
             InvalidPublicKeyException, InvalidPostsNumberException, TooMuchAnnouncementsException {
-
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -1){
@@ -349,11 +188,9 @@ public class ClientEndpoint {
                 throw new TooMuchAnnouncementsException("There are not that much announcements to be read!");
             }
         }
-        
     }
     
     public void checkReadGeneral(Response response) throws InvalidPostsNumberException, TooMuchAnnouncementsException {
-
 		if(!response.getSuccess()){
 		    int error = response.getErrorCode();
 		    if(error == -6){
@@ -363,7 +200,6 @@ public class ClientEndpoint {
 		        throw new TooMuchAnnouncementsException("There are not that much announcements to be read!");
 		    }
 		}
-		
 	}
 
     
@@ -381,12 +217,9 @@ public class ClientEndpoint {
 
         startHandshake(getPublicKey());
 
-        System.out.println(getClientNonce());
-        System.out.println(getServerNonce());
-
         Request request = new Request("REGISTER", getPublicKey(), getUsername(), getServerNonce(), getClientNonce());
 
-        Envelope envelope_req = new Envelope(request, cipherRequest(request, getPrivateKey()));
+        Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
@@ -395,7 +228,7 @@ public class ClientEndpoint {
                 //lançar exceçao, old message
             }
 
-            if(!checkHash(envelope_resp)) {
+            if(!criptoManager.checkHash(envelope_resp, userName)) {
                 //lançar exceção
             }
             checkRegister(envelope_resp.getResponse());
@@ -427,7 +260,7 @@ public class ClientEndpoint {
             request = new Request("POST", key, message, announcs, serverNonce, clientNonce);
         }
 
-        Envelope envelope_req = new Envelope(request, cipherRequest(request, privateKey));
+        Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, privateKey));
 
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
@@ -435,7 +268,7 @@ public class ClientEndpoint {
                 //lançar execeção, replay attack
             }
 
-            if(!checkHash(envelope_resp)){
+            if(!criptoManager.checkHash(envelope_resp, userName)){
                 //lançar exceção
             }
             checkPost(envelope_resp.getResponse());
@@ -468,26 +301,16 @@ public class ClientEndpoint {
     //				      READ						//
     //////////////////////////////////////////////////
 
-    public JSONObject read(String userName, int number) throws InvalidPostsNumberException, UserNotRegisteredException,
+    public JSONObject read(String announcUserName, int number) throws InvalidPostsNumberException, UserNotRegisteredException,
     		InvalidPublicKeyException, TooMuchAnnouncementsException {
 
         startHandshake(getPublicKey());
         
-        PublicKey pubKey = null;
-		try {
-			char[] passphrase = "changeit".toCharArray();
-			KeyStore ks = null;
-			pubKey = null;
-			ks = KeyStore.getInstance("JKS");
-			ks.load(new FileInputStream("Keystores/" + username + "_keystore"), passphrase);
-			pubKey = ks.getCertificate(userName).getPublicKey();
-		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e1) {
-			e1.printStackTrace();
-		}
+        PublicKey pubKey = criptoManager.getPublicKeyFromKs(userName, announcUserName);
 
     	Request request = new Request("READ", pubKey, number, getServerNonce(), getClientNonce());
 
-        Envelope envelope_req = new Envelope(request, cipherRequest(request, getPrivateKey()));
+        Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
@@ -496,7 +319,7 @@ public class ClientEndpoint {
                 //lançar execeção, replay attack
             }
 
-            if(!checkHash(envelope_resp)){
+            if(!criptoManager.checkHash(envelope_resp, userName)){
                 //lançar exceção
             }
 
@@ -518,7 +341,7 @@ public class ClientEndpoint {
         try {
             Envelope envelope = sendReceive(new Envelope(request, null));
 
-            if(!checkHash(envelope)){
+            if(!criptoManager.checkHash(envelope, userName)){
                 //lançar exceção
             }
 			checkReadGeneral(envelope.getResponse());

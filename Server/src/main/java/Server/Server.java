@@ -132,13 +132,11 @@ public class Server implements Runnable{
             return;
         }
         synchronized (userIdMap) {
-            System.out.println("tou fixe");
             if (userIdMap.containsKey(request.getPublicKey())) {
                 send(new Response(false, -2, request.getNonceClient()), outStream);
             }
             // Register new user
             else {
-                System.out.println("tou fixe v2");
                 String path = "./storage/AnnouncementBoards/" + username;
                 File file = new File(path);
                 file.mkdirs();

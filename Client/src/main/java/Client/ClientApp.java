@@ -11,7 +11,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 
-public class App {
+public class ClientApp {
 	// ClientEndpoint
 	private static ClientEndpoint clientEndpoint;
 	// Scanner to get user input
