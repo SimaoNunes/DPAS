@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import Exceptions.*;
@@ -196,6 +198,7 @@ public class ClientApp {
 	
 	
 	private static void postMethod(Boolean isGeneral) {
+		// Ask for message
 		Boolean goodInput = false;
 		String message = null;
 		while(!goodInput) {
@@ -207,12 +210,37 @@ public class ClientApp {
 				goodInput = true;
 			}
 		}
+		// Ask if user wants to reference other Announcements
+		Boolean end = false;
+		goodInput = false;
+		String announcId;
+		List<Integer> announcsList  = new ArrayList<Integer>();
+		System.out.println("\nType the Ids of the Announcements you want to reference, and press Enter in between them. When you're finished, "
+						 + "press enter again. If you don't want to reference any Announcement, just press Enter.\n>>");
+		while(!end) {
+			while(!goodInput) {
+				System.out.println(" ");
+				announcId = scanner.nextLine();
+				if(announcId.equals("\n")) {
+					goodInput = true;
+					end = true;
+				}
+				else if(!announcId.matches("^[0-9]+$")) { 
+					System.out.println("\nPlease insert a valid number");
+				}
+				else {
+					goodInput = true;
+					announcsList.add(Integer.parseInt(announcId));
+				}
+			}
+		}
+		int[] announcsArray = toIntArray(announcsList);
 		// Post announcement
 		try{
 			if(isGeneral){
-				clientEndpoint.postGeneral(message, null);
+				clientEndpoint.postGeneral(message, announcsArray);
 			} else {
-				clientEndpoint.post(message, null);
+				clientEndpoint.post(message, announcsArray);
 			}
 		} catch (UserNotRegisteredException e) {
 			System.out.println("\n"+e.getMessage());
@@ -314,6 +342,17 @@ public class ClientApp {
                 System.out.println("Message: " + msg);
             }	
         }
+	}
+	
+	private static int[] toIntArray(List<Integer> list){
+		if(list.size() == 0) {
+			return null;
+		} else {
+			int[] ret = new int[list.size()];
+			for(int i = 0;i < ret.length;i++)
+				ret[i] = list.get(i);
+			return ret;
+		}
 	}
 
 }
