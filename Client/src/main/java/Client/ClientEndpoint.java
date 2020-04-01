@@ -95,8 +95,7 @@ public class ClientEndpoint {
     private Envelope sendReceive(Envelope envelope) throws IOException, ClassNotFoundException {
         Socket socket = createSocket();
         createOutputStream(socket).writeObject(envelope);
-        socket.setSoTimeout(20);
-        System.out.println(socket.getSoTimeout());
+        socket.setSoTimeout(100);
 
         return (Envelope) createInputStream(socket).readObject();
     }
@@ -150,7 +149,7 @@ public class ClientEndpoint {
                 throw new UnknownPublicKeyException("Such key doesn't exist in the server side!");
             }
             else if(error == -2){
-                throw new AlreadyRegisteredException("User with that public key already registered!");
+                throw new AlreadyRegisteredException("User with that public key already registered in the DPAS!");
             }
         }
     }
@@ -160,10 +159,10 @@ public class ClientEndpoint {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -1){
-                throw new UserNotRegisteredException("User with this public key is not registered!");
+                throw new UserNotRegisteredException("This user is not registered!");
             }
             else if(error == -4){
-                throw new MessageTooBigException("Message cannot have more than 255 characters!");
+                throw new MessageTooBigException("Message cannot exceed 255 characters!");
             }
             else if(error == -5){
                 throw new InvalidAnnouncementException("Announcements referenced do not exist!");
@@ -176,13 +175,13 @@ public class ClientEndpoint {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -1){
-                throw new UserNotRegisteredException("User with this public key is not registered!");
+                throw new UserNotRegisteredException("This user is not registered!");
             }
             else if(error == -6){
                 throw new InvalidPostsNumberException("Invalid announcements number to be read!");
             }
             else if(error == -10){
-                throw new TooMuchAnnouncementsException("There are not that much announcements to be read!");
+                throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
             }
         }
     }
@@ -224,9 +223,8 @@ public class ClientEndpoint {
             if(!checkNonce(envelope_resp.getResponse()))          {
                 //lançar exceçao, old message
             }
-
             if(!criptoManager.checkHash(envelope_resp, userName)) {
-                //lançar exceção
+                //lançar exceção, ataque à integridade física do jogador
             }
             checkRegister(envelope_resp.getResponse());
             if(envelope_resp.getResponse().getSuccess()){
@@ -237,13 +235,13 @@ public class ClientEndpoint {
                 return 0;
             }
         } catch (ClassNotFoundException e) {
-        	// On failure, return 0
             e.printStackTrace();
             return 0;
         } catch(SocketTimeoutException e){
-            throw new OperationTimeoutException("Please do a read to confirm that the post was successful!");
+            throw new OperationTimeoutException("There was a problem in the connection we cannot infer precisely if te register was successful. Please try to log in");
         } catch (IOException e) {
             e.printStackTrace();
+            return 0;
         }
     }
 
@@ -282,12 +280,12 @@ public class ClientEndpoint {
         return 0;
     }
 
-    public int post(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException {
+    public int post(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException {
         startHandshake(getPublicKey());
         return postAux(getPublicKey(), message, announcs, false, getServerNonce(), getClientNonce(), getPrivateKey());
     }
     
-    public int postGeneral(String message, int[] announcs) throws  MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException {
+    public int postGeneral(String message, int[] announcs) throws  MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException {
         startHandshake(getPublicKey());
         return postAux(getPublicKey(), message, announcs, true, getServerNonce(), getClientNonce(), getPrivateKey());
     }
@@ -296,7 +294,7 @@ public class ClientEndpoint {
     //				      READ						//
     //////////////////////////////////////////////////
 
-    public JSONObject read(String announcUserName, int number) throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException {
+    public JSONObject read(String announcUserName, int number) throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException {
 
         startHandshake(getPublicKey());
         

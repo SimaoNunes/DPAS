@@ -16,7 +16,7 @@ public class ReadGeneralTest extends BaseTest{
 
     @BeforeClass
 	public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, MessageTooBigException,
-			UserNotRegisteredException, InvalidAnnouncementException {
+			UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException {
 
 		clientEndpoint1.register();
         clientEndpoint2.register();

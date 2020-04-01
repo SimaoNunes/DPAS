@@ -1,6 +1,8 @@
 package Client;
 
 import Exceptions.AlreadyRegisteredException;
+import Exceptions.NonceTimeoutException;
+import Exceptions.OperationTimeoutException;
 import Exceptions.UnknownPublicKeyException;
 
 import org.junit.Before;
@@ -24,18 +26,18 @@ public class RegisterTest extends BaseTest {
 	}
 	
 	@Test
-	public void SimpleRegisterSuccess() throws AlreadyRegisteredException, UnknownPublicKeyException {
+	public void SimpleRegisterSuccess() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException {
 		clientEndpoint1.register();
 	}
 	
 	@Test(expected = AlreadyRegisteredException.class)
-	public void Should_Fail_When_UserIsAlreadyRegistered() throws AlreadyRegisteredException, UnknownPublicKeyException {
+	public void Should_Fail_When_UserIsAlreadyRegistered() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException {
 		clientEndpoint1.register();
 		clientEndpoint1.register();
 	}
 
 	@Test(expected = UnknownPublicKeyException.class)
-	public void Should_Fail_When_ServerDoesntHavePubKey() throws KeyStoreException, AlreadyRegisteredException, UnknownPublicKeyException {
+	public void Should_Fail_When_ServerDoesntHavePubKey() throws KeyStoreException, AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException {
 		clientEndpointError.register();
 	}
 	
@@ -46,7 +48,7 @@ public class RegisterTest extends BaseTest {
 	}*/
 
 	@Test
-	public void Should_Succeed_With_TripleRegisters() throws AlreadyRegisteredException, UnknownPublicKeyException {
+	public void Should_Succeed_With_TripleRegisters() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException {
 		assertEquals(1, clientEndpoint1.register());
 		assertEquals(1, clientEndpoint2.register());
 		assertEquals(1, clientEndpoint3.register());

@@ -13,45 +13,34 @@ import org.json.simple.JSONObject;
 
 public class ClientApp {
 	// ClientEndpoint
-	private static ClientEndpoint clientEndpoint;
+	private static ClientEndpoint clientEndpoint = null;
 	// Scanner to get user input
 	private static Scanner scanner = new Scanner(System.in);
 	// Keystore with the client keyPair and Server publicKey
-	private static KeyStore keyStore;
+	private static KeyStore keyStore = null;
 	// Username
-	private static String userName;
+	private static String userName = null;
 	
 	
     public static void main(String[] args) {
+    	System.out.println("\n======================  DPAS Application ======================");
     	// Check if arguments are being wrongly used (should only receive username, or no arguments at all)
     	if(args.length > 1) {
     		System.out.println("\nWrong way of running app. Either give a single argument with the user name or don't provide arguments and register a new user");
     	}
-    	System.out.println("\n======================  DPAS Application ======================");
-    	// Load user's keystore
-        try {
-        	keyStore = KeyStore.getInstance("JKS");
-			keyStore.load(new FileInputStream("Keystores/keystore"), "changeit".toCharArray());
-		} catch (NoSuchAlgorithmException | CertificateException | IOException | KeyStoreException e) {
-			e.printStackTrace();
-		}
     	// Check if user name is provided. Otherwise register a new user
     	if(args.length == 1) {
     		userName = args[0]; 																						//FIXME not sanitizing user input
-    		// Check if username is in keystore and if this user is the owner of the account
+    		// Try to load user's keystore and if this user is the owner of the account
 			try {
-				if(keyStore.containsAlias(userName)) {
-					if(keyStore.entryInstanceOf(userName, KeyStore.PrivateKeyEntry.class)) {
-						clientEndpoint = new ClientEndpoint(userName);
-						runApp();
-					} else {
-						System.out.println("\nYou're not the owner of this account!");
-					}
-				}
-				else {
-					System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
-				}
+		    	// Try to load user's keystore
+	        	keyStore = KeyStore.getInstance("JKS");
+				keyStore.load(new FileInputStream("Keystores/" + userName + "_keystore"), "changeit".toCharArray());
+				clientEndpoint = new ClientEndpoint(userName);
+				runApp();
 			} catch (KeyStoreException e) {
+				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded). You sure you typed your name right?");
+			} catch (NoSuchAlgorithmException | CertificateException | IOException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
 			}
     	} 
@@ -68,38 +57,33 @@ public class ClientApp {
     
 	private static Boolean registerUser() {
 		System.out.println("\nPlease register yourself in the DPAS.");
-    	// Ask user if he is registered or not
-    	Boolean goodInput = false;
     	String inputUserName = null;
-    	while(!goodInput) {
-    		// Check if username is trusted (aka if username alias is in keyStore)
-    		System.out.print("\nInsert a username:\n>> ");
-			inputUserName = scanner.nextLine();																			//FIXME Not sanitizing user input
-			/*try {*/
-			try {
-				if(keyStore.containsAlias(inputUserName)) {
-					if(keyStore.entryInstanceOf(inputUserName, KeyStore.PrivateKeyEntry.class)) {
-					goodInput = true;
-					userName = inputUserName;
-					clientEndpoint.register();
-					} else {
-						System.out.println("\nYou're not the owner of this account!");
-						return false;
-					}
-				} else {
-					System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
-				}
-			} catch (KeyStoreException e) {
-				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
-				return false;
-			} catch (AlreadyRegisteredException e) {
-				System.out.println("\nUser with such username is already registered in DPAS!");
-				return false;
-			} catch (UnknownPublicKeyException e) {
-				System.out.println("\nThere seems to be a problem with your authentication. Make sure you have the app properly installed with your CC public key.");
-				return false;
-			} 
-    	}
+		// Check if username is trusted (aka if username alias is in keyStore)
+		System.out.print("\nInsert a username:\n>> ");
+		inputUserName = scanner.nextLine();																			//FIXME Not sanitizing user input
+		try {
+	    	// Try to load user's keystore
+        	keyStore = KeyStore.getInstance("JKS");
+			keyStore.load(new FileInputStream("Keystores/" + inputUserName + "_keystore"), "changeit".toCharArray());
+			userName = inputUserName;
+			clientEndpoint = new ClientEndpoint(userName);
+			clientEndpoint.register();
+		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+			System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
+			return false;
+		} catch (AlreadyRegisteredException e) {
+			System.out.println("\n"+e.getMessage());
+			return false;
+		} catch (UnknownPublicKeyException e) {
+			System.out.println("\nThere seems to be a problem with your authentication. Make sure you have the app properly installed with your CC public key.");
+			return false;
+		} catch (NonceTimeoutException e) {
+			System.out.println("\n"+e.getMessage());
+			return false;
+		} catch (OperationTimeoutException e) {
+			System.out.println("\n"+e.getMessage());
+			return false;
+		}
     	System.out.println("\nHi " + userName + "! You're now registered on DPAS!");
     	return true;
 	}
@@ -227,12 +211,14 @@ public class ClientApp {
 				clientEndpoint.post(message, null);
 			}
 		} catch (UserNotRegisteredException e) {
-			System.out.println("\nERROR: User is not registered in DPAS System.");
+			System.out.println("\n"+e.getMessage());
 		} catch (MessageTooBigException e) {
-			System.out.println("\nERROR: Message size exceeds 255 characters.");
+			System.out.println("\n"+e.getMessage());
 		} catch (InvalidAnnouncementException e) {
-			System.out.println("\nERROR: Invalid announcement reference.");
-		}
+			System.out.println("\n"+e.getMessage());
+		} catch (NonceTimeoutException e) {
+			System.out.println("\n"+e.getMessage());
+		} 
 	}
 	
 	
@@ -269,11 +255,13 @@ public class ClientApp {
 		} catch (KeyStoreException e) {
 			System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
 		} catch (InvalidPostsNumberException e) {
-			System.out.println("\nERROR: You've inserted and invalid number of announcements to read.");
+			System.out.println("\n"+e.getMessage());
 		} catch (TooMuchAnnouncementsException e) {
-			System.out.println("\nERROR: The number of announcements you've asked for exceeds the number of announcements existing in such board");
+			System.out.println("\n"+e.getMessage());
 		} catch (UserNotRegisteredException e) {
-			System.out.println("\nERROR: User is not registered in DPAS System.");
+			System.out.println("\n"+e.getMessage());
+		} catch (NonceTimeoutException e) {
+			System.out.println("\n"+e.getMessage());
 		}
 	}
 
