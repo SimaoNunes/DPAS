@@ -14,6 +14,8 @@ import java.io.*;
 import java.net.Socket;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
+import java.util.Base64;
 
 public class ClientEndpoint {
 
@@ -191,7 +193,7 @@ public class ClientEndpoint {
 
     private byte[] cipherRequest(Request request, PrivateKey key){
 
-        MessageDigest md ;
+        MessageDigest md;
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream out = null;
@@ -281,7 +283,7 @@ public class ClientEndpoint {
     }
 
     private boolean checkNonce(Response response){
-        if(response.getNonce().equals(getClientNonce())){
+        if(Arrays.equals(response.getNonce(), getClientNonce())){
             setClientNonce(null);
             setServerNonce(null);
             return true;
@@ -381,6 +383,9 @@ public class ClientEndpoint {
     public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
 
         startHandshake(getPublicKey());
+
+        System.out.println(getClientNonce());
+        System.out.println(getServerNonce());
 
         Request request = new Request("REGISTER", getPublicKey(), getUsername(), getServerNonce(), getClientNonce());
 
