@@ -40,14 +40,39 @@ public class CriptoManager{
     protected CriptoManager(){
         nonces = new HashMap<>();
     }
-    
-//////////////////////////////////////////
-//										//
-//           Crypto Methods             //
-//    									//
-//////////////////////////////////////////
 
-    public String checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
+    public PrivateKey getPrivateKey(){
+        char[] passphrase = "changeit".toCharArray();
+        KeyStore ks = null;
+        PrivateKey key = null;
+
+        try {
+            ks = KeyStore.getInstance("JKS");
+            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
+            key = (PrivateKey) ks.getKey("server", passphrase);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnrecoverableEntryException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return key;
+    }
+    
+    //////////////////////////////////////////
+    //										//
+    //            Check Methods             //
+    //    									//
+    //////////////////////////////////////////
+
+    public String checkKey(PublicKey publicKey){
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
         try {
@@ -104,7 +129,12 @@ public class CriptoManager{
         return false;
     }
 
-    
+    /////////////////////////////////////////////////////////
+    //										               //
+    //            Nonce Manipulation Methods               //
+    //										               //
+    /////////////////////////////////////////////////////////
+
     private HashMap<PublicKey, byte[]> getNonces(){
         return nonces;
     }
@@ -127,30 +157,12 @@ public class CriptoManager{
         return nonce;
     }
 
-    public PrivateKey getPrivateKey(){
-        char[] passphrase = "changeit".toCharArray();
-        KeyStore ks = null;
-        PrivateKey key = null;
+    /////////////////////////////////////////////////////////
+    //										               //
+    //             Cipher and Decipher methods             //
+    //										               //
+    /////////////////////////////////////////////////////////
 
-        try {
-            ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
-            key = (PrivateKey) ks.getKey("server", passphrase);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnrecoverableEntryException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return key;
-    }
 
     public byte[] cipher(byte[] bytes, PrivateKey key){
         byte[] final_bytes = null;

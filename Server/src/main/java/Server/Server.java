@@ -93,7 +93,7 @@ public class Server implements Runnable{
                         }
                         break;
                     case "READ":
-                        if (checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -3, -6, -7}) && 
+                        if (checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -3, -6, -7, -10}) && 
                             criptoManager.checkHash(envelope, outStream) && 
                             criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()))
                             {
@@ -101,7 +101,7 @@ public class Server implements Runnable{
                         }
                         break;
                     case "READGENERAL":
-                        if (checkExceptions(envelope.getRequest(), outStream, new int[] {-6})) {
+                        if (checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10})) {
                             read(envelope.getRequest(), true, outStream);
                         }
                         break;
@@ -191,48 +191,43 @@ public class Server implements Runnable{
         String[] directoryList = getDirectoryList(request.getPublicKey());
         int directorySize = directoryList.length;
 
-        if (request.getNumber() > directorySize) { //se for general o getDirectoryList ve o nr no general
-            send(new Response(false, -10, request.getNonceClient()), outStream);  //TooMuchAnnouncements
+        String path = "./storage/";
+        if(!isGeneral){
+            System.out.println("READ method");
+            String username = userIdMap.get(request.getPublicKey());
+            path += "AnnouncementBoards/" + username + "/";
         } else{
+            System.out.println("READGENERAL method");
+            path += "GeneralBoard/";
 
-            String path = "./storage/";
-            if(!isGeneral){
-                System.out.println("READ method");
-                String username = userIdMap.get(request.getPublicKey());
-                path += "AnnouncementBoards/" + username + "/";
-            } else{
-                System.out.println("READGENERAL method");
-                path += "GeneralBoard/";
+        }
 
+        int total;
+        if(request.getNumber() == 0) { //all posts
+            total = directorySize;
+        } else {
+            total = request.getNumber();
+        }
+
+        Arrays.sort(directoryList);
+        JSONParser parser = new JSONParser();
+        try{
+            JSONArray annoucementsList = new JSONArray();
+            JSONObject announcement;
+
+            String fileToRead;
+            for (int i=0; i<total; i++) {
+                fileToRead = directoryList[directorySize-1]; // -1 because arrays starts in 0
+                announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
+                directorySize--;
+                annoucementsList.add(announcement);
             }
-
-            int total;
-            if(request.getNumber() == 0) { //all posts
-                total = directorySize;
-            } else {
-                total = request.getNumber();
-            }
-
-            Arrays.sort(directoryList);
-            JSONParser parser = new JSONParser();
-            try{
-                JSONArray annoucementsList = new JSONArray();
-                JSONObject announcement;
-
-                String fileToRead;
-                for (int i=0; i<total; i++) {
-                    fileToRead = directoryList[directorySize-1]; // -1 because arrays starts in 0
-                    announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
-                    directorySize--;
-                    annoucementsList.add(announcement);
-                }
-                JSONObject announcementsToSend =  new JSONObject();
-                announcementsToSend.put("announcementList", annoucementsList);
-                send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
-            } catch(Exception e){
-                e.printStackTrace();
-                send(new Response(false, -8, request.getNonceClient()), outStream);
-            }
+            JSONObject announcementsToSend =  new JSONObject();
+            announcementsToSend.put("announcementList", annoucementsList);
+            send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
+        } catch(Exception e){
+            e.printStackTrace();
+            send(new Response(false, -8, request.getNonceClient()), outStream);
         }
     }
     
@@ -534,6 +529,13 @@ public class Server implements Runnable{
                 case -7:
                     if (criptoManager.checkKey(request.getPublicKey()) == "") {
                         send(new Response(false, -7, request.getNonceClient()), outStream);
+                        return false;
+                    }
+                    break;
+                // TooMuchAnnouncements
+                case -10:
+                    if (request.getNumber() > getDirectoryList(request.getPublicKey()).length) { 
+                        send(new Response(false, -10, request.getNonceClient()), outStream);
                         return false;
                     }
                     break;
