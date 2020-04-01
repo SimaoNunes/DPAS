@@ -21,22 +21,21 @@ import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
-import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server implements Runnable{
 
     private ServerSocket server = null;
-    private HashMap<PublicKey, byte[]> nonces = null;
     private Map<PublicKey, String> userIdMap = null;
     private AtomicInteger TotalAnnouncements;
+    private CriptoManager criptoManager = null;
 
     protected Server(ServerSocket ss){
+        server = ss;
+        criptoManager = new CriptoManager();
         getUserIdMap();
         getTotalAnnouncementsFromFile();
-        server = ss;
-        nonces = new HashMap<>();
         newListener();
     }
     
@@ -68,34 +67,47 @@ public class Server implements Runnable{
                 System.out.println("User connected.");
                 Envelope envelope = (Envelope) inStream.readObject();
 
-
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
-                        if(checkHash(envelope, outStream) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())){
-                            System.out.println("toca a entrar aqui");
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-2, -3, -7}) && 
+                            criptoManager.checkHash(envelope, outStream) && 
+                            criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()))
+                            {
                             register(envelope.getRequest(), outStream);
                         }
                         break;
                     case "POST":
-                        if (checkHash(envelope, outStream) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())) {
+                        if (checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -3, -4, -5, -7}) && 
+                            criptoManager.checkHash(envelope, outStream) && 
+                            criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())) 
+                            {
                             post(envelope.getRequest(), false, outStream);
                         }
                         break;
                     case "POSTGENERAL":
-                        if(checkHash(envelope, outStream) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())){
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -3, -4, -5, -7}) && 
+                            criptoManager.checkHash(envelope, outStream) && 
+                            criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()))
+                            {
                             post(envelope.getRequest(), true, outStream);
                         }
                         break;
                     case "READ":
-                        if (checkHash(envelope, outStream) && checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer())){
+                        if (checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -3, -6, -7}) && 
+                            criptoManager.checkHash(envelope, outStream) && 
+                            criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()))
+                            {
                             read(envelope.getRequest(), false, outStream);
                         }
                         break;
                     case "READGENERAL":
-                        read(envelope.getRequest(), true, outStream);
+                        if (checkExceptions(envelope.getRequest(), outStream, new int[] {-6})) {
+                            read(envelope.getRequest(), true, outStream);
+                        }
                         break;
                     case "NONCE":
-                        sendRandomNonce(envelope.getRequest().getPublicKey(), outStream);
+                        byte[] randomNonce = criptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
+                        send(new Response(randomNonce), outStream);
                         break;
                     case "DELETEALL":
                         deleteUsers();
@@ -112,304 +124,116 @@ public class Server implements Runnable{
             e.printStackTrace();
         }
     }
-    
+
 //////////////////////////////////////////
 //  									//
 //             API Methods              //
 //	                                    //
 //////////////////////////////////////////
+
+    //////////////////////////////////////////////////
+    //				    REGISTER					//
+    //////////////////////////////////////////////////
     
     public void register(Request request, ObjectOutputStream outStream) {
         System.out.println("REGISTER Method. Registering user: " + request.getName());
-        if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
-            send(new Response(false, -3, request.getNonceClient()), outStream);  //InvalidPublicKey
-            return;
-        }
 
-        String username = checkKey(request.getPublicKey());
-        if (username == "") {
-            send(new Response(false, -7, request.getNonceClient()), outStream); //key not in server keystore -7
-            return;
-        }
         synchronized (userIdMap) {
-            if (userIdMap.containsKey(request.getPublicKey())) {
-                send(new Response(false, -2, request.getNonceClient()), outStream);
-            }
-            // Register new user
-            else {
-                String path = "./storage/AnnouncementBoards/" + username;
-                File file = new File(path);
-                file.mkdirs();
-                userIdMap.put(request.getPublicKey(), username);
-                saveUserIdMap();
-                System.out.println("User " + request.getName() + " successfully registered!");
-                send(new Response(true, request.getNonceClient()), outStream);
-            }
-
+            String username = criptoManager.checkKey(request.getPublicKey());
+            String path = "./storage/AnnouncementBoards/" + username;
+            File file = new File(path);
+            file.mkdirs();
+            userIdMap.put(request.getPublicKey(), username);
+            saveUserIdMap();
+            System.out.println("User " + request.getName() + " successfully registered!");
+            send(new Response(true, request.getNonceClient()), outStream);
         }
     }
-    // se for general, guarda no general e no do user
-    // se nao, guarda so no do user
+
+    //////////////////////////////////////////////////
+    //				      POST						//
+    //////////////////////////////////////////////////
+    
     private void post(Request request, Boolean general, ObjectOutputStream outStream){
-        System.out.println("POST method");
-        // Check if message length exceeds 255 characters
-        if(request.getMessage().length() > 255){
-            send(new Response(false, -4, request.getNonceClient()), outStream);  //MessageTooBigException
+      
+        String username = userIdMap.get(request.getPublicKey());
+        String path = "./storage/AnnouncementBoards/" + username + "/";
+
+        // Write to file
+        JSONObject announcementObject =  new JSONObject();
+        announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
+        announcementObject.put("user", username);
+        announcementObject.put("message", request.getMessage());
+        announcementObject.put("ref_announcements", (Object) request.getAnnouncements());
+        
+        if(general){
+            path = "./storage/GeneralBoard/";
         }
-        // Checks if key has proper length
-        else if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
-            send(new Response(false, -3, request.getNonceClient()), outStream);  //InvalidPublicKey
+
+        try {
+            saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
+        } catch (IOException e) {
+            send(new Response(false, -9, request.getNonceClient()), outStream);
         }
-        // Checks if user is registered 
-        else if(!userIdMap.containsKey(request.getPublicKey())){
-            send(new Response(false, -1, request.getNonceClient()), outStream);
 
-        }
-        // Checks if announcements refered by the user are valid 
-        else if(request.getAnnouncements() != null && !checkValidAnnouncements(request.getAnnouncements())){
-            send(new Response(false, -5, request.getNonceClient()), outStream);       //Invalid Announcements refered by the user
-        }
-        else{
-            String username = userIdMap.get(request.getPublicKey());
-            String path = "./storage/AnnouncementBoards/" + username + "/";
+        incrementTotalAnnouncs();
+        saveTotalAnnouncements();
 
-            // Write to file
-            JSONObject announcementObject =  new JSONObject();
-            announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
-            announcementObject.put("user", username);
-            announcementObject.put("message", request.getMessage());
-            announcementObject.put("ref_announcements", (Object) request.getAnnouncements());
-
-            
-            if(general){
-                path = "./storage/GeneralBoard/";
-            }
-
-            try {
-                saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
-            } catch (IOException e) {
-                send(new Response(false, -9, request.getNonceClient()), outStream);
-            }
-
-            incrementTotalAnnouncs();
-            saveTotalAnnouncements();
-
-            send(new Response(true), outStream);
-        }
+        send(new Response(true), outStream);
     }
+    
+    //////////////////////////////////////////////////
+    //				      READ						//
+    //////////////////////////////////////////////////
     
     private void read(Request request, boolean isGeneral, ObjectOutputStream outStream) {        
 
-        if (!isGeneral && (request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294)) {
-            send(new Response(false, -3, request.getNonceClient()), outStream);  //InvalidPublicKey
+        String[] directoryList = getDirectoryList(request.getPublicKey());
+        int directorySize = directoryList.length;
 
-        } else if (!isGeneral &&(!userIdMap.containsKey(request.getPublicKey()))) {
-            send(new Response(false, -1, request.getNonceClient()), outStream);  //UserNotRegistered
+        if (request.getNumber() > directorySize) { //se for general o getDirectoryList ve o nr no general
+            send(new Response(false, -10, request.getNonceClient()), outStream);  //TooMuchAnnouncements
+        } else{
 
-        } else if (request.getNumber() < 0) {
-            send(new Response(false, -6, request.getNonceClient()), outStream);  //InvalidPostsNumber
+            String path = "./storage/";
+            if(!isGeneral){
+                System.out.println("READ method");
+                String username = userIdMap.get(request.getPublicKey());
+                path += "AnnouncementBoards/" + username + "/";
+            } else{
+                System.out.println("READGENERAL method");
+                path += "GeneralBoard/";
 
-        }
-        else{
-            // get list with file names in the specific directory
-            String[] directoryList = getDirectoryList(request.getPublicKey());
-            int directorySize = directoryList.length;
-
-
-            if (request.getNumber() > directorySize) { //se for general o getDirectoryList ve o nr no general
-                send(new Response(false, -10, request.getNonceClient()), outStream);  //TooMuchAnnouncements
             }
 
-            else{
-                String path = "./storage/";
-                if(!isGeneral){
-                    System.out.println("READ method");
-                    String username = userIdMap.get(request.getPublicKey());
-                    path += "AnnouncementBoards/" + username + "/";
-                }
-                else{
-                    System.out.println("READGENERAL method");
-                    path += "GeneralBoard/";
-
-                }
-
-                int total;
-                if(request.getNumber() == 0) { //all posts
-                    total = directorySize;
-                }
-                else{
-                    total = request.getNumber();
-                }
-                Arrays.sort(directoryList);
-                JSONParser parser = new JSONParser();
-                try{
-                    JSONArray annoucementsList = new JSONArray();
-                    JSONObject announcement;
-
-                    String fileToRead;
-                    for (int i=0; i<total; i++) {
-                        fileToRead = directoryList[directorySize-1]; // -1 because arrays starts in 0
-                        announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
-                        directorySize--;
-                        annoucementsList.add(announcement);
-                    }
-                    JSONObject announcementsToSend =  new JSONObject();
-                    announcementsToSend.put("announcementList", annoucementsList);
-                    send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
-                } catch(Exception e){
-                    e.printStackTrace();
-                    send(new Response(false, -8, request.getNonceClient()), outStream);
-                }
+            int total;
+            if(request.getNumber() == 0) { //all posts
+                total = directorySize;
+            } else {
+                total = request.getNumber();
             }
 
-        }
+            Arrays.sort(directoryList);
+            JSONParser parser = new JSONParser();
+            try{
+                JSONArray annoucementsList = new JSONArray();
+                JSONObject announcement;
 
-    }
-
-
-//////////////////////////////////////////
-//										//
-//           Crypto Methods             //
-//    									//
-//////////////////////////////////////////
-
-    public boolean checkNonce(PublicKey key, byte[] nonce){
-        if(getNonces().containsKey(key)){
-            if(Arrays.equals(getNonces().get(key), nonce)){
-                getNonces().remove(key);
-                return true;
+                String fileToRead;
+                for (int i=0; i<total; i++) {
+                    fileToRead = directoryList[directorySize-1]; // -1 because arrays starts in 0
+                    announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
+                    directorySize--;
+                    annoucementsList.add(announcement);
+                }
+                JSONObject announcementsToSend =  new JSONObject();
+                announcementsToSend.put("announcementList", annoucementsList);
+                send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
+            } catch(Exception e){
+                e.printStackTrace();
+                send(new Response(false, -8, request.getNonceClient()), outStream);
             }
         }
-        return false;
-    }
-
-    public boolean checkHash(Envelope envelope, ObjectOutputStream outStream){
-
-        MessageDigest md ;
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = null;
-        if(envelope.getRequest().getPublicKey() == null || envelope.getRequest().getPublicKey().getEncoded().length != 294){
-            send(new Response(false, -3, envelope.getRequest().getNonceClient()), outStream);  //InvalidPublicKey
-            return false;
-        }
-
-        String username = checkKey(envelope.getRequest().getPublicKey());
-        if (username.equals("")) {
-            send(new Response(false, -7, envelope.getRequest().getNonceClient()), outStream); //key not in server keystore -7
-            return false;
-        }
-
-        byte[] hash = decipher(envelope.getHash(), envelope.getRequest().getPublicKey());
-
-        try {
-            md = MessageDigest.getInstance("SHA-256");
-
-            out = new ObjectOutputStream(bos);
-            out.writeObject(envelope.getRequest());
-            out.flush();
-            byte[] request_bytes = bos.toByteArray();
-
-            return Arrays.equals(md.digest(request_bytes), hash);
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-
-    public byte[] generateRandomNonce(){
-        SecureRandom random = new SecureRandom();
-        byte[] nonce = new byte[16];
-        random.nextBytes(nonce);
-        return nonce;
-    }
-
-
-    public void sendRandomNonce(PublicKey key, ObjectOutputStream outputStream){
-
-        byte[] serverNonce = generateRandomNonce();
-
-        getNonces().put(key, serverNonce);
-
-        System.out.println("A gerar random nonce");
-
-        send(new Response(serverNonce), outputStream);
-
-    }
-
-    public PrivateKey getPrivateKey(){
-        char[] passphrase = "changeit".toCharArray();
-        KeyStore ks = null;
-        PrivateKey key = null;
-
-        try {
-            ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
-            key = (PrivateKey) ks.getKey("server", passphrase);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnrecoverableEntryException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return key;
-
-    }
-
-    public byte[] cipher(byte[] bytes, PrivateKey key){
-        byte[] final_bytes = null;
-        try {
-            Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            final_bytes = cipher.doFinal(bytes);
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-
-        return final_bytes;
-
-    }
-
-    public byte[] decipher(byte[] bytes, PublicKey key){
-        byte[] final_bytes = null;
-        Cipher cipher = null;
-        try {
-            cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            final_bytes = cipher.doFinal(bytes);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        }
-        return final_bytes;
-
     }
     
 //////////////////////////////////////////
@@ -441,40 +265,6 @@ public class Server implements Runnable{
         return file.list();
     }
 
-    private String checkKey(PublicKey publicKey){ //checks if a key exists in the server keystore
-        char[] passphrase = "changeit".toCharArray();
-        KeyStore ks = null;
-        try {
-            ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
-
-            Enumeration aliases = ks.aliases();
-
-            for (; aliases.hasMoreElements(); ) {
-
-                String alias = (String) aliases.nextElement();
-
-                if (ks.isCertificateEntry(alias)) {
-                    PublicKey key = ks.getCertificate(alias).getPublicKey();
-                    if (key.equals(publicKey)) {
-                        return alias;
-                    }
-                }
-            }
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
     private void send(Response response, ObjectOutputStream outputStream){
         MessageDigest md ;
 
@@ -493,7 +283,7 @@ public class Server implements Runnable{
             byte[] response_hash = md.digest(request_bytes);
 
             cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.ENCRYPT_MODE, getPrivateKey());
+            cipher.init(Cipher.ENCRYPT_MODE, criptoManager.getPrivateKey());
 
             byte[] final_bytes = cipher.doFinal(response_hash);
 
@@ -530,10 +320,6 @@ public class Server implements Runnable{
         }
 
 
-    }
-
-    private HashMap<PublicKey, byte[]> getNonces(){
-        return nonces;
     }
     
     private void newListener() {
@@ -691,5 +477,68 @@ public class Server implements Runnable{
             e.printStackTrace();
         }
         System.out.printf("Total announcements-> " + TotalAnnouncements);
+    }
+
+    //////////////////////////////////////////
+    //  									//
+    //          Check Exceptions            //
+    //	                                    //
+    //////////////////////////////////////////
+
+    public boolean checkExceptions(Request request, ObjectOutputStream outStream, int[] codes){
+        for (int i = 0; i < codes.length; i++) {
+            switch(codes[i]) {
+                // UserNotRegistered 
+                case -1:
+                    if(!userIdMap.containsKey(request.getPublicKey())){
+                        send(new Response(false, -1, request.getNonceClient()), outStream);
+                        return false;
+                    }
+                    break;
+                // AlreadyRegistered
+                case -2:
+                        if (userIdMap.containsKey(request.getPublicKey())) {
+                            send(new Response(false, -2, request.getNonceClient()), outStream);
+                            return false;
+                        }
+                    break;
+                // InvalidPublicKey
+                case -3:
+                    if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
+                        send(new Response(false, -3, request.getNonceClient()), outStream);  
+                        return false;
+                    }
+                    break;
+                // MessageTooBigException
+                case -4:
+                    if(request.getMessage().length() > 255){
+                        send(new Response(false, -4, request.getNonceClient()), outStream);
+                        return false;
+                    }
+                    break;
+                // Invalid Announcements refered by the user
+                case -5:
+                    if(request.getAnnouncements() != null && !checkValidAnnouncements(request.getAnnouncements())){
+                        send(new Response(false, -5, request.getNonceClient()), outStream); 
+                        return false;      
+                    }
+                    break;
+                // InvalidPostsNumber
+                case -6:
+                    if (request.getNumber() < 0) {
+                        send(new Response(false, -6, request.getNonceClient()), outStream);
+                        return false;
+                    }
+                    break;
+                // UnknownPublicKey
+                case -7:
+                    if (criptoManager.checkKey(request.getPublicKey()) == "") {
+                        send(new Response(false, -7, request.getNonceClient()), outStream);
+                        return false;
+                    }
+                    break;
+            }
+        }
+        return true;
     }
 }
