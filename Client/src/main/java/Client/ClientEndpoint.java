@@ -8,6 +8,7 @@ import org.json.simple.JSONObject;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.security.*;
 import java.util.Arrays;
 
@@ -94,6 +95,8 @@ public class ClientEndpoint {
     private Envelope sendReceive(Envelope envelope) throws IOException, ClassNotFoundException {
         Socket socket = createSocket();
         createOutputStream(socket).writeObject(envelope);
+        socket.setSoTimeout(20);
+        System.out.println(socket.getSoTimeout());
 
         return (Envelope) createInputStream(socket).readObject();
     }
@@ -104,18 +107,22 @@ public class ClientEndpoint {
 //						//
 //////////////////////////
 
-    private byte[] askForServerNonce(PublicKey key){
+    private byte[] askForServerNonce(PublicKey key) throws NonceTimeoutException {
         try {
              return sendReceive(new Envelope(new Request("NONCE", key))).getResponse().getNonce();
-        } catch (IOException e) {
-            e.printStackTrace();
+
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        } catch (SocketTimeoutException e) {
+            throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
+        } catch (IOException e){
+            e.printStackTrace();
+
         }
         return null;
     }
 
-    private void startHandshake(PublicKey publicKey) {
+    private void startHandshake(PublicKey publicKey) throws NonceTimeoutException {
         setServerNonce(askForServerNonce(publicKey));
         setClientNonce(criptoManager.generateClientNonce());
     }
@@ -203,7 +210,7 @@ public class ClientEndpoint {
 	//				     REGISTER  					//
 	//////////////////////////////////////////////////
 
-    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException {
+    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException {
 
         startHandshake(getPublicKey());
 
@@ -229,10 +236,14 @@ public class ClientEndpoint {
             else{
                 return 0;
             }
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
         	// On failure, return 0
             e.printStackTrace();
             return 0;
+        } catch(SocketTimeoutException e){
+            throw new OperationTimeoutException("Please do a read to confirm that the post was successful!");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
