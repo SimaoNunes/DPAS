@@ -1,14 +1,13 @@
 package Client;
 
 import Exceptions.AlreadyRegisteredException;
-import Exceptions.InvalidPublicKeyException;
 import Exceptions.UnknownPublicKeyException;
 import org.junit.BeforeClass;
 
 public class PersistenceTest extends BaseTest {
 
     @BeforeClass
-    public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
+    public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException {
         clientEndpoint1.register();
     }
 

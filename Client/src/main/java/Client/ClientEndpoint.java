@@ -29,7 +29,6 @@ public class ClientEndpoint {
         setPublicKey(criptoManager.getPublicKeyFromKs(userName, userName));
         setServerPublicKey(criptoManager.getPublicKeyFromKs(userName, "server"));
         setUsername(userName);
-
     }
 
     public String getUsername() {
@@ -137,13 +136,10 @@ public class ClientEndpoint {
  //															 //
  //////////////////////////////////////////////////////////////
     
-    public void checkRegister(Response response) throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
+    public void checkRegister(Response response) throws AlreadyRegisteredException, UnknownPublicKeyException {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
-            if(error == -3){
-                throw new InvalidPublicKeyException("Such key is invalid for registration, must have 2048 bits");
-            }
-            else if(error == -7){
+            if(error == -7){
                 throw new UnknownPublicKeyException("Such key doesn't exist in the server side!");
             }
             else if(error == -2){
@@ -153,14 +149,11 @@ public class ClientEndpoint {
     }
 
     public void checkPost(Response response) throws UserNotRegisteredException,
-            InvalidPublicKeyException, MessageTooBigException, InvalidAnnouncementException {
+            MessageTooBigException, InvalidAnnouncementException {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -1){
                 throw new UserNotRegisteredException("User with this public key is not registered!");
-            }
-            else if(error == -3){
-                throw new InvalidPublicKeyException("Invalid public key!");
             }
             else if(error == -4){
                 throw new MessageTooBigException("Message cannot have more than 255 characters!");
@@ -172,14 +165,11 @@ public class ClientEndpoint {
     }
 
     public void checkRead(Response response) throws UserNotRegisteredException,
-            InvalidPublicKeyException, InvalidPostsNumberException, TooMuchAnnouncementsException {
+            InvalidPostsNumberException, TooMuchAnnouncementsException {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -1){
                 throw new UserNotRegisteredException("User with this public key is not registered!");
-            }
-            else if(error == -3){
-                throw new InvalidPublicKeyException("Invalid public key!");
             }
             else if(error == -6){
                 throw new InvalidPostsNumberException("Invalid announcements number to be read!");
@@ -213,7 +203,7 @@ public class ClientEndpoint {
 	//				     REGISTER  					//
 	//////////////////////////////////////////////////
 
-    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
+    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException {
 
         startHandshake(getPublicKey());
 
@@ -251,7 +241,7 @@ public class ClientEndpoint {
     //////////////////////////////////////////////////
 
     public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey) throws InvalidAnnouncementException,
-            UserNotRegisteredException, InvalidPublicKeyException, MessageTooBigException {
+            UserNotRegisteredException, MessageTooBigException {
         Request request;
         if(isGeneral){
             request = new Request("POSTGENERAL", key, message, announcs, serverNonce, clientNonce);
@@ -281,19 +271,13 @@ public class ClientEndpoint {
         return 0;
     }
 
-    public int post(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException,
-    		InvalidPublicKeyException, InvalidAnnouncementException {
-
+    public int post(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException {
         startHandshake(getPublicKey());
-
         return postAux(getPublicKey(), message, announcs, false, getServerNonce(), getClientNonce(), getPrivateKey());
     }
     
-    public int postGeneral(String message, int[] announcs) throws  MessageTooBigException, UserNotRegisteredException,
-            InvalidPublicKeyException, InvalidAnnouncementException {
-
+    public int postGeneral(String message, int[] announcs) throws  MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException {
         startHandshake(getPublicKey());
-
         return postAux(getPublicKey(), message, announcs, true, getServerNonce(), getClientNonce(), getPrivateKey());
     }
 
@@ -301,8 +285,7 @@ public class ClientEndpoint {
     //				      READ						//
     //////////////////////////////////////////////////
 
-    public JSONObject read(String announcUserName, int number) throws InvalidPostsNumberException, UserNotRegisteredException,
-    		InvalidPublicKeyException, TooMuchAnnouncementsException {
+    public JSONObject read(String announcUserName, int number) throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException {
 
         startHandshake(getPublicKey());
         

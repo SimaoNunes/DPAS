@@ -105,7 +105,7 @@ public class Server implements Runnable{
                         break;
                 }
                 socket.close();
-            }catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }catch (Exception e) {
@@ -121,58 +121,57 @@ public class Server implements Runnable{
     
     public void register(Request request, ObjectOutputStream outStream) {
         System.out.println("REGISTER Method. Registering user: " + request.getName());
-        if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
-            send(new Response(false, -3, request.getNonceClient()), outStream);  //InvalidPublicKey
-            return;
-        }
-
+        // Get userName from keystore
         String username = checkKey(request.getPublicKey());
-        if (username == "") {
-            send(new Response(false, -7, request.getNonceClient()), outStream); //key not in server keystore -7
-            return;
+        // Check if key is null ## UnknownPublicKey ##
+        if(request.getPublicKey() == null) {
+            send(new Response(false, -7, request.getNonceClient()), outStream);
         }
-        synchronized (userIdMap) {
-            if (userIdMap.containsKey(request.getPublicKey())) {
-                send(new Response(false, -2, request.getNonceClient()), outStream);
-            }
-            // Register new user
-            else {
-                String path = "./storage/AnnouncementBoards/" + username;
-                File file = new File(path);
-                file.mkdirs();
-                userIdMap.put(request.getPublicKey(), username);
-                saveUserIdMap();
-                System.out.println("User " + request.getName() + " successfully registered!");
-                send(new Response(true, request.getNonceClient()), outStream);
-            }
-
+        // Check if key is known by the Server ## UnknownPublicKey ##
+        else if(username == "") {
+            send(new Response(false, -7, request.getNonceClient()), outStream);
+        }
+        else {
+	        synchronized (userIdMap) {
+	        	// Check if user is already registered ## UserAlreadyRegistered ##
+	            if (userIdMap.containsKey(request.getPublicKey())) {
+	                send(new Response(false, -2, request.getNonceClient()), outStream);
+	            }
+	            // Register new user
+	            else {
+	                String path = "./storage/AnnouncementBoards/" + username;
+	                File file = new File(path);
+	                file.mkdirs();
+	                userIdMap.put(request.getPublicKey(), username);
+	                saveUserIdMap();
+	                System.out.println("User " + request.getName() + " successfully registered!");
+	                send(new Response(true, request.getNonceClient()), outStream);
+	            }
+	        }
         }
     }
-    // se for general, guarda no general e no do user
-    // se nao, guarda so no do user
+    
     private void post(Request request, Boolean general, ObjectOutputStream outStream){
         System.out.println("POST method");
-        // Check if message length exceeds 255 characters
-        if(request.getMessage().length() > 255){
-            send(new Response(false, -4, request.getNonceClient()), outStream);  //MessageTooBigException
+        // Check if message length exceeds 255 characters ## MessageTooBig ##
+        if(request.getMessage().length() > 255) {
+            send(new Response(false, -4, request.getNonceClient()), outStream);
         }
-        // Checks if key has proper length
-        else if(request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294){
-            send(new Response(false, -3, request.getNonceClient()), outStream);  //InvalidPublicKey
+        // Check if key is null ## UnknownPublicKey ##
+        else if(request.getPublicKey() == null) {
+            send(new Response(false, -7, request.getNonceClient()), outStream);
         }
-        // Checks if user is registered 
-        else if(!userIdMap.containsKey(request.getPublicKey())){
+        // Checks if user is registered ## UserNotRegistered ##
+        else if(!userIdMap.containsKey(request.getPublicKey())) {
             send(new Response(false, -1, request.getNonceClient()), outStream);
-
         }
-        // Checks if announcements refered by the user are valid 
-        else if(request.getAnnouncements() != null && !checkValidAnnouncements(request.getAnnouncements())){
-            send(new Response(false, -5, request.getNonceClient()), outStream);       //Invalid Announcements refered by the user
+        // Checks if announcements refered by the user are valid ## InvalidAnnouncement ##
+        else if(request.getAnnouncements() != null && !checkValidAnnouncements(request.getAnnouncements())) {
+            send(new Response(false, -5, request.getNonceClient()), outStream);
         }
-        else{
+        else {
             String username = userIdMap.get(request.getPublicKey());
             String path = "./storage/AnnouncementBoards/" + username + "/";
-
             // Write to file
             JSONObject announcementObject =  new JSONObject();
             announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
@@ -180,11 +179,9 @@ public class Server implements Runnable{
             announcementObject.put("message", request.getMessage());
             announcementObject.put("ref_announcements", (Object) request.getAnnouncements());
 
-            
-            if(general){
+            if(general) {
                 path = "./storage/GeneralBoard/";
             }
-
             try {
                 saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
             } catch (IOException e) {
@@ -199,35 +196,35 @@ public class Server implements Runnable{
     }
     
     private void read(Request request, boolean isGeneral, ObjectOutputStream outStream) {        
-
-        if (!isGeneral && (request.getPublicKey() == null || request.getPublicKey().getEncoded().length != 294)) {
-            send(new Response(false, -3, request.getNonceClient()), outStream);  //InvalidPublicKey
-
-        } else if (!isGeneral &&(!userIdMap.containsKey(request.getPublicKey()))) {
-            send(new Response(false, -1, request.getNonceClient()), outStream);  //UserNotRegistered
-
-        } else if (request.getNumber() < 0) {
-            send(new Response(false, -6, request.getNonceClient()), outStream);  //InvalidPostsNumber
-
+    	// Check if key is null ## UnknownPublicKey ##
+        if (!isGeneral && (request.getPublicKey() == null)) {
+            send(new Response(false, -7, request.getNonceClient()), outStream);
         }
-        else{
-            // get list with file names in the specific directory
+        // Checks if user is registered ## UserNotRegistered ##
+        else if (!isGeneral &&(!userIdMap.containsKey(request.getPublicKey()))) {
+            send(new Response(false, -1, request.getNonceClient()), outStream);
+        }
+        // Check if user wants to read a negative number of posts ## InvalidPostsNumber ##
+        else if (request.getNumber() < 0) {
+            send(new Response(false, -6, request.getNonceClient()), outStream);
+        }
+        else {
+            // Get list with file names in the specific directory
             String[] directoryList = getDirectoryList(request.getPublicKey());
             int directorySize = directoryList.length;
-
-
+            // Check if user is trying to read mor announcements that Board number of announcements ## TooMuchAnnouncements ##
             if (request.getNumber() > directorySize) { //se for general o getDirectoryList ve o nr no general
-                send(new Response(false, -10, request.getNonceClient()), outStream);  //TooMuchAnnouncements
+                send(new Response(false, -10, request.getNonceClient()), outStream);
             }
 
-            else{
+            else {
                 String path = "./storage/";
                 if(!isGeneral){
                     System.out.println("READ method");
                     String username = userIdMap.get(request.getPublicKey());
                     path += "AnnouncementBoards/" + username + "/";
                 }
-                else{
+                else {
                     System.out.println("READGENERAL method");
                     path += "GeneralBoard/";
 
@@ -237,7 +234,7 @@ public class Server implements Runnable{
                 if(request.getNumber() == 0) { //all posts
                     total = directorySize;
                 }
-                else{
+                else {
                     total = request.getNumber();
                 }
                 Arrays.sort(directoryList);
@@ -256,7 +253,7 @@ public class Server implements Runnable{
                     JSONObject announcementsToSend =  new JSONObject();
                     announcementsToSend.put("announcementList", annoucementsList);
                     send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
-                } catch(Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                     send(new Response(false, -8, request.getNonceClient()), outStream);
                 }
@@ -274,8 +271,8 @@ public class Server implements Runnable{
 //////////////////////////////////////////
 
     public boolean checkNonce(PublicKey key, byte[] nonce){
-        if(getNonces().containsKey(key)){
-            if(Arrays.equals(getNonces().get(key), nonce)){
+        if(getNonces().containsKey(key)) {
+            if(Arrays.equals(getNonces().get(key), nonce)) {
                 getNonces().remove(key);
                 return true;
             }
@@ -289,14 +286,15 @@ public class Server implements Runnable{
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream out = null;
-        if(envelope.getRequest().getPublicKey() == null || envelope.getRequest().getPublicKey().getEncoded().length != 294){
-            send(new Response(false, -3, envelope.getRequest().getNonceClient()), outStream);  //InvalidPublicKey
+        // Check if key is null ## UnknownPublicKey ##
+        if(envelope.getRequest().getPublicKey() == null) {
+            send(new Response(false, -7, envelope.getRequest().getNonceClient()), outStream);
             return false;
         }
-
+        // Check if key is known by the Server ## UnknownPublicKey ##
         String username = checkKey(envelope.getRequest().getPublicKey());
         if (username.equals("")) {
-            send(new Response(false, -7, envelope.getRequest().getNonceClient()), outStream); //key not in server keystore -7
+            send(new Response(false, -7, envelope.getRequest().getNonceClient()), outStream);
             return false;
         }
 
@@ -430,10 +428,10 @@ public class Server implements Runnable{
     
     private String[] getDirectoryList(PublicKey key){
         String path = "./storage/";
-        if(key == null){
+        if(key == null) {
             path += "GeneralBoard/";
         }
-        else{
+        else {
             path += "AnnouncementBoards/" + userIdMap.get(key) + "/";
         }
 
