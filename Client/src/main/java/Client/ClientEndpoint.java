@@ -132,6 +132,8 @@ public class ClientEndpoint {
             setServerNonce(null);
             return true;
         }
+        setClientNonce(null);
+        setServerNonce(null);
         return false;
     }
 
