@@ -162,14 +162,24 @@ public class Server implements Runnable{
         // Get userName from keystore
         String username = userIdMap.get(request.getPublicKey());
         String path = "./storage/AnnouncementBoards/" + username + "/";
-
+        
         // Write to file
         JSONObject announcementObject =  new JSONObject();
         announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
         announcementObject.put("user", username);
         announcementObject.put("message", request.getMessage());
-        announcementObject.put("ref_announcements", (Object) request.getAnnouncements());
-        
+
+        int[] ref_announcements = request.getAnnouncements();
+        if(ref_announcements != null){
+            JSONArray annoucementsList = new JSONArray();
+            for(int i = 0; i < ref_announcements.length; i++){
+                annoucementsList.add(ref_announcements[i]);
+            }
+            announcementObject.put("ref_announcements", annoucementsList);
+        }
+
+        System.out.println(announcementObject);
+
         if(general){
             path = "./storage/GeneralBoard/";
         }
@@ -243,7 +253,8 @@ public class Server implements Runnable{
 
     private Boolean checkValidAnnouncements(int[] announcs){
         int total = getTotalAnnouncements();
-        for (int i = 0; i < total; i++) { 		      
+        for (int i = 0; i < announcs.length; i++) { 	
+            System.out.println(announcs[i]);	      
             if (announcs[i] >= total ) {
                 return false;
             }		
