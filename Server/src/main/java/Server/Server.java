@@ -183,8 +183,6 @@ public class Server implements Runnable{
             announcementObject.put("ref_announcements", annoucementsList);
         }
 
-        System.out.println(announcementObject);
-
         if(general){
             path = "./storage/GeneralBoard/";
         }
@@ -258,8 +256,7 @@ public class Server implements Runnable{
 
     private Boolean checkValidAnnouncements(int[] announcs){
         int total = getTotalAnnouncements();
-        for (int i = 0; i < announcs.length; i++) { 	
-            System.out.println(announcs[i]);	      
+        for (int i = 0; i < announcs.length; i++) { 		      
             if (announcs[i] >= total ) {
                 return false;
             }		
@@ -349,7 +346,7 @@ public class Server implements Runnable{
 
     public void deleteUsers() throws IOException {
 
-        System.out.println("Delete operation");
+        System.out.println("DELETE operation");
 
         userIdMap.clear();
         saveUserIdMap();

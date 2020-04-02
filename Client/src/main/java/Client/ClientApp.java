@@ -275,13 +275,15 @@ public class ClientApp {
 		try {
 			if(isGeneral) {
 				jsonAnnouncs = clientEndpoint.readGeneral(Integer.parseInt(numberOfPosts));
-				printAnnouncements(jsonAnnouncs, true);
+				if(!(jsonAnnouncs == null))
+					printAnnouncements(jsonAnnouncs, true);
 			} else {
 				System.out.print("\nWhich User's Announcement Board you want to read from?\n>> ");
 				String userName = scanner.nextLine();																	//FIXME NOT SANITIZING USER INPUT
 				if(keyStore.containsAlias(userName)) {
 					jsonAnnouncs = clientEndpoint.read(userName, Integer.parseInt(numberOfPosts));
-					printAnnouncements(jsonAnnouncs, false);
+					if(!(jsonAnnouncs == null))
+						printAnnouncements(jsonAnnouncs, false);
 				} else {
 					System.out.println("\nUnknown username in the keyStore! Must enter valid username!");
 				}
@@ -320,12 +322,21 @@ public class ClientApp {
                 String announcId = (String) obj.get("id");
                 String date = (String) obj.get("date");
                 String msg = (String) obj.get("message");
+                JSONArray refs = (JSONArray) obj.get("ref_announcements");
 
                 System.out.println("\n" + i++ + ")");
                 System.out.println("Announcement From User: " + user);
                 System.out.println("Id: " + announcId);
                 System.out.println("Date: " + date);
                 System.out.println("Message: " + msg);
+                if(!(refs == null)) {
+	                System.out.print("References:");
+	                for (Object ref : refs) {
+	                    String refString = (String) ref;
+	                    System.out.print(" " + refString);
+	                }
+	                System.out.println();
+                }
             }
         // Read
         } else {
@@ -335,11 +346,20 @@ public class ClientApp {
                 String announcId = (String) obj.get("id");
                 String date = (String) obj.get("date");
                 String msg = (String) obj.get("message");
+                JSONArray refs = (JSONArray) obj.get("ref_announcements");
 
                 System.out.println("\n" + i++ + ")");
                 System.out.println("Id: " + announcId);
                 System.out.println("Date: " + date);
                 System.out.println("Message: " + msg);
+                if(!(refs == null)) {
+	                System.out.print("References:");
+	                for (Object ref : refs) {
+	                    String refString = (String) ref;
+	                    System.out.print(" " + refString);
+	                }
+	                System.out.println();
+                }
             }	
         }
 	}
