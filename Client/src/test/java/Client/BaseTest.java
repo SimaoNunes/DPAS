@@ -81,17 +81,37 @@ public class BaseTest {
         String[] result = new String[array.size()];
 
         int i = 0;
-
         for (Object object : array) {
             JSONObject obj = (JSONObject) object;
-
             String msg = (String) obj.get("message");
-
             result[i++] = msg;
-
         }
-        return result;
 
+        return result;
+    }
+
+    public String[] getReferencedAnnouncementsFromJSONResultWith1Post(JSONObject json){
+
+    	JSONArray arrayAnnouncement = (JSONArray) json.get("announcementList");
+        String[] numbers = null;
+        JSONArray refs = null;
+        
+        int i = 0;
+        for (Object post : arrayAnnouncement) {
+            JSONObject obj = (JSONObject) post;
+            refs = (JSONArray) obj.get("ref_announcements");
+            numbers = new String[refs.size()];
+            for (Object ref : refs) {
+                String refString = (String) ref;
+                numbers[i++] = refString;
+            }
+        }
+        // Deal with the case of no refs
+        if (refs == null) {
+            return new String[0]; // empty list
+        } else {
+        	return numbers;	
+        }
     }
 
     public static void shutDown(){
@@ -106,7 +126,5 @@ public class BaseTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
-	
 }

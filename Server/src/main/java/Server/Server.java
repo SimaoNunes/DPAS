@@ -21,6 +21,7 @@ import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -163,14 +164,28 @@ public class Server implements Runnable{
         // Get userName from keystore
         String username = userIdMap.get(request.getPublicKey());
         String path = "./storage/AnnouncementBoards/" + username + "/";
-
+        
         // Write to file
         JSONObject announcementObject =  new JSONObject();
         announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
         announcementObject.put("user", username);
         announcementObject.put("message", request.getMessage());
-        announcementObject.put("ref_announcements", (Object) request.getAnnouncements());
         
+        Date dNow = new Date();
+        SimpleDateFormat ft = new SimpleDateFormat ("dd-MM-yyyy 'at' HH:mm");
+        announcementObject.put("date", ft.format(dNow).toString());
+
+        int[] ref_announcements = request.getAnnouncements();
+        if(ref_announcements != null){
+            JSONArray annoucementsList = new JSONArray();
+            for(int i = 0; i < ref_announcements.length; i++){
+                annoucementsList.add(Integer.toString(ref_announcements[i]));
+            }
+            announcementObject.put("ref_announcements", annoucementsList);
+        }
+
+        System.out.println(announcementObject);
+
         if(general){
             path = "./storage/GeneralBoard/";
         }
@@ -244,7 +259,8 @@ public class Server implements Runnable{
 
     private Boolean checkValidAnnouncements(int[] announcs){
         int total = getTotalAnnouncements();
-        for (int i = 0; i < total; i++) { 		      
+        for (int i = 0; i < announcs.length; i++) { 	
+            System.out.println(announcs[i]);	      
             if (announcs[i] >= total ) {
                 return false;
             }		

@@ -71,7 +71,7 @@ public class ClientApp {
 			clientEndpoint = new ClientEndpoint(userName);
 			clientEndpoint.register();
 		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
-			System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
+			System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded)");
 			return false;
 		} catch (AlreadyRegisteredException e) {
 			System.out.println("\n"+e.getMessage());
@@ -212,29 +212,25 @@ public class ClientApp {
 		}
 		// Ask if user wants to reference other Announcements
 		Boolean end = false;
-		goodInput = false;
 		String announcId;
 		List<Integer> announcsList  = new ArrayList<Integer>();
-		System.out.println("\nType the Ids of the Announcements you want to reference, and press Enter in between them. When you're finished, "
-						 + "press enter again. If you don't want to reference any Announcement, just press Enter.\n>>");
+		System.out.print("\nType the Ids of the Announcements you want to reference, and press Enter in between them. When you're finished, "
+						 + "press Enter again. If you don't want to reference any Announcement, just press Enter.\n>>");
 		while(!end) {
-			while(!goodInput) {
-				System.out.println(" ");
-				announcId = scanner.nextLine();
-				if(announcId.equals("\n")) {
-					goodInput = true;
-					end = true;
-				}
-				else if(!announcId.matches("^[0-9]+$")) { 
-					System.out.println("\nPlease insert a valid number");
-				}
-				else {
-					goodInput = true;
-					announcsList.add(Integer.parseInt(announcId));
-				}
+			System.out.print(" ");
+			announcId = scanner.nextLine();
+			if(announcId.isEmpty()) {
+				end = true;
+			}
+			else if(announcId.matches("^[0-9]+$")) { 
+				announcsList.add(Integer.parseInt(announcId));
+			}
+			else {
+				System.out.println("\nPlease insert a valid number");
 			}
 		}
-		int[] announcsArray = toIntArray(announcsList);
+		int[] announcsArray = new int[announcsList.size()];
+		announcsArray = toIntArray(announcsList);
 		// Post announcement
 		try{
 			if(isGeneral){
@@ -295,7 +291,6 @@ public class ClientApp {
 		} catch (InvalidPostsNumberException e) {
 			System.out.println("\n" + e.getMessage());
 		} catch (TooMuchAnnouncementsException e) {
-			System.out.println("PANICO");
 			System.out.println("\n" + e.getMessage());
 		} catch (UserNotRegisteredException e) {
 			System.out.println("\n" + e.getMessage());
@@ -315,7 +310,7 @@ public class ClientApp {
 	private static void printAnnouncements(JSONObject jsonAnnouncs, Boolean isGeneral) {
 		// Get array of announcements in JSON format, iterate over them and print them
         JSONArray array = (JSONArray) jsonAnnouncs.get("announcementList");
-        int i = 0;
+        int i = 1;
         // ReadGeneral
         if(isGeneral) {
             for (Object object : array) {
@@ -323,11 +318,13 @@ public class ClientApp {
 
                 String user = (String) obj.get("user");
                 String announcId = (String) obj.get("id");
+                String date = (String) obj.get("date");
                 String msg = (String) obj.get("message");
 
                 System.out.println("\n" + i++ + ")");
                 System.out.println("Announcement From User: " + user);
                 System.out.println("Id: " + announcId);
+                System.out.println("Date: " + date);
                 System.out.println("Message: " + msg);
             }
         // Read
@@ -335,11 +332,13 @@ public class ClientApp {
             for (Object object : array) {
                 JSONObject obj = (JSONObject) object;
 
-                String msg = (String) obj.get("message");
                 String announcId = (String) obj.get("id");
+                String date = (String) obj.get("date");
+                String msg = (String) obj.get("message");
 
                 System.out.println("\n" + i++ + ")");
                 System.out.println("Id: " + announcId);
+                System.out.println("Date: " + date);
                 System.out.println("Message: " + msg);
             }	
         }
