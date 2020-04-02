@@ -33,7 +33,7 @@ public class ReadTest extends BaseTest{
 		
 		int[] announcs  = {0,3};
 		clientEndpoint1.post("message with references from user1", announcs); // id = 6
-		int[] announcs2 = {1,2};
+		int[] announcs2 = {1,4};
 		clientEndpoint2.post("message with references from user2", announcs2); // id = 7
 	}
 
@@ -97,11 +97,21 @@ public class ReadTest extends BaseTest{
 	@Test
 	public void Should_Succeed_When_CheckingReferencedAnnouncementsResultWith1Post() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		
-		// get announcements with references -> which are the most recent ones (1)
-		JSONObject result  = clientEndpoint1.read("user1", 1); 
+		// get announcements with references -> which are the most recent ones for each user (1)
+		JSONObject result1 = clientEndpoint1.read("user1", 1); 
 		JSONObject result2 = clientEndpoint2.read("user2", 1);
-		System.out.println(getReferencedAnnouncementsFromJSONResultWith1Post(result));
-		System.out.println(getReferencedAnnouncementsFromJSONResultWith1Post(result2));
+
+		int ref_id1_from_user1 = Integer.parseInt(getReferencedAnnouncementsFromJSONResultWith1Post(result1)[0]);
+		int ref_id2_from_user1 = Integer.parseInt(getReferencedAnnouncementsFromJSONResultWith1Post(result1)[1]);
+
+		assertEquals(0, ref_id1_from_user1);
+		assertEquals(3, ref_id2_from_user1);
+
+		int ref_id1_from_user2 = Integer.parseInt(getReferencedAnnouncementsFromJSONResultWith1Post(result2)[0]);
+		int ref_id2_from_user2 = Integer.parseInt(getReferencedAnnouncementsFromJSONResultWith1Post(result2)[1]);
+
+		assertEquals(1, ref_id1_from_user2);
+		assertEquals(4, ref_id2_from_user2);
 
 	}
 
