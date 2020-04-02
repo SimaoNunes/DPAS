@@ -40,25 +40,25 @@ public class ReadGeneralTest extends BaseTest{
     
     
     @Test(expected = InvalidPostsNumberException.class)
-	public void Should_Fail_When_Bad_Posts_Number() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException {
+	public void Should_Fail_When_Bad_Posts_Number() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException {
 		clientEndpoint1.readGeneral(-301);
     }
     
     @Test(expected = TooMuchAnnouncementsException.class)
-	public void Should_Fail_When_Asking_Alot_Of_Posts() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException {
+	public void Should_Fail_When_Asking_Alot_Of_Posts() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException {
 		// There are only 4 posts
 		clientEndpoint1.readGeneral(685);
 	}
 
     @Test
-	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException {
+	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException {
         // get most recent general post -> should succeed even though the user didn't refer any other announcements when posting
         String[] general_result = getMessagesFromJSON(clientEndpoint1.readGeneral(1));
         assertEquals("public post2 from user2", general_result[0]);
     }
     
 	@Test
-	public void Should_Succeed_When_Asking_For_All() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException {
+	public void Should_Succeed_When_Asking_For_All() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException {
         String[] general_result = getMessagesFromJSON(clientEndpoint1.readGeneral(0));
 
 		assertEquals(general_result[0], "public post2 from user2");

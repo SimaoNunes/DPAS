@@ -78,6 +78,7 @@ public class Server implements Runnable{
                         }
                         break;
                     case "POST":
+                        System.out.println("POST OPERATION");
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
                             criptoManager.checkHash(envelope, outStream) && 
                             criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
