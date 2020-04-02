@@ -81,17 +81,37 @@ public class BaseTest {
         String[] result = new String[array.size()];
 
         int i = 0;
-
         for (Object object : array) {
             JSONObject obj = (JSONObject) object;
-
             String msg = (String) obj.get("message");
-
             result[i++] = msg;
-
         }
-        return result;
 
+        return result;
+    }
+
+    public int[] getReferencedAnnouncementsFromJSON(JSONObject json){
+
+        System.out.println(json);
+        JSONArray array = (JSONArray) json.get("ref_announcements");
+        System.out.println("brooooo");
+
+        System.out.println(array);
+    
+        // Deal with the case of a non-array value
+        if (array == null) {
+            return new int[] {}; // empty list
+        }
+
+        // Create an int array to accomodate the numbers
+        int[] numbers = new int[array.size()];
+
+        // Extract numbers from JSON array
+        for (int i = 0; i < array.size(); ++i) {
+            numbers[i] = (int) array.get(i);
+        }
+
+        return numbers;
     }
 
     public static void shutDown(){
@@ -106,7 +126,5 @@ public class BaseTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
-	
 }
