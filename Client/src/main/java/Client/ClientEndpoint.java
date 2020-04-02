@@ -6,6 +6,7 @@ import Library.Request;
 import Library.Response;
 import org.json.simple.JSONObject;
 
+import javax.swing.plaf.synth.SynthOptionPaneUI;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -188,12 +189,14 @@ public class ClientEndpoint {
     }
     
     public void checkReadGeneral(Response response) throws InvalidPostsNumberException, TooMuchAnnouncementsException {
-		if(!response.getSuccess()){
+        System.out.println("TOU NO CHECKREAD GENERAL");
+        if(!response.getSuccess()){
 		    int error = response.getErrorCode();
 		    if(error == -6){
 		        throw new InvalidPostsNumberException("Invalid announcements number to be read!");
 		    }
 		    else if(error == -10){
+                System.out.println("TOU NO ERRO CERTO");
 		        throw new TooMuchAnnouncementsException("There are not that much announcements to be read!");
 		    }
 		}
