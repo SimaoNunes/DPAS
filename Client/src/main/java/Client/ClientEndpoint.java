@@ -8,6 +8,7 @@ import org.json.simple.JSONObject;
 
 import javax.swing.plaf.synth.SynthOptionPaneUI;
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.security.*;
@@ -24,9 +25,15 @@ public class ClientEndpoint {
     private String userName = null;
     private CriptoManager criptoManager = null;
 
-    private boolean test_flag = false;
-    private int timeout = 4000;
+    /***********Attack Tests Flags************/
 
+    private boolean test_flag = false;
+    private boolean nonce_flag = false;
+    private boolean operation_flag = false;
+    private boolean later_timeout = false;
+    private boolean replay_flag = false;
+
+    /*****************************************/
 
     public ClientEndpoint(String userName){
     	criptoManager = new CriptoManager();
@@ -36,12 +43,36 @@ public class ClientEndpoint {
         setUsername(userName);
     }
 
-    public int getTimeout() {
-        return timeout;
+    public boolean isReplay_flag() {
+        return replay_flag;
     }
 
-    public void setTimeout(int timeout) {
-        this.timeout = timeout;
+    public void setReplay_flag(boolean replay_flag) {
+        this.replay_flag = replay_flag;
+    }
+
+    public boolean isNonce_flag() {
+        return nonce_flag;
+    }
+
+    public void setNonce_flag(boolean nonce_flag) {
+        this.nonce_flag = nonce_flag;
+    }
+
+    public boolean isOperation_flag() {
+        return operation_flag;
+    }
+
+    public void setOperation_flag(boolean operation_flag) {
+        this.operation_flag = operation_flag;
+    }
+
+    public boolean isLater_timeout() {
+        return later_timeout;
+    }
+
+    public void setLater_timeout(boolean later_timeout) {
+        this.later_timeout = later_timeout;
     }
 
     public boolean isTest_flag() {
@@ -101,7 +132,7 @@ public class ClientEndpoint {
     }
 
     private Socket createSocket() throws IOException {
-        return new Socket("localhost",9000);
+        return new Socket("localhost", 9000);
     }
 
     private ObjectOutputStream createOutputStream(Socket socket) throws IOException {
@@ -114,10 +145,29 @@ public class ClientEndpoint {
 
     private Envelope sendReceive(Envelope envelope) throws IOException, ClassNotFoundException {
         Socket socket = createSocket();
+        socket.setSoTimeout(4000);
+        if(isTest_flag()){
+            if(isNonce_flag() || isLater_timeout()){
+                socket.setSoTimeout(20);
+            }
+        }
         createOutputStream(socket).writeObject(envelope);
-        socket.setSoTimeout(getTimeout());
-
         return (Envelope) createInputStream(socket).readObject();
+
+    }
+
+    private void sendReplays(Envelope envelope, int n_replays){
+        try {
+            int i = 0;
+            while(i < n_replays){
+                Socket socket = createSocket();
+                createOutputStream(socket).writeObject(envelope);
+                i++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 //////////////////////////
@@ -143,9 +193,6 @@ public class ClientEndpoint {
 
     private void startHandshake(PublicKey publicKey) throws NonceTimeoutException {
         setServerNonce(askForServerNonce(publicKey));
-        if(isTest_flag()) {
-            setTimeout(10);
-        }
         setClientNonce(criptoManager.generateClientNonce());
     }
 
@@ -216,7 +263,7 @@ public class ClientEndpoint {
 		    if(error == -6) {
 		        throw new InvalidPostsNumberException("Invalid announcements number to be read!");
 		    }
-		    else if(error == -10) {
+		    else if(error == -10){
 		        throw new TooMuchAnnouncementsException("There are not that much announcements to be read!");
 		    }
 		}
@@ -241,8 +288,17 @@ public class ClientEndpoint {
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
+
+        if(operation_flag){
+            later_timeout = true;
+        }
+
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
+
+            if(replay_flag){
+                sendReplays(envelope_req, 2);
+            }
 
             if(!checkNonce(envelope_resp.getResponse()))          {
                 throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
@@ -285,8 +341,13 @@ public class ClientEndpoint {
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, privateKey));
 
+        if(operation_flag){
+            later_timeout = true;
+        }
+
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
+            later_timeout = false;
             if(!checkNonce(envelope_resp.getResponse())){
                 throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
@@ -331,8 +392,16 @@ public class ClientEndpoint {
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
+        if(operation_flag){
+            later_timeout = true;
+        }
+
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
+
+            if(replay_flag){
+                sendReplays(envelope_req, 2);
+            }
 
             if (!checkNonce(envelope_resp.getResponse())) {
                 throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");            }
@@ -352,12 +421,20 @@ public class ClientEndpoint {
         return null;
     }
 
-    public JSONObject readGeneral(int number) throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException {
+    public JSONObject readGeneral(int number) throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException {
 
         Request request = new Request("READGENERAL", number);
 
+        if(operation_flag){
+            later_timeout = true;
+        }
+
         try {
             Envelope envelope = sendReceive(new Envelope(request, null));
+
+            if(replay_flag){
+                sendReplays(new Envelope(request, null), 2);
+            }
 
             if(!criptoManager.checkHash(envelope, userName)){
                 throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
@@ -365,9 +442,11 @@ public class ClientEndpoint {
 			checkReadGeneral(envelope.getResponse());
             return envelope.getResponse().getJsonObject();
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (SocketTimeoutException e) {
+            throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return null;
