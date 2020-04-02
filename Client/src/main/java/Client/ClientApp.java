@@ -291,6 +291,7 @@ public class ClientApp {
 		} catch (InvalidPostsNumberException e) {
 			System.out.println("\n" + e.getMessage());
 		} catch (TooMuchAnnouncementsException e) {
+			System.out.println("PANICO");
 			System.out.println("\n" + e.getMessage());
 		} catch (UserNotRegisteredException e) {
 			System.out.println("\n" + e.getMessage());
