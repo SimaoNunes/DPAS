@@ -212,26 +212,22 @@ public class ClientApp {
 		}
 		// Ask if user wants to reference other Announcements
 		Boolean end = false;
-		goodInput = false;
 		String announcId;
 		List<Integer> announcsList  = new ArrayList<Integer>();
-		System.out.println("\nType the Ids of the Announcements you want to reference, and press Enter in between them. When you're finished, "
-						 + "press enter again. If you don't want to reference any Announcement, just press Enter.\n>>");
+		System.out.print("\nType the Ids of the Announcements you want to reference, and press Enter in between them. When you're finished, "
+						 + "press Enter again. If you don't want to reference any Announcement, just press Enter.\n>>");
 		while(!end) {
-			while(!goodInput) {
-				System.out.println(" ");
-				announcId = scanner.nextLine();
-				if(announcId.equals("\n")) {
-					goodInput = true;
-					end = true;
-				}
-				else if(!announcId.matches("^[0-9]+$")) { 
-					System.out.println("\nPlease insert a valid number");
-				}
-				else {
-					goodInput = true;
-					announcsList.add(Integer.parseInt(announcId));
-				}
+			System.out.print(" ");
+			announcId = scanner.nextLine();
+			if(announcId.isEmpty()) {
+				end = true;
+			}
+			else if(!announcId.matches("^[0-9]+$")) { 
+				System.out.println("\nPlease insert a valid number");
+			}
+			else {
+				end = true;
+				announcsList.add(Integer.parseInt(announcId));
 			}
 		}
 		int[] announcsArray = toIntArray(announcsList);
