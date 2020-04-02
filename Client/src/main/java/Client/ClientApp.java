@@ -222,11 +222,11 @@ public class ClientApp {
 			if(announcId.isEmpty()) {
 				end = true;
 			}
-			else if(!announcId.matches("^[0-9]+$")) { 
-				System.out.println("\nPlease insert a valid number");
+			else if(announcId.matches("^[0-9]+$")) { 
+				announcsList.add(Integer.parseInt(announcId));
 			}
 			else {
-				announcsList.add(Integer.parseInt(announcId));
+				System.out.println("\nPlease insert a valid number");
 			}
 		}
 		int[] announcsArray = new int[announcsList.size()];
