@@ -178,7 +178,7 @@ public class Server implements Runnable{
         if(ref_announcements != null){
             JSONArray annoucementsList = new JSONArray();
             for(int i = 0; i < ref_announcements.length; i++){
-                annoucementsList.add(ref_announcements[i]);
+                annoucementsList.add(Integer.toString(ref_announcements[i]));
             }
             announcementObject.put("ref_announcements", annoucementsList);
         }

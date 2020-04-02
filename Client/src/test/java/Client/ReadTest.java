@@ -95,18 +95,13 @@ public class ReadTest extends BaseTest{
 	}
 
 	@Test
-	public void Should_Succeed_When_CheckingReferencedAnnouncements() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+	public void Should_Succeed_When_CheckingReferencedAnnouncementsResultWith1Post() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		
 		// get announcements with references -> which are the most recent ones (1)
 		JSONObject result  = clientEndpoint1.read("user1", 1); 
 		JSONObject result2 = clientEndpoint2.read("user2", 1);
-	
-		System.out.println(result);
-		System.out.println(result2);
-
-		// falta fazer read das referencias
-		
-		// System.out.println(getReferencedAnnouncementsFromJSON(result));
+		System.out.println(getReferencedAnnouncementsFromJSONResultWith1Post(result));
+		System.out.println(getReferencedAnnouncementsFromJSONResultWith1Post(result2));
 
 	}
 

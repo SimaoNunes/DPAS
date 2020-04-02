@@ -90,28 +90,28 @@ public class BaseTest {
         return result;
     }
 
-    public int[] getReferencedAnnouncementsFromJSON(JSONObject json){
+    public String[] getReferencedAnnouncementsFromJSONResultWith1Post(JSONObject json){
 
-        System.out.println(json);
-        JSONArray array = (JSONArray) json.get("ref_announcements");
-        System.out.println("brooooo");
-
-        System.out.println(array);
-    
-        // Deal with the case of a non-array value
-        if (array == null) {
-            return new int[] {}; // empty list
+    	JSONArray arrayAnnouncement = (JSONArray) json.get("announcementList");
+        String[] numbers = null;
+        JSONArray refs = null;
+        
+        int i = 0;
+        for (Object post : arrayAnnouncement) {
+            JSONObject obj = (JSONObject) post;
+            refs = (JSONArray) obj.get("ref_announcements");
+            numbers = new String[refs.size()];
+            for (Object ref : refs) {
+                String refString = (String) ref;
+                numbers[i++] = refString;
+            }
         }
-
-        // Create an int array to accomodate the numbers
-        int[] numbers = new int[array.size()];
-
-        // Extract numbers from JSON array
-        for (int i = 0; i < array.size(); ++i) {
-            numbers[i] = (int) array.get(i);
+        // Deal with the case of no refs
+        if (refs == null) {
+            return new String[0]; // empty list
+        } else {
+        	return numbers;	
         }
-
-        return numbers;
     }
 
     public static void shutDown(){

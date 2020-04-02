@@ -78,7 +78,7 @@ public class ReadGeneralTest extends BaseTest{
 	}
     
     @Test
-	public void Should_Succeed_When_CheckingReferencedAnnouncements() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+	public void Should_Succeed_When_CheckingReferencedAnnouncementsResultWith1Post() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		
 		// get announcements with references -> which are the 2 most recent ones (2)
         JSONObject result  = clientEndpoint1.readGeneral(2); 
