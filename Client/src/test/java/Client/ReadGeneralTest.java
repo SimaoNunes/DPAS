@@ -41,8 +41,6 @@ public class ReadGeneralTest extends BaseTest{
 
         int[] announcs  = {0,3};
 		clientEndpoint1.postGeneral("message with references from user1", announcs); // id = 8
-		int[] announcs2 = {1,2};
-		clientEndpoint2.postGeneral("message with references from user2", announcs2); // id = 9
     }
     
     
@@ -59,8 +57,8 @@ public class ReadGeneralTest extends BaseTest{
 
 	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException {
         // should succeed even though the user didn't refer any other announcements when posting
-        String[] general_result = getMessagesFromJSON(clientEndpoint1.readGeneral(3));
-        assertEquals("public post2 from user2", general_result[2]);
+        String[] general_result = getMessagesFromJSON(clientEndpoint1.readGeneral(2));
+        assertEquals("public post2 from user2", general_result[1]);
     }
 
 	@Test
@@ -68,25 +66,23 @@ public class ReadGeneralTest extends BaseTest{
 
         String[] general_result = getMessagesFromJSON(clientEndpoint1.readGeneral(0));
 
-        assertEquals(general_result[0], "message with references from user2");
-        assertEquals(general_result[1], "message with references from user1");
-        assertEquals(general_result[2], "public post2 from user2");
-		assertEquals(general_result[3], "public post1 from user2");
-        assertEquals(general_result[4], "public post2 from user1");
-        assertEquals(general_result[5], "public post1 from user1");
+        assertEquals(general_result[0], "message with references from user1");
+        assertEquals(general_result[1], "public post2 from user2");
+		assertEquals(general_result[2], "public post1 from user2");
+        assertEquals(general_result[3], "public post2 from user1");
+        assertEquals(general_result[4], "public post1 from user1");
 	}
     
     @Test
 	public void Should_Succeed_When_CheckingReferencedAnnouncementsResultWith1Post() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-		
-		// get announcements with references -> which are the 2 most recent ones (2)
-        JSONObject result  = clientEndpoint1.readGeneral(2); 
 
-		// falta fazer read das referencias
-		
-		// System.out.println(getReferencedAnnouncementsFromJSON(result));
+		// get announcements with references -> which is the most recent one (1)       
+        JSONObject result1 = clientEndpoint1.readGeneral(1); 
 
+		int ref_id1_from_user1 = Integer.parseInt(getReferencedAnnouncementsFromJSONResultWith1Post(result1)[0]);
+		int ref_id1_from_user2 = Integer.parseInt(getReferencedAnnouncementsFromJSONResultWith1Post(result1)[1]);
+
+        assertEquals(0, ref_id1_from_user1);
+        assertEquals(3, ref_id1_from_user2);
 	}
-
-
 }
