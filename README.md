@@ -25,7 +25,7 @@ Each error code sent by the server is translated into an exception client side.
 
 - -1 -> UserNotRegistered
 - -2 -> AlreadyRegistered
-- -3 -> InvalidPublicKey
+- -3 -> InvalidPublicKey (currently not being used, only UnknownPublicKey)
 - -4 -> MessageTooBig
 - -5 -> InvalidAnnouncement
 - -6 -> InvalidPostsNumber

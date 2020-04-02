@@ -61,11 +61,19 @@ public class ReadTest extends BaseTest{
 
 	}
 
-	@Test(expected = UserNotRegisteredException.class)
-	public void Should_Fail_When_UserNotRegistered() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+	/*@Test
+	public void Should_Succeed_When_UserReadingNotRegistered() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		//user 3 is not registered
-		clientEndpoint3.read("user3", 1);
-	}
+		String[] result1 = getMessagesFromJSON(clientEndpoint3.read("user1", 3)); // will receive 3
+		assertEquals(result1[1], "message3 user1");
+		assertEquals(result1[2], "message2 user1"); 
+	}*/
+	
+	/*@Test(expected = UserNotRegisteredException.class)
+	public void Should_Fail_When_UserToReadFromNotRegistered() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+		//user 3 is not registered
+		clientEndpoint2.read("user3", 1);
+	}*/
 
 	@Test(expected = InvalidPostsNumberException.class)
 	public void Should_Fail_When_BadPostsNumber() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {

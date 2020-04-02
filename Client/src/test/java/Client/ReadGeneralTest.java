@@ -55,6 +55,7 @@ public class ReadGeneralTest extends BaseTest{
 		clientEndpoint1.readGeneral(685);
 	}
 
+    @Test
 	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException {
         // should succeed even though the user didn't refer any other announcements when posting
         String[] general_result = getMessagesFromJSON(clientEndpoint1.readGeneral(2));
