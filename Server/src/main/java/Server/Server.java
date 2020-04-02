@@ -21,6 +21,7 @@ import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -168,6 +169,10 @@ public class Server implements Runnable{
         announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
         announcementObject.put("user", username);
         announcementObject.put("message", request.getMessage());
+        
+        Date dNow = new Date();
+        SimpleDateFormat ft = new SimpleDateFormat ("dd-MM-yyyy 'at' HH:mm");
+        announcementObject.put("date", ft.format(dNow).toString());
 
         int[] ref_announcements = request.getAnnouncements();
         if(ref_announcements != null){

@@ -134,7 +134,7 @@ public class ClientEndpoint {
             e.printStackTrace();
         } catch (SocketTimeoutException e) {
             throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
 
         }
@@ -143,14 +143,14 @@ public class ClientEndpoint {
 
     private void startHandshake(PublicKey publicKey) throws NonceTimeoutException {
         setServerNonce(askForServerNonce(publicKey));
-        if(isTest_flag()){
+        if(isTest_flag()) {
             setTimeout(10);
         }
         setClientNonce(criptoManager.generateClientNonce());
     }
 
     private boolean checkNonce(Response response){
-        if(Arrays.equals(response.getNonce(), getClientNonce())){
+        if(Arrays.equals(response.getNonce(), getClientNonce())) {
             setClientNonce(null);
             setServerNonce(null);
             return true;
@@ -170,10 +170,10 @@ public class ClientEndpoint {
     public void checkRegister(Response response) throws AlreadyRegisteredException, UnknownPublicKeyException {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
-            if(error == -7){
+            if(error == -7) {
                 throw new UnknownPublicKeyException("Such key doesn't exist in the server side!");
             }
-            else if(error == -2){
+            else if(error == -2) {
                 throw new AlreadyRegisteredException("User with that public key already registered in the DPAS!");
             }
         }
@@ -183,13 +183,13 @@ public class ClientEndpoint {
             MessageTooBigException, InvalidAnnouncementException {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
-            if(error == -1){
+            if(error == -1) {
                 throw new UserNotRegisteredException("This user is not registered!");
             }
-            else if(error == -4){
+            else if(error == -4) {
                 throw new MessageTooBigException("Message cannot exceed 255 characters!");
             }
-            else if(error == -5){
+            else if(error == -5) {
                 throw new InvalidAnnouncementException("Announcements referenced do not exist!");
             }
         }
@@ -198,27 +198,25 @@ public class ClientEndpoint {
     public void checkRead(Response response) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
-            if(error == -1){
+            if(error == -1) {
                 throw new UserNotRegisteredException("This user is not registered!");
             }
-            else if(error == -6){
+            else if(error == -6) {
                 throw new InvalidPostsNumberException("Invalid announcements number to be read!");
             }
-            else if(error == -10){
+            else if(error == -10) {
                 throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
             }
         }
     }
     
     public void checkReadGeneral(Response response) throws InvalidPostsNumberException, TooMuchAnnouncementsException {
-        System.out.println("TOU NO CHECKREAD GENERAL");
         if(!response.getSuccess()){
 		    int error = response.getErrorCode();
-		    if(error == -6){
+		    if(error == -6) {
 		        throw new InvalidPostsNumberException("Invalid announcements number to be read!");
 		    }
-		    else if(error == -10){
-                System.out.println("TOU NO ERRO CERTO");
+		    else if(error == -10) {
 		        throw new TooMuchAnnouncementsException("There are not that much announcements to be read!");
 		    }
 		}

@@ -71,7 +71,7 @@ public class ClientApp {
 			clientEndpoint = new ClientEndpoint(userName);
 			clientEndpoint.register();
 		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
-			System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
+			System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded)");
 			return false;
 		} catch (AlreadyRegisteredException e) {
 			System.out.println("\n"+e.getMessage());
@@ -230,7 +230,13 @@ public class ClientApp {
 				announcsList.add(Integer.parseInt(announcId));
 			}
 		}
-		int[] announcsArray = toIntArray(announcsList);
+		int[] announcsArray = new int[announcsList.size()];
+		announcsArray = toIntArray(announcsList);
+		/*if(announcsList.size() > 0) {
+			for(int i : announcsArray) {
+				System.out.println(i);
+			}
+		}*/
 		// Post announcement
 		try{
 			if(isGeneral){
@@ -291,7 +297,6 @@ public class ClientApp {
 		} catch (InvalidPostsNumberException e) {
 			System.out.println("\n" + e.getMessage());
 		} catch (TooMuchAnnouncementsException e) {
-			System.out.println("PANICO");
 			System.out.println("\n" + e.getMessage());
 		} catch (UserNotRegisteredException e) {
 			System.out.println("\n" + e.getMessage());
@@ -311,7 +316,7 @@ public class ClientApp {
 	private static void printAnnouncements(JSONObject jsonAnnouncs, Boolean isGeneral) {
 		// Get array of announcements in JSON format, iterate over them and print them
         JSONArray array = (JSONArray) jsonAnnouncs.get("announcementList");
-        int i = 0;
+        int i = 1;
         // ReadGeneral
         if(isGeneral) {
             for (Object object : array) {
@@ -319,11 +324,13 @@ public class ClientApp {
 
                 String user = (String) obj.get("user");
                 String announcId = (String) obj.get("id");
+                String date = (String) obj.get("date");
                 String msg = (String) obj.get("message");
 
                 System.out.println("\n" + i++ + ")");
                 System.out.println("Announcement From User: " + user);
                 System.out.println("Id: " + announcId);
+                System.out.println("Date: " + date);
                 System.out.println("Message: " + msg);
             }
         // Read
@@ -331,11 +338,13 @@ public class ClientApp {
             for (Object object : array) {
                 JSONObject obj = (JSONObject) object;
 
-                String msg = (String) obj.get("message");
                 String announcId = (String) obj.get("id");
+                String date = (String) obj.get("date");
+                String msg = (String) obj.get("message");
 
                 System.out.println("\n" + i++ + ")");
                 System.out.println("Id: " + announcId);
+                System.out.println("Date: " + date);
                 System.out.println("Message: " + msg);
             }	
         }
