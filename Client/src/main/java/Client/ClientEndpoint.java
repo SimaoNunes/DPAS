@@ -24,6 +24,9 @@ public class ClientEndpoint {
     private String userName = null;
     private CriptoManager criptoManager = null;
 
+    private boolean test_flag = false;
+    private int timeout = 4000;
+
 
     public ClientEndpoint(String userName){
     	criptoManager = new CriptoManager();
@@ -31,6 +34,22 @@ public class ClientEndpoint {
         setPublicKey(criptoManager.getPublicKeyFromKs(userName, userName));
         setServerPublicKey(criptoManager.getPublicKeyFromKs(userName, "server"));
         setUsername(userName);
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+    }
+
+    public boolean isTest_flag() {
+        return test_flag;
+    }
+
+    public void setTest_flag(boolean test_flag) {
+        this.test_flag = test_flag;
     }
 
     public String getUsername() {
@@ -96,7 +115,7 @@ public class ClientEndpoint {
     private Envelope sendReceive(Envelope envelope) throws IOException, ClassNotFoundException {
         Socket socket = createSocket();
         createOutputStream(socket).writeObject(envelope);
-        socket.setSoTimeout(4000);
+        socket.setSoTimeout(getTimeout());
 
         return (Envelope) createInputStream(socket).readObject();
     }
@@ -124,6 +143,9 @@ public class ClientEndpoint {
 
     private void startHandshake(PublicKey publicKey) throws NonceTimeoutException {
         setServerNonce(askForServerNonce(publicKey));
+        if(isTest_flag()){
+            setTimeout(10);
+        }
         setClientNonce(criptoManager.generateClientNonce());
     }
 
