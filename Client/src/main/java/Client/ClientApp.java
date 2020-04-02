@@ -226,17 +226,11 @@ public class ClientApp {
 				System.out.println("\nPlease insert a valid number");
 			}
 			else {
-				end = true;
 				announcsList.add(Integer.parseInt(announcId));
 			}
 		}
 		int[] announcsArray = new int[announcsList.size()];
 		announcsArray = toIntArray(announcsList);
-		/*if(announcsList.size() > 0) {
-			for(int i : announcsArray) {
-				System.out.println(i);
-			}
-		}*/
 		// Post announcement
 		try{
 			if(isGeneral){
