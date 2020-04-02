@@ -281,7 +281,7 @@ public class ClientApp {
 				jsonAnnouncs = clientEndpoint.readGeneral(Integer.parseInt(numberOfPosts));
 				printAnnouncements(jsonAnnouncs, true);
 			} else {
-				System.out.println("\nWhich User's Announcement Board you want to read from?\n>> ");
+				System.out.print("\nWhich User's Announcement Board you want to read from?\n>> ");
 				String userName = scanner.nextLine();																	//FIXME NOT SANITIZING USER INPUT
 				if(keyStore.containsAlias(userName)) {
 					jsonAnnouncs = clientEndpoint.read(userName, Integer.parseInt(numberOfPosts));
@@ -293,13 +293,13 @@ public class ClientApp {
 		} catch (KeyStoreException e) {
 			System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
 		} catch (InvalidPostsNumberException e) {
-			System.out.println("\n"+e.getMessage());
+			System.out.println("\n" + e.getMessage());
 		} catch (TooMuchAnnouncementsException e) {
-			System.out.println("\n"+e.getMessage());
+			System.out.println("\n" + e.getMessage());
 		} catch (UserNotRegisteredException e) {
-			System.out.println("\n"+e.getMessage());
+			System.out.println("\n" + e.getMessage());
 		} catch (NonceTimeoutException e) {
-			System.out.println("\n"+e.getMessage());
+			System.out.println("\n" + e.getMessage());
 		} catch (OperationTimeoutException e) {
 			System.out.println("\n" + e.getMessage());
 		} catch (IntegrityException e) {
