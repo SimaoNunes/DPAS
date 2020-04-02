@@ -222,21 +222,15 @@ public class ClientApp {
 			if(announcId.isEmpty()) {
 				end = true;
 			}
-			else if(!announcId.matches("^[0-9]+$")) { 
-				System.out.println("\nPlease insert a valid number");
+			else if(announcId.matches("^[0-9]+$")) { 
+				announcsList.add(Integer.parseInt(announcId));
 			}
 			else {
-				end = true;
-				announcsList.add(Integer.parseInt(announcId));
+				System.out.println("\nPlease insert a valid number");
 			}
 		}
 		int[] announcsArray = new int[announcsList.size()];
 		announcsArray = toIntArray(announcsList);
-		/*if(announcsList.size() > 0) {
-			for(int i : announcsArray) {
-				System.out.println(i);
-			}
-		}*/
 		// Post announcement
 		try{
 			if(isGeneral){
