@@ -6,9 +6,5 @@ public class AlreadyRegisteredException extends Exception{
         super(message);
     }
 
-        public String getMessage(){
-            return this.getMessage();
-        }
-
 }
 

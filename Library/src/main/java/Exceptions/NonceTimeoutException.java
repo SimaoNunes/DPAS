@@ -6,7 +6,4 @@ public class NonceTimeoutException extends Exception {
         super(message);
     }
 
-    public String getMessage(){
-        return this.getMessage();
-    }
 }
