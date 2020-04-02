@@ -508,7 +508,7 @@ public class Server implements Runnable{
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        System.out.printf("Total announcements-> " + TotalAnnouncements);
+        System.out.println("Total announcements-> " + TotalAnnouncements);
     }
 
     private void createOriginalAnnouncs(){
