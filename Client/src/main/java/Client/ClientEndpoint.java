@@ -172,8 +172,7 @@ public class ClientEndpoint {
         }
     }
 
-    public void checkRead(Response response) throws UserNotRegisteredException,
-            InvalidPostsNumberException, TooMuchAnnouncementsException {
+    public void checkRead(Response response) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -1){
