@@ -34,6 +34,8 @@ public class Server implements Runnable{
 
     /********** Replay attacks variables ***********/
     private boolean test_flag = false;
+    private boolean drop_nonce_flag = false;
+    private boolean drop_operation_flag = false;
     private boolean handshake = false;
     private boolean integrity_flag = false;
     private Response old_response;
@@ -125,7 +127,11 @@ public class Server implements Runnable{
                     case "NONCE":
                         handshake = true;
                         byte[] randomNonce = criptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
-                        send(new Response(randomNonce), outStream);
+                        if(!drop_nonce_flag) {
+                        	send(new Response(randomNonce), outStream);
+                        } else {
+                        	System.out.println("\n\n\nDROPEI\n\n\n");
+                        }
                         handshake = false;
                         break;
                     case "DELETEALL":
@@ -147,10 +153,25 @@ public class Server implements Runnable{
                         integrity_flag = true;
                         break;
                     case "INTEGRITY_FLAG_FALSE":
+                    	System.out.println("integrity flag a false");
                         integrity_flag = false;
                         break;
-
-
+                    case "DROP_NONCE_FLAG_TRUE":
+                    	System.out.println("drop nonce flag a true");
+                    	drop_nonce_flag = true;
+                    	break;
+                    case "DROP_NONCE_FLAG_FALSE":
+                    	System.out.println("drop nonce flag a true");
+                    	drop_nonce_flag = false;
+                    	break;
+                    case "DROP_OPERATION_FLAG_TRUE":
+                    	System.out.println("drop nonce flag a true");
+                    	drop_operation_flag = true;
+                    	break;
+                    case "DROP_OPERATION_FLAG_FALSE":
+                    	System.out.println("drop nonce flag a true");
+                    	drop_operation_flag = false;
+                    	break;
                 }
                 socket.close();
             } catch (Exception e) {
@@ -182,7 +203,11 @@ public class Server implements Runnable{
             userIdMap.put(request.getPublicKey(), username);
             saveUserIdMap();
             System.out.println("User " + username + " successfully registered!");
-            send(new Response(true, request.getNonceClient()), outStream);
+            if(!drop_operation_flag) {
+            	send(new Response(true, request.getNonceClient()), outStream);
+            } else {
+            	System.out.println("\n\n\nDROPEI\n\n\n");
+            }
         }
     }
 
@@ -226,8 +251,11 @@ public class Server implements Runnable{
 
         incrementTotalAnnouncs();
         saveTotalAnnouncements();
-
-        send(new Response(true, request.getNonceClient()), outStream);
+        if(!drop_operation_flag) {
+        	send(new Response(true, request.getNonceClient()), outStream);
+        } else {
+        	System.out.println("\n\n\nDROPEI\n\n\n");
+        }
     }
     
     //////////////////////////////////////////////////
@@ -271,7 +299,11 @@ public class Server implements Runnable{
             }
             JSONObject announcementsToSend =  new JSONObject();
             announcementsToSend.put("announcementList", annoucementsList);
-            send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
+            if(!drop_operation_flag) {
+                send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
+            } else {
+            	System.out.println("\n\n\nDROPEI\n\n\n");
+            }
         } catch(Exception e){
             e.printStackTrace();
             send(new Response(false, -8, request.getNonceClient()), outStream);
