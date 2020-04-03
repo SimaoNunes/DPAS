@@ -37,7 +37,7 @@ public class ReadTest extends BaseTest{
 		clientEndpoint2.post("message with references from user2", announcs2); // id = 7
 	}
 
-	@Test
+	/*@Test
 	public void Should_Succeed_When_AnnouncsIsNull_With_1Post() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
 		String[] result = getMessagesFromJSON(clientEndpoint1.read("user1", 2)); // will receive 2
@@ -61,19 +61,19 @@ public class ReadTest extends BaseTest{
 
 	}
 
-	/*@Test
+	@Test
 	public void Should_Succeed_When_UserReadingNotRegistered() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		//user 3 is not registered
 		String[] result1 = getMessagesFromJSON(clientEndpoint3.read("user1", 3)); // will receive 3
 		assertEquals(result1[1], "message3 user1");
 		assertEquals(result1[2], "message2 user1"); 
-	}*/
+	}
 	
-	/*@Test(expected = UserNotRegisteredException.class)
+	@Test(expected = UserNotRegisteredException.class)
 	public void Should_Fail_When_UserToReadFromNotRegistered() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		//user 3 is not registered
 		clientEndpoint2.read("user3", 1);
-	}*/
+	}
 
 	@Test(expected = InvalidPostsNumberException.class)
 	public void Should_Fail_When_BadPostsNumber() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
@@ -121,6 +121,6 @@ public class ReadTest extends BaseTest{
 		assertEquals(1, ref_id1_from_user2);
 		assertEquals(4, ref_id2_from_user2);
 
-	}
+	}*/
 
 }

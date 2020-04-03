@@ -248,6 +248,9 @@ public class ClientEndpoint {
             if(error == -1) {
                 throw new UserNotRegisteredException("This user is not registered!");
             }
+            else if(error == -3) {
+                throw new UserNotRegisteredException("The user you're reading from is not registered!");
+            }
             else if(error == -6) {
                 throw new InvalidPostsNumberException("Invalid announcements number to be read!");
             }
@@ -386,9 +389,9 @@ public class ClientEndpoint {
 
         startHandshake(getPublicKey());
         
-        PublicKey pubKey = criptoManager.getPublicKeyFromKs(userName, announcUserName);
+        PublicKey pubKeyToReadFrom = criptoManager.getPublicKeyFromKs(userName, announcUserName);
 
-    	Request request = new Request("READ", pubKey, number, getServerNonce(), getClientNonce());
+    	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(), getClientNonce());
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
@@ -404,10 +407,12 @@ public class ClientEndpoint {
             }
 
             if (!checkNonce(envelope_resp.getResponse())) {
-                throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");            }
+                throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
+            }
 
             if (!criptoManager.checkHash(envelope_resp, userName)) {
-                throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");            }
+                throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
+            }
 
             checkRead(envelope_resp.getResponse());
             return envelope_resp.getResponse().getJsonObject();
