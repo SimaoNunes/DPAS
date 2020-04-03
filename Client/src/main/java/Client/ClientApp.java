@@ -27,18 +27,20 @@ public class ClientApp {
     public static void main(String[] args) {
     	System.out.println("\n======================  DPAS Application ======================");
     	// Check if arguments are being wrongly used (should only receive username, or no arguments at all)
-    	if(args.length > 1) {
-    		System.out.println("\nWrong way of running app. Either give a single argument with the user name or don't provide arguments and register a new user");
+    	if(args.length > 2 || args.length == 0) {
+    		System.out.println("\nWrong way of running app. Either give a single argument with the IP of the server" +
+									   " or provide user and IP in this order or don't provide at all and register");
     	}
     	// Check if user name is provided. Otherwise register a new user
-    	if(args.length == 1) {
-    		userName = args[0]; 																						//FIXME not sanitizing user input
+    	String server = server = args[0];
+		if(args.length == 2) {
+    		userName = args[1]; 																						//FIXME not sanitizing user input
     		// Try to load user's keystore and if this user is the owner of the account
 			try {
 		    	// Try to load user's keystore
 	        	keyStore = KeyStore.getInstance("JKS");
 				keyStore.load(new FileInputStream("Keystores/" + userName + "_keystore"), "changeit".toCharArray());
-				clientEndpoint = new ClientEndpoint(userName);
+				clientEndpoint = new ClientEndpoint(userName, server);
 				runApp();
 			} catch (KeyStoreException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded). You sure you typed your name right?");
@@ -47,8 +49,7 @@ public class ClientApp {
 			}
     	} 
     	else {
-			if(registerUser()) {
-				clientEndpoint = new ClientEndpoint(userName);
+			if(registerUser(server)) {
 				runApp();
 			}
     	}
@@ -57,7 +58,7 @@ public class ClientApp {
     
     
     
-	private static Boolean registerUser() {
+	private static Boolean registerUser(String server) {
 		System.out.println("\nPlease register yourself in the DPAS.");
     	String inputUserName = null;
 		// Check if username is trusted (aka if username alias is in keyStore)
@@ -68,7 +69,7 @@ public class ClientApp {
         	keyStore = KeyStore.getInstance("JKS");
 			keyStore.load(new FileInputStream("Keystores/" + inputUserName + "_keystore"), "changeit".toCharArray());
 			userName = inputUserName;
-			clientEndpoint = new ClientEndpoint(userName);
+			clientEndpoint = new ClientEndpoint(userName, server);
 			clientEndpoint.register();
 		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
 			System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded)");

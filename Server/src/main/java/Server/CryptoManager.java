@@ -33,11 +33,11 @@ import java.util.HashMap;
 
 import Library.Envelope;
 
-public class CriptoManager{
+public class CryptoManager {
 
     private HashMap<PublicKey, byte[]> nonces = null;
 
-    protected CriptoManager(){
+    protected CryptoManager(){
         nonces = new HashMap<>();
     }
 

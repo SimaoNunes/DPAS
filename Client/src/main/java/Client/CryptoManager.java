@@ -27,7 +27,7 @@ import java.util.Arrays;
 import Library.Envelope;
 import Library.Request;
 
-public class CriptoManager {
+public class CryptoManager {
 	
 /////////////////////////////////////
 //								   //
