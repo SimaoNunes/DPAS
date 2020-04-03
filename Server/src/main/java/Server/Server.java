@@ -25,7 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Server implements Runnable{
+public class Server implements Runnable {
 
     private ServerSocket server = null;
     private Map<PublicKey, String> userIdMap = null;
@@ -130,7 +130,7 @@ public class Server implements Runnable{
                         if(!drop_nonce_flag) {
                         	send(new Response(randomNonce), outStream);
                         } else {
-                        	System.out.println("\n\n\nDROPEI\n\n\n");
+                        	System.out.println("\nDROPEI\n");
                         }
                         handshake = false;
                         break;
@@ -302,7 +302,7 @@ public class Server implements Runnable{
             if(!drop_operation_flag) {
                 send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
             } else {
-            	System.out.println("\n\n\nDROPEI\n\n\n");
+            	System.out.println("\nDROPEI\n");
             }
         } catch(Exception e){
             e.printStackTrace();

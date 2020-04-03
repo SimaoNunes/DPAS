@@ -18,7 +18,7 @@ import Exceptions.TooMuchAnnouncementsException;
 import Exceptions.UnknownPublicKeyException;
 import Exceptions.UserNotRegisteredException;
 
-public class IntegrityTest1 extends BaseTest {
+public class IntegrityRequestTest extends BaseTest {
 
 	/**
 	 *

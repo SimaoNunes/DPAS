@@ -10,7 +10,7 @@ import org.junit.Test;
 import static junit.framework.TestCase.assertEquals;
 
 
-public class ReplayAttackTest1 extends BaseTest {
+public class ReplayRequestAttackTest extends BaseTest {
 	
     /**
      * Replay attacks on the request of the operation by the client

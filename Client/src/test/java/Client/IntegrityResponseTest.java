@@ -5,7 +5,7 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class IntegrityTest2 extends BaseTest{
+public class IntegrityResponseTest extends BaseTest{
 
     /**
      * Integrity test of the response from the server to the user's request
