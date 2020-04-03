@@ -31,6 +31,7 @@ To test our system and simulate possible attacks, we provided a set of tests ins
 - Java 13 installed
 - Maven installed (at least version 3.6)
 - A copy of this repository
+- Works 100% on Linux, on Windows might not be consistent
 
 #### Testing Process
 
