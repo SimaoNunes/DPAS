@@ -264,7 +264,7 @@ public class Server implements Runnable{
 
             String fileToRead;
             for (int i=0; i<total; i++) {
-                fileToRead = directoryList[directorySize-1]; // -1 because arrays starts in 0
+                fileToRead = directoryList[directorySize-1];
                 announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
                 directorySize--;
                 annoucementsList.add(announcement);
@@ -337,7 +337,6 @@ public class Server implements Runnable{
 
             // SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)]
             if(test_flag && !handshake){
-                System.out.println("1");
                 outputStream.writeObject(old_envelope);
             }
             else{

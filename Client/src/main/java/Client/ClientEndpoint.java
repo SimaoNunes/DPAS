@@ -1,4 +1,4 @@
-package Client;
+	package Client;
 
 import Exceptions.*;
 import Library.Envelope;
@@ -33,7 +33,6 @@ public class ClientEndpoint {
     private boolean later_timeout = false;
     private boolean replay_flag = false;
     private boolean integrity_flag = false;
-    private boolean replay_nonce = false;
 
     /*****************************************/
 
@@ -377,12 +376,11 @@ public class ClientEndpoint {
 
         try {
 
-            // SIMULATE ATTACKER: send replayed messages to the server
+            Envelope envelope_resp = sendReceive(envelope_req);
+            // SIMULATE ATTACKER: replay register
             if(replay_flag){
                 sendReplays(envelope_req, 2);
             }
-
-            Envelope envelope_resp = sendReceive(envelope_req);
             later_timeout = false;
             if(!checkNonce(envelope_resp.getResponse())){
                 throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
@@ -444,15 +442,12 @@ public class ClientEndpoint {
             if(replay_flag){
                 sendReplays(envelope_req, 2);
             }
-
             if (!checkNonce(envelope_resp.getResponse())) {
                 throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
-
             if (!criptoManager.checkHash(envelope_resp, userName)) {
                 throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
-
             checkRead(envelope_resp.getResponse());
             return envelope_resp.getResponse().getJsonObject();
         } catch (SocketTimeoutException e){
