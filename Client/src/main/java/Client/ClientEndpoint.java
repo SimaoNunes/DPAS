@@ -308,7 +308,7 @@ public class ClientEndpoint {
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
-
+        //SIMULATE ATTACK: simulate a drop of the operation request, this flag is to simulate it AFTER the handshake
         if(operation_flag){
             later_timeout = true;
         }
@@ -319,7 +319,8 @@ public class ClientEndpoint {
 
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
-            // SIMULATE ATTACKER: replay register
+
+            // SIMULATE ATTACKER: send replayed messages to the server
             if(replay_flag){
                 sendReplays(envelope_req, 2);
             }
@@ -363,6 +364,7 @@ public class ClientEndpoint {
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, privateKey));
 
+        //SIMULATE ATTACK: simulate a drop of the operation request, this flag is to simulate it AFTER the handshake
         if(operation_flag){
             later_timeout = true;
         }
@@ -372,6 +374,7 @@ public class ClientEndpoint {
         }
 
         try {
+
             Envelope envelope_resp = sendReceive(envelope_req);
             // SIMULATE ATTACKER: replay register
             if(replay_flag){
@@ -421,6 +424,7 @@ public class ClientEndpoint {
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
+        //SIMULATE ATTACK: simulate a drop of the operation request, this flag is to simulate it AFTER the handshake
         if(operation_flag){
             later_timeout = true;
         }
@@ -432,7 +436,8 @@ public class ClientEndpoint {
 
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
-            // SIMULATE ATTACKER: replay post
+
+            // SIMULATE ATTACKER: send replayed messages to the server
             if(replay_flag){
                 sendReplays(envelope_req, 2);
             }
@@ -458,13 +463,15 @@ public class ClientEndpoint {
 
         Request request = new Request("READGENERAL", number);
 
+        //SIMULATE ATTACK: simulate a drop of the operation request, this flag is to simulate it AFTER the handshake
         if(operation_flag){
             later_timeout = true;
         }
 
         try {
             Envelope envelope = sendReceive(new Envelope(request, null));
-            // SIMULATE ATTACKER: replay read
+
+            // SIMULATE ATTACKER: send replayed messages to the server
             if(replay_flag){
                 sendReplays(new Envelope(request, null), 2);
             }

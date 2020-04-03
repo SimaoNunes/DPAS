@@ -21,6 +21,7 @@ public class ReplayAttackTest1 extends BaseTest {
     		FreshnessException, IntegrityException, MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException {
         clientEndpoint1.register();
         clientEndpoint1.post("USER1 MESSAGE1", null);
+        clientEndpoint1.postGeneral("USER1 MESSAGE1", null);
     }
     
     @Before
@@ -29,7 +30,7 @@ public class ReplayAttackTest1 extends BaseTest {
     }
     
     @AfterClass
-    public void setReplayFlagFalse() {
+    public static void setReplayFlagFalse() {
     	clientEndpoint1.setReplay_flag(false);
     }
 
@@ -64,11 +65,10 @@ public class ReplayAttackTest1 extends BaseTest {
     		NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException, InvalidPostsNumberException, TooMuchAnnouncementsException {
         clientEndpoint1.postGeneral("USER1 MESSAGE3", null);
 
-        String[] result1 = getMessagesFromJSON(clientEndpoint1.readGeneral(2));
+        String[] result1 = getMessagesFromJSON(clientEndpoint1.readGeneral(1));
 
         assertEquals(result1[0], "USER1 MESSAGE3");
-        assertEquals(result1[1], "USER1 MESSAGE2");
-        assertEquals(result1.length, 2);
+        assertEquals(result1.length, 1);
     }
 
     @Test
