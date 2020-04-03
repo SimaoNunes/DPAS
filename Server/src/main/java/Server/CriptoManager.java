@@ -157,6 +157,13 @@ public class CriptoManager{
         return nonce;
     }
 
+    public byte[] generateRandomNonce(){
+        SecureRandom random = new SecureRandom();
+        byte[] nonce = new byte[16];
+        random.nextBytes(nonce);
+        return nonce;
+    }
+
     /////////////////////////////////////////////////////////
     //										               //
     //             Cipher and Decipher methods             //
