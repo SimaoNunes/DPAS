@@ -97,6 +97,8 @@ public class ReplayAttackTest extends BaseTest {
         clientEndpoint1.post("entao vamos la", null);
         clientEndpoint1.post("esta nao vai receber resposta", null);
 
+        setTestFlag(false);
+
     }
 
     @Test(expected = FreshnessException.class)
@@ -110,6 +112,8 @@ public class ReplayAttackTest extends BaseTest {
 
         clientEndpoint1.postGeneral("entao vamos la", null);
         clientEndpoint1.postGeneral("esta nao vai receber resposta", null);
+
+        setTestFlag(false);
 
     }
 
