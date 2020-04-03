@@ -206,18 +206,17 @@ public class Server implements Runnable{
     
     private void read(Request request, boolean isGeneral, ObjectOutputStream outStream) {
 
-        String[] directoryList = getDirectoryList(request.getPublicKey());
+        String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
         int directorySize = directoryList.length;
 
         String path = "./storage/";
-        if(!isGeneral){
+        if(!isGeneral) {
             System.out.println("READ method");
-            String username = userIdMap.get(request.getPublicKey());
+            String username = userIdMap.get(request.getPublicKeyToReadFrom());
             path += "AnnouncementBoards/" + username + "/";
-        } else{
+        } else {
             System.out.println("READGENERAL method");
             path += "GeneralBoard/";
-
         }
 
         int total;

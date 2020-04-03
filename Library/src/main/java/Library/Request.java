@@ -60,9 +60,10 @@ public class Request implements Serializable {
     
     // Read
     public Request(String operation, PublicKey key, PublicKey publicKeyToReadFrom, int number, byte[] nonceServer, byte[] nonceClient) {
+    	this.operation = operation;
         this.publicKey = key;
+        this.publicKeyToReadFrom = publicKeyToReadFrom;
         this.number = number;
-        this.operation = operation;
         this.nonceServer = nonceServer;
         this.nonceClient = nonceClient;
     }
