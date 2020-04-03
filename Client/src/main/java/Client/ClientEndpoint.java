@@ -6,9 +6,7 @@ import Library.Request;
 import Library.Response;
 import org.json.simple.JSONObject;
 
-import javax.swing.plaf.synth.SynthOptionPaneUI;
 import java.io.*;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.security.*;
@@ -19,11 +17,13 @@ public class ClientEndpoint {
     private byte[] serverNonce = null;
     private byte[] clientNonce = null;
 
+    private String server_address = null;
+
     private PrivateKey privateKey = null;
     private PublicKey publicKey = null;
     private PublicKey serverPublicKey = null;
     private String userName = null;
-    private CriptoManager criptoManager = null;
+    private CryptoManager criptoManager = null;
 
     /***********Attack Tests Flags************/
 
@@ -33,15 +33,25 @@ public class ClientEndpoint {
     private boolean later_timeout = false;
     private boolean replay_flag = false;
     private boolean integrity_flag = false;
+    private boolean replay_nonce = false;
 
     /*****************************************/
 
-    public ClientEndpoint(String userName){
-    	criptoManager = new CriptoManager();
+    public ClientEndpoint(String userName, String server){
+    	criptoManager = new CryptoManager();
         setPrivateKey(criptoManager.getPrivateKeyFromKs(userName));
         setPublicKey(criptoManager.getPublicKeyFromKs(userName, userName));
         setServerPublicKey(criptoManager.getPublicKeyFromKs(userName, "server"));
         setUsername(userName);
+        setServer_address(server);
+    }
+
+    public String getServer_address() {
+        return server_address;
+    }
+
+    public void setServer_address(String server_address) {
+        this.server_address = server_address;
     }
 
     public boolean isReplay_flag() {
@@ -141,7 +151,7 @@ public class ClientEndpoint {
     }
 
     private Socket createSocket() throws IOException {
-        return new Socket("localhost", 9000);
+        return new Socket(getServer_address(), 9000);
     }
 
     private ObjectOutputStream createOutputStream(Socket socket) throws IOException {

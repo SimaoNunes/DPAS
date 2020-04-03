@@ -30,7 +30,7 @@ public class Server implements Runnable{
     private ServerSocket server = null;
     private Map<PublicKey, String> userIdMap = null;
     private AtomicInteger TotalAnnouncements;
-    private CriptoManager criptoManager = null;
+    private CryptoManager criptoManager = null;
 
     /********** Replay attacks variables ***********/
     private boolean test_flag = false;
@@ -40,8 +40,8 @@ public class Server implements Runnable{
 
     protected Server(ServerSocket ss){
         server = ss;
-        criptoManager = new CriptoManager();
-        old_response = new Response(true, criptoManager.generateRandomNonce());
+        criptoManager = new CryptoManager();
+        old_response = new Response(criptoManager.generateRandomNonce());
         old_envelope = new Envelope(old_response, null);
         getUserIdMap();
         getTotalAnnouncementsFromFile();
