@@ -9,6 +9,7 @@ public class Request implements Serializable {
     private byte[] nonceServer = null;   //server generated the nonce
     private byte[] nonceClient = null;   //client generated the nonce
     private PublicKey publicKey = null;
+    private PublicKey publicKeyToReadFrom = null;
     private String message = null;
     private int number = -1;
     private int[] announcements = null;
@@ -58,15 +59,16 @@ public class Request implements Serializable {
     }
     
     // Read
-    public Request(String operation, PublicKey key, int number, byte[] nonceServer, byte[] nonceClient) {
+    public Request(String operation, PublicKey key, PublicKey publicKeyToReadFrom, int number, byte[] nonceServer, byte[] nonceClient) {
+    	this.operation = operation;
         this.publicKey = key;
+        this.publicKeyToReadFrom = publicKeyToReadFrom;
         this.number = number;
-        this.operation = operation;
         this.nonceServer = nonceServer;
         this.nonceClient = nonceClient;
     }
     
-    // Read
+    // ReadGeneral
     public Request(String operation, int number) {
         this.number = number;
         this.operation = operation;
@@ -135,4 +137,12 @@ public class Request implements Serializable {
     public void setNonceClient(byte[] nonceClient) {
         this.nonceClient = nonceClient;
     }
+
+	public PublicKey getPublicKeyToReadFrom() {
+		return publicKeyToReadFrom;
+	}
+
+	public void setPublicKeyToReadFrom(PublicKey publicKeyToReadFrom) {
+		this.publicKeyToReadFrom = publicKeyToReadFrom;
+	}
 }

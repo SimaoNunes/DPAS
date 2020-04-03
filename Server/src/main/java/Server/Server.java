@@ -105,7 +105,7 @@ public class Server implements Runnable{
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
                             criptoManager.checkHash(envelope, outStream) && 
                             criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
-                            checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -6, -10}))
+                            checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
                             {
                             read(envelope.getRequest(), false, outStream);
                         }
@@ -215,20 +215,19 @@ public class Server implements Runnable{
     //				      READ						//
     //////////////////////////////////////////////////
     
-    private void read(Request request, boolean isGeneral, ObjectOutputStream outStream) {        
+    private void read(Request request, boolean isGeneral, ObjectOutputStream outStream) {
 
-        String[] directoryList = getDirectoryList(request.getPublicKey());
+        String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
         int directorySize = directoryList.length;
 
         String path = "./storage/";
-        if(!isGeneral){
+        if(!isGeneral) {
             System.out.println("READ method");
-            String username = userIdMap.get(request.getPublicKey());
+            String username = userIdMap.get(request.getPublicKeyToReadFrom());
             path += "AnnouncementBoards/" + username + "/";
-        } else{
+        } else {
             System.out.println("READGENERAL method");
             path += "GeneralBoard/";
-
         }
 
         int total;
@@ -557,7 +556,7 @@ public class Server implements Runnable{
             switch(codes[i]) {
                 // ## UserNotRegistered ## -> check if user is registed
                 case -1:
-                    if(!userIdMap.containsKey(request.getPublicKey())){
+                    if(!userIdMap.containsKey(request.getPublicKey())) {
                         send(new Response(false, -1, request.getNonceClient()), outStream);
                         return false;
                     }
@@ -569,16 +568,23 @@ public class Server implements Runnable{
                             return false;
                         }
                     break;
+                // ## UserNotRegistered ## -> check if user to read from is registed
+                case -3:
+                    if(!userIdMap.containsKey(request.getPublicKeyToReadFrom())) {
+                        send(new Response(false, -3, request.getNonceClient()), outStream);
+                        return false;
+                    }
+                    break;
                 // ## MessageTooBig ## -> Check if message length exceeds 255 characters
                 case -4:
-                    if(request.getMessage().length() > 255){
+                    if(request.getMessage().length() > 255) {
                         send(new Response(false, -4, request.getNonceClient()), outStream);
                         return false;
                     }
                     break;
                 // ## InvalidAnnouncement ## -> checks if announcements refered by the user are valid
                 case -5:
-                    if(request.getAnnouncements() != null && !checkValidAnnouncements(request.getAnnouncements())){
+                    if(request.getAnnouncements() != null && !checkValidAnnouncements(request.getAnnouncements())) {
                         send(new Response(false, -5, request.getNonceClient()), outStream); 
                         return false;      
                     }
@@ -590,9 +596,9 @@ public class Server implements Runnable{
                         return false;
                     }
                     break;
-                // ## UnknownPublicKey ## -> Check if key is null or known by the Server
+                // ## UnknownPublicKey ## -> Check if key is null or known by the Server. If method is read, check if key to ready from is null
                 case -7:
-                    if (request.getPublicKey() == null || criptoManager.checkKey(request.getPublicKey()) == "") {
+                    if (request.getPublicKey() == null || criptoManager.checkKey(request.getPublicKey()) == "" || (request.getOperation().equals("READ") && (request.getPublicKeyToReadFrom() == null || criptoManager.checkKey(request.getPublicKeyToReadFrom()) == ""))) {
                         send(new Response(false, -7, request.getNonceClient()), outStream);
                         return false;
                     }
