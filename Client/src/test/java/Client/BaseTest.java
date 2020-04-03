@@ -40,7 +40,9 @@ public class BaseTest {
 	}
 
 	@AfterClass
-	public static void cleanUp(){
+	public static void cleanUp() {
+		setDropNonceFlag(false);
+		setDropOperationFlag(false);
         deleteUsers();
 	}
 
@@ -148,7 +150,6 @@ public class BaseTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     public static void setIntegrityFlag(boolean flag){
@@ -170,6 +171,48 @@ public class BaseTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
+    
+    public static void setDropNonceFlag(boolean flag){
+        Socket socket = null;
+        String message = "DROP_NONCE_FLAG_";
+        if(flag){
+            message+="TRUE";
+        }
+        else{
+            message+="FALSE";
+        }
+        try {
+            socket = new Socket(server_address, 9000);
+            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+            outputStream.writeObject(new Envelope(new Request(message, null)));
+            outputStream.close();
+            socket.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public static void setDropOperationFlag(boolean flag){
+        Socket socket = null;
+        String message = "DROP_OPERATION_FLAG_";
+        if(flag){
+            message+="TRUE";
+        }
+        else{
+            message+="FALSE";
+        }
+        try {
+            socket = new Socket(server_address, 9000);
+            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+            outputStream.writeObject(new Envelope(new Request(message, null)));
+            outputStream.close();
+            socket.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
 }

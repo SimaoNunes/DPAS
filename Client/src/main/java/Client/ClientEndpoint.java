@@ -27,10 +27,6 @@ public class ClientEndpoint {
 
     /***********Attack Tests Flags************/
 
-    private boolean test_flag = false;
-    private boolean nonce_flag = false;
-    private boolean operation_flag = false;
-    private boolean later_timeout = false;
     private boolean replay_flag = false;
     private boolean integrity_flag = false;
 
@@ -59,38 +55,6 @@ public class ClientEndpoint {
 
     public void setReplay_flag(boolean replay_flag) {
         this.replay_flag = replay_flag;
-    }
-
-    public boolean isNonce_flag() {
-        return nonce_flag;
-    }
-
-    public void setNonce_flag(boolean nonce_flag) {
-        this.nonce_flag = nonce_flag;
-    }
-
-    public boolean isOperation_flag() {
-        return operation_flag;
-    }
-
-    public void setOperation_flag(boolean operation_flag) {
-        this.operation_flag = operation_flag;
-    }
-
-    public boolean isLater_timeout() {
-        return later_timeout;
-    }
-
-    public void setLater_timeout(boolean later_timeout) {
-        this.later_timeout = later_timeout;
-    }
-
-    public boolean isTest_flag() {
-        return test_flag;
-    }
-
-    public void setTest_flag(boolean test_flag) {
-        this.test_flag = test_flag;
     }
 
     public boolean isIntegrity_flag() {
@@ -164,11 +128,6 @@ public class ClientEndpoint {
     private Envelope sendReceive(Envelope envelope) throws IOException, ClassNotFoundException {
         Socket socket = createSocket();
         socket.setSoTimeout(4000);
-        if(isTest_flag()){
-            if(isNonce_flag() || isLater_timeout()){
-                socket.setSoTimeout(20);
-            }
-        }
         createOutputStream(socket).writeObject(envelope);
         return (Envelope) createInputStream(socket).readObject();
     }
@@ -184,7 +143,6 @@ public class ClientEndpoint {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
 //////////////////////////
@@ -196,14 +154,12 @@ public class ClientEndpoint {
     private byte[] askForServerNonce(PublicKey key) throws NonceTimeoutException {
         try {
              return sendReceive(new Envelope(new Request("NONCE", key))).getResponse().getNonce();
-
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (SocketTimeoutException e) {
             throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
         } catch (IOException e) {
-            e.printStackTrace();
-
+        	throw new NonceTimeoutException("The operation was not possible, please try again!"); 
         }
         return null;
     }
@@ -308,10 +264,6 @@ public class ClientEndpoint {
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
-        //SIMULATE ATTACK: simulate a drop of the operation request, this flag is to simulate it AFTER the handshake
-        if(operation_flag){
-            later_timeout = true;
-        }
         // SIMULATE ATTACKER: changing the userX key to userY pubKey [in this case user3]
         if(isIntegrity_flag()) {
         	envelope_req.getRequest().setPublicKey(criptoManager.getPublicKeyFromKs(userName, "user3"));
@@ -364,10 +316,6 @@ public class ClientEndpoint {
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, privateKey));
 
-        //SIMULATE ATTACK: simulate a drop of the operation request, this flag is to simulate it AFTER the handshake
-        if(operation_flag){
-            later_timeout = true;
-        }
         // SIMULATE ATTACKER: changing the message (tamper)
         if(isIntegrity_flag()) {
         	envelope_req.getRequest().setMessage("Olá, eu odeio-te");
@@ -380,7 +328,6 @@ public class ClientEndpoint {
             if(replay_flag){
                 sendReplays(envelope_req, 2);
             }
-            later_timeout = false;
             if(!checkNonce(envelope_resp.getResponse())){
                 throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
@@ -423,11 +370,6 @@ public class ClientEndpoint {
     	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(), getClientNonce());
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
-
-        //SIMULATE ATTACK: simulate a drop of the operation request, this flag is to simulate it AFTER the handshake
-        if(operation_flag){
-            later_timeout = true;
-        }
         
         // SIMULATE ATTACKER: changing the read to use from. User might think is going to read from user X but reads from X [in this case user3] (tamper)
         if(isIntegrity_flag()) {
@@ -463,11 +405,6 @@ public class ClientEndpoint {
 
         Request request = new Request("READGENERAL", number);
 
-        //SIMULATE ATTACK: simulate a drop of the operation request, this flag is to simulate it AFTER the handshake
-        if(operation_flag){
-            later_timeout = true;
-        }
-
         try {
             Envelope envelope = sendReceive(new Envelope(request, null));
 
@@ -487,7 +424,7 @@ public class ClientEndpoint {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+        	throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         }
         return null;
     }
