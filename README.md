@@ -8,17 +8,6 @@ This is Java API that wants to solve the problems concerned with the emergence o
 - Users can read all the announcements of other users and obtain their cronological order
 - When posting announcements, users can refer to previous announcements posted by them or other users.
 
-## Server API
-This is a Java API. All the methods return either Java primitive type objects or JSONs.
-There are 5 methods you can use:
-```bash
-register(PublicKey publicKey, String name) : returns int
-post(PublicKey key, String message, int[] announcs) : returns int
-postGeneral(PublicKey key, String message, int[] announcs) : returns int
-read(PublicKey key, int number) : returns JSONObject
-readGeneral(int number) : returns JSONObject
-```
-
 ## Exceptions Guide
 
 Each error code sent by the server is translated into an exception client side.
@@ -33,10 +22,6 @@ Each error code sent by the server is translated into an exception client side.
 - -8 -> ErrorReadingFile
 - -9 -> ErrorWrittingFile
 - -10 -> TooMuchAnnouncements
-
-## Application Example
-
-We also developed an example of an application that uses the DPAS API. You can find it in the Client module. Hope it helps to better understand how it works! (The application is currently "installed on user1 pc". This means that the app only knows user1 keypair. All the other keys are the public keys of the server and other users so, in order to try our app, you can only use it as user1).
 
 ## How to test 
 
@@ -60,7 +45,7 @@ mvn -DskipTests clean install
 - Once the installation process is complete, you should start the execution of the server in console number 2, after entering inside the Server's directory. To do this, you must execute the following commands: 
 
 ```bash
-cd server
+cd Server
 mvn exec:java
 ```
 
@@ -74,7 +59,7 @@ mvn test
 ### Warning
 
 During the test process, the test modules will ask you to reboot the server to simulate one possible situation that would compromise our system: 
-- If the Server maintains persistent information, even if it fails for a short period
+- If the Server maintains persistent information, even if it crashes
 
 To reboot the server, you must stop the execution on console number 2, and execute again:
 
