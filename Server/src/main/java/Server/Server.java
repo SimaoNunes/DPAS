@@ -32,6 +32,10 @@ public class Server implements Runnable{
     private AtomicInteger TotalAnnouncements;
     private CriptoManager criptoManager = null;
 
+    /********** Replay attacks variables ***********/
+    private boolean test_flag = false;
+    private Envelope old_envelope = null;
+
     protected Server(ServerSocket ss){
         server = ss;
         criptoManager = new CriptoManager();
@@ -120,6 +124,14 @@ public class Server implements Runnable{
                         break;
                     case "SHUTDOWN":
                         shutDown();
+                        break;
+                    case "TEST_FLAG_TRUE":
+                        System.out.println("test flag true");
+                        test_flag = true;
+                        break;
+                    case "TEST_FLAG_FALSE":
+                        System.out.println("test flag false");
+                        test_flag = false;
                         break;
                 }
                 socket.close();
@@ -299,7 +311,19 @@ public class Server implements Runnable{
 
             byte[] final_bytes = cipher.doFinal(response_hash);
 
-            outputStream.writeObject(new Envelope(response, final_bytes));
+            if(test_flag && old_envelope != null){
+                System.out.println("1");
+                outputStream.writeObject(old_envelope);
+            }
+            else{
+                System.out.println("2");
+                outputStream.writeObject(new Envelope(response, final_bytes));
+            }
+
+            if(test_flag && old_envelope == null){ //vai so atribuir a primeira mensagem e fica sempre a mesma
+                System.out.println("3");
+                old_envelope = new Envelope(response, final_bytes);
+            }
 
         } catch (IOException e) {
             e.printStackTrace();

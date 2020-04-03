@@ -127,4 +127,26 @@ public class BaseTest {
             e.printStackTrace();
         }
     }
+
+    public static void setTestFlag(boolean flag){
+        Socket socket = null;
+        String message = "TEST_FLAG_";
+        if(flag){
+            message+="TRUE";
+        }
+        else{
+            message+="FALSE";
+        }
+        try {
+            socket = new Socket("localhost", 9000);
+            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+            outputStream.writeObject(new Envelope(new Request(message, null)));
+            outputStream.close();
+            socket.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 }
