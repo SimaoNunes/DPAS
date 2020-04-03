@@ -1,4 +1,4 @@
-package Client;
+	package Client;
 
 import Exceptions.*;
 import Library.Envelope;
@@ -33,7 +33,6 @@ public class ClientEndpoint {
     private boolean later_timeout = false;
     private boolean replay_flag = false;
     private boolean integrity_flag = false;
-    private boolean replay_nonce = false;
 
     /*****************************************/
 
@@ -309,11 +308,10 @@ public class ClientEndpoint {
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
-
+        //SIMULATE ATTACK: simulate a drop of the operation request, this flag is to simulate it AFTER the handshake
         if(operation_flag){
             later_timeout = true;
         }
-        
         // SIMULATE ATTACKER: changing the userX key to userY pubKey [in this case user3]
         if(isIntegrity_flag()) {
         	envelope_req.getRequest().setPublicKey(criptoManager.getPublicKeyFromKs(userName, "user3"));
@@ -322,6 +320,7 @@ public class ClientEndpoint {
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
 
+            // SIMULATE ATTACKER: send replayed messages to the server
             if(replay_flag){
                 sendReplays(envelope_req, 2);
             }
@@ -365,6 +364,7 @@ public class ClientEndpoint {
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, privateKey));
 
+        //SIMULATE ATTACK: simulate a drop of the operation request, this flag is to simulate it AFTER the handshake
         if(operation_flag){
             later_timeout = true;
         }
@@ -374,7 +374,12 @@ public class ClientEndpoint {
         }
 
         try {
+
             Envelope envelope_resp = sendReceive(envelope_req);
+            // SIMULATE ATTACKER: replay register
+            if(replay_flag){
+                sendReplays(envelope_req, 2);
+            }
             later_timeout = false;
             if(!checkNonce(envelope_resp.getResponse())){
                 throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
@@ -419,6 +424,7 @@ public class ClientEndpoint {
 
         Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
+        //SIMULATE ATTACK: simulate a drop of the operation request, this flag is to simulate it AFTER the handshake
         if(operation_flag){
             later_timeout = true;
         }
@@ -431,18 +437,16 @@ public class ClientEndpoint {
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
 
+            // SIMULATE ATTACKER: send replayed messages to the server
             if(replay_flag){
                 sendReplays(envelope_req, 2);
             }
-
             if (!checkNonce(envelope_resp.getResponse())) {
                 throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
-
             if (!criptoManager.checkHash(envelope_resp, userName)) {
                 throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
-
             checkRead(envelope_resp.getResponse());
             return envelope_resp.getResponse().getJsonObject();
         } catch (SocketTimeoutException e){
@@ -459,6 +463,7 @@ public class ClientEndpoint {
 
         Request request = new Request("READGENERAL", number);
 
+        //SIMULATE ATTACK: simulate a drop of the operation request, this flag is to simulate it AFTER the handshake
         if(operation_flag){
             later_timeout = true;
         }
@@ -466,6 +471,7 @@ public class ClientEndpoint {
         try {
             Envelope envelope = sendReceive(new Envelope(request, null));
 
+            // SIMULATE ATTACKER: send replayed messages to the server
             if(replay_flag){
                 sendReplays(new Envelope(request, null), 2);
             }

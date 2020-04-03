@@ -35,8 +35,11 @@ public class Server implements Runnable{
     /********** Replay attacks variables ***********/
     private boolean test_flag = false;
     private boolean handshake = false;
+    private boolean integrity_flag = false;
     private Response old_response;
     private Envelope old_envelope;
+
+    /**********************************************/
 
     protected Server(ServerSocket ss){
         server = ss;
@@ -139,6 +142,15 @@ public class Server implements Runnable{
                         System.out.println("test flag false");
                         test_flag = false;
                         break;
+                    case "INTEGRITY_FLAG_TRUE":
+                        System.out.println("integrity flag a true");
+                        integrity_flag = true;
+                        break;
+                    case "INTEGRITY_FLAG_FALSE":
+                        integrity_flag = false;
+                        break;
+
+
                 }
                 socket.close();
             } catch (Exception e) {
@@ -252,7 +264,7 @@ public class Server implements Runnable{
 
             String fileToRead;
             for (int i=0; i<total; i++) {
-                fileToRead = directoryList[directorySize-1]; // -1 because arrays starts in 0
+                fileToRead = directoryList[directorySize-1];
                 announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
                 directorySize--;
                 annoucementsList.add(announcement);
@@ -317,8 +329,14 @@ public class Server implements Runnable{
 
             byte[] final_bytes = cipher.doFinal(response_hash);
 
+            // SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash]
+            if(integrity_flag) {
+                response.setSuccess(false);
+                response.setErrorCode(-33);
+            }
+
+            // SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)]
             if(test_flag && !handshake){
-                System.out.println("1");
                 outputStream.writeObject(old_envelope);
             }
             else{

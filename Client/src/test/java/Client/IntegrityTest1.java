@@ -18,7 +18,12 @@ import Exceptions.TooMuchAnnouncementsException;
 import Exceptions.UnknownPublicKeyException;
 import Exceptions.UserNotRegisteredException;
 
-public class IntegrityTest extends BaseTest {
+public class IntegrityTest1 extends BaseTest {
+
+	/**
+	 *
+	 * Integrity test of the request operation from the client to the server
+	 */
 	
 	@BeforeClass
 	public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException,
