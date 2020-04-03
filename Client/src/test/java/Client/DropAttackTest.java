@@ -64,6 +64,8 @@ public class DropAttackTest extends BaseTest { //SO NONCESTIMEOUTEXCEPTIONS
         Thread.sleep(7000);
 
         clientEndpoint1.setTest_flag(true);
+        clientEndpoint1.setNonce_flag(false);
+        clientEndpoint1.setLater_timeout(false);
         clientEndpoint1.setOperation_flag((true));
         clientEndpoint1.post("user1", null);
     }
@@ -75,6 +77,8 @@ public class DropAttackTest extends BaseTest { //SO NONCESTIMEOUTEXCEPTIONS
         Thread.sleep(7000);
 
         clientEndpoint1.setTest_flag(true);
+        clientEndpoint1.setNonce_flag(false);
+        clientEndpoint1.setLater_timeout(false);
         clientEndpoint1.setOperation_flag((true));
         clientEndpoint1.read("user1", 1);
     }
@@ -86,6 +90,8 @@ public class DropAttackTest extends BaseTest { //SO NONCESTIMEOUTEXCEPTIONS
         Thread.sleep(7000);
 
         clientEndpoint1.setTest_flag(true);
+        clientEndpoint1.setNonce_flag(false);
+        clientEndpoint1.setLater_timeout(false);
         clientEndpoint1.setOperation_flag((true));
         clientEndpoint1.postGeneral("message a toa", null);
     }
@@ -97,6 +103,8 @@ public class DropAttackTest extends BaseTest { //SO NONCESTIMEOUTEXCEPTIONS
         Thread.sleep(7000);
 
         clientEndpoint1.setTest_flag(true);
+        clientEndpoint1.setNonce_flag(false);
+        clientEndpoint1.setLater_timeout(false);
         clientEndpoint1.setOperation_flag((true));
         clientEndpoint1.readGeneral(1);
     }
@@ -108,6 +116,8 @@ public class DropAttackTest extends BaseTest { //SO NONCESTIMEOUTEXCEPTIONS
         Thread.sleep(7000);
 
         clientEndpoint1.setTest_flag(true);
+        clientEndpoint1.setNonce_flag(false);
+        clientEndpoint1.setLater_timeout(false);
         clientEndpoint1.setOperation_flag((true));
         clientEndpoint1.register();
     }

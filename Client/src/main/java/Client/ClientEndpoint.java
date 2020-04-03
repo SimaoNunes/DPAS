@@ -144,14 +144,21 @@ public class ClientEndpoint {
     }
 
     private Envelope sendReceive(Envelope envelope) throws IOException, ClassNotFoundException {
+        System.out.println("tou no send receive");
         Socket socket = createSocket();
-        socket.setSoTimeout(4000);
+        //socket.setSoTimeout(4000);
         if(isTest_flag()){
             if(isNonce_flag() || isLater_timeout()){
+                System.out.println("entrou no sitio onde n devia");
+                System.out.println(test_flag);
+                System.out.println(operation_flag);
+                System.out.println(nonce_flag);
+                System.out.println(later_timeout);
                 socket.setSoTimeout(20);
             }
         }
         createOutputStream(socket).writeObject(envelope);
+        System.out.println(socket.getSoTimeout());
         return (Envelope) createInputStream(socket).readObject();
 
     }
