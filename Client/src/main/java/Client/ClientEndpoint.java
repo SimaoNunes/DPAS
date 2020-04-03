@@ -312,7 +312,6 @@ public class ClientEndpoint {
         if(operation_flag){
             later_timeout = true;
         }
-        
         // SIMULATE ATTACKER: changing the userX key to userY pubKey [in this case user3]
         if(isIntegrity_flag()) {
         	envelope_req.getRequest().setPublicKey(criptoManager.getPublicKeyFromKs(userName, "user3"));
