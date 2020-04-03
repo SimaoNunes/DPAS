@@ -32,6 +32,7 @@ public class ClientEndpoint {
     private boolean operation_flag = false;
     private boolean later_timeout = false;
     private boolean replay_flag = false;
+    private boolean integrity_flag = false;
 
     /*****************************************/
 
@@ -456,5 +457,13 @@ public class ClientEndpoint {
         }
         return null;
     }
+
+	public boolean isIntegrity_flag() {
+		return integrity_flag;
+	}
+
+	public void setIntegrity_flag(boolean integrity_flag) {
+		this.integrity_flag = integrity_flag;
+	}
     
 }

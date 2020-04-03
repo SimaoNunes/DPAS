@@ -8,7 +8,7 @@ import static junit.framework.TestCase.assertEquals;
 
 public class ReplayAttackTest extends BaseTest {
 
-    @BeforeClass
+    /*@BeforeClass
     public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException, UserNotRegisteredException, InvalidAnnouncementException, MessageTooBigException {
         clientEndpoint1.register();
         clientEndpoint1.post("USER1 MESSAGE1", null);
@@ -16,9 +16,7 @@ public class ReplayAttackTest extends BaseTest {
         //clientEndpoint1.postGeneral("USER1 MESSAGE3", null);
     }
 
-    /**
-     * Replay attacks on the response of the operation of the server
-     */
+
 
     @Test(expected = TooMuchAnnouncementsException.class)
     public void Should_not_Post_More_Than_One() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
@@ -75,7 +73,7 @@ public class ReplayAttackTest extends BaseTest {
         clientEndpoint2.register();
 
 
-    }
+    }*/
 
 
 
