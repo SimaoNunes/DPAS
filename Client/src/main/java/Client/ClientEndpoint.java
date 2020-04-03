@@ -160,7 +160,6 @@ public class ClientEndpoint {
         createOutputStream(socket).writeObject(envelope);
         System.out.println(socket.getSoTimeout());
         return (Envelope) createInputStream(socket).readObject();
-
     }
 
     private void sendReplays(Envelope envelope, int n_replays){

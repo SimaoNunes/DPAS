@@ -34,11 +34,15 @@ public class Server implements Runnable{
 
     /********** Replay attacks variables ***********/
     private boolean test_flag = false;
-    private Envelope old_envelope = null;
+    private boolean handshake = false;
+    private Response old_response;
+    private Envelope old_envelope;
 
     protected Server(ServerSocket ss){
         server = ss;
         criptoManager = new CriptoManager();
+        old_response = new Response(true, criptoManager.generateRandomNonce());
+        old_envelope = new Envelope(old_response, null);
         getUserIdMap();
         getTotalAnnouncementsFromFile();
         newListener();
@@ -116,8 +120,10 @@ public class Server implements Runnable{
                         }
                         break;
                     case "NONCE":
+                        handshake = true;
                         byte[] randomNonce = criptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
                         send(new Response(randomNonce), outStream);
+                        handshake = false;
                         break;
                     case "DELETEALL":
                         deleteUsers();
@@ -311,19 +317,14 @@ public class Server implements Runnable{
 
             byte[] final_bytes = cipher.doFinal(response_hash);
 
-            if(test_flag && old_envelope != null){
+            if(test_flag && !handshake){
                 System.out.println("1");
                 outputStream.writeObject(old_envelope);
             }
             else{
-                System.out.println("2");
                 outputStream.writeObject(new Envelope(response, final_bytes));
             }
 
-            if(test_flag && old_envelope == null){ //vai so atribuir a primeira mensagem e fica sempre a mesma
-                System.out.println("3");
-                old_envelope = new Envelope(response, final_bytes);
-            }
 
         } catch (IOException e) {
             e.printStackTrace();

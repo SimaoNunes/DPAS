@@ -95,9 +95,8 @@ public class ReplayAttackTest extends BaseTest {
         setTestFlag(true);
 
         clientEndpoint1.post("entao vamos la", null);
-        clientEndpoint1.post("esta nao vai receber resposta", null);
+        //clientEndpoint1.post("esta nao vai receber resposta", null);
 
-        setTestFlag(false);
 
     }
 
@@ -113,7 +112,6 @@ public class ReplayAttackTest extends BaseTest {
         clientEndpoint1.postGeneral("entao vamos la", null);
         clientEndpoint1.postGeneral("esta nao vai receber resposta", null);
 
-        setTestFlag(false);
 
     }
 
