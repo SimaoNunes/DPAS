@@ -1,4 +1,4 @@
-package Client;
+	package Client;
 
 import Exceptions.*;
 import Library.Envelope;
@@ -33,7 +33,6 @@ public class ClientEndpoint {
     private boolean later_timeout = false;
     private boolean replay_flag = false;
     private boolean integrity_flag = false;
-    private boolean replay_nonce = false;
 
     /*****************************************/
 
@@ -321,7 +320,7 @@ public class ClientEndpoint {
 
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
-
+            // SIMULATE ATTACKER: replay register
             if(replay_flag){
                 sendReplays(envelope_req, 2);
             }
@@ -375,6 +374,10 @@ public class ClientEndpoint {
 
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
+            // SIMULATE ATTACKER: replay register
+            if(replay_flag){
+                sendReplays(envelope_req, 2);
+            }
             later_timeout = false;
             if(!checkNonce(envelope_resp.getResponse())){
                 throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
@@ -430,19 +433,16 @@ public class ClientEndpoint {
 
         try {
             Envelope envelope_resp = sendReceive(envelope_req);
-
+            // SIMULATE ATTACKER: replay post
             if(replay_flag){
                 sendReplays(envelope_req, 2);
             }
-
             if (!checkNonce(envelope_resp.getResponse())) {
                 throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
-
             if (!criptoManager.checkHash(envelope_resp, userName)) {
                 throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
-
             checkRead(envelope_resp.getResponse());
             return envelope_resp.getResponse().getJsonObject();
         } catch (SocketTimeoutException e){
@@ -465,7 +465,7 @@ public class ClientEndpoint {
 
         try {
             Envelope envelope = sendReceive(new Envelope(request, null));
-
+            // SIMULATE ATTACKER: replay read
             if(replay_flag){
                 sendReplays(new Envelope(request, null), 2);
             }

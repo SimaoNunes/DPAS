@@ -1,6 +1,9 @@
 package Client;
 
 import Exceptions.*;
+
+import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -16,37 +19,37 @@ public class ReplayAttackTest2 extends BaseTest {
      */
 
     @BeforeClass
-    public static void populate() throws FreshnessException, UnknownPublicKeyException, NonceTimeoutException, IntegrityException, OperationTimeoutException, AlreadyRegisteredException {
+    public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException,
+    		FreshnessException, IntegrityException {
         clientEndpoint1.register();
     }
+    
+    @Before
+    public void setTestFlagTrue() {
+    	setTestFlag(true);
+    }
+    
+    @AfterClass
+    public void setTestFlagFalse() {
+    	setTestFlag(true);
+    }
 
     @Test(expected = FreshnessException.class)
-    public void Should_Ignore_Older_Replayed_Message_Post() throws NonceTimeoutException, OperationTimeoutException, IntegrityException, FreshnessException, UnknownPublicKeyException, AlreadyRegisteredException, UserNotRegisteredException, InvalidAnnouncementException, MessageTooBigException {
-
-        setTestFlag(true);
-
+    public void Should_Ignore_Older_Replayed_Message_Post() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException,
+    		OperationTimeoutException, FreshnessException, IntegrityException {
         clientEndpoint1.post("entao vamos la", null);
-        //clientEndpoint1.post("esta nao vai receber resposta", null);
-
-
     }
 
     @Test(expected = FreshnessException.class)
-    public void Should_Ignore_Older_Replayed_Message_Post_General() throws NonceTimeoutException, OperationTimeoutException, IntegrityException, FreshnessException, UnknownPublicKeyException, AlreadyRegisteredException, UserNotRegisteredException, InvalidAnnouncementException, MessageTooBigException {
-
-        setTestFlag(true);
-
+    public void Should_Ignore_Older_Replayed_Message_Post_General() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException,
+    		OperationTimeoutException, FreshnessException, IntegrityException{
         clientEndpoint1.postGeneral("entao vamos la", null);
-
     }
 
     @Test(expected = FreshnessException.class)
-    public void Should_Ignore_Older_Replayed_Message_Read() throws NonceTimeoutException, OperationTimeoutException, IntegrityException, FreshnessException, UnknownPublicKeyException, AlreadyRegisteredException, UserNotRegisteredException, InvalidAnnouncementException, MessageTooBigException, TooMuchAnnouncementsException, InvalidPostsNumberException {
-
-        setTestFlag(true);
-
+    public void Should_Ignore_Older_Replayed_Message_Read() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException,
+    		OperationTimeoutException, FreshnessException, IntegrityException {
         clientEndpoint1.read("user1", 1);
-
     }
 
 }

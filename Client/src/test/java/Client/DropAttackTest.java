@@ -6,7 +6,7 @@ import org.junit.Test;
 
 public class DropAttackTest extends BaseTest { //SO NONCESTIMEOUTEXCEPTIONS
 
-    /*@BeforeClass
+    @BeforeClass
     public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException, UserNotRegisteredException, InvalidAnnouncementException, MessageTooBigException {
         clientEndpoint1.register();
         clientEndpoint1.post("USER1 MESSAGE1", null);
@@ -120,6 +120,6 @@ public class DropAttackTest extends BaseTest { //SO NONCESTIMEOUTEXCEPTIONS
         clientEndpoint1.setLater_timeout(false);
         clientEndpoint1.setOperation_flag((true));
         clientEndpoint1.register();
-    }*/
+    }
 
 }
