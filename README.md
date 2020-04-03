@@ -73,8 +73,7 @@ mvn test
 
 ### Warning
 
-During the test process, the test modules will ask you to reboot the server to simulate two possible situations that would compromise our system: 
-- If the Request/Response has suffered a Drop Attack
+During the test process, the test modules will ask you to reboot the server to simulate one possible situation that would compromise our system: 
 - If the Server maintains persistent information, even if it fails for a short period
 
 To reboot the server, you must stop the execution on console number 2, and execute again:
