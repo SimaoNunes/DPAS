@@ -40,7 +40,7 @@ We also developed an example of an application that uses the DPAS API. You can f
 
 ## How to test 
 
-To test our system and simulate the possible attacks, we provided a set of tests inside the Client's module. 
+To test our system and simulate possible attacks, we provided a set of tests inside the Client's module. 
 
 #### Before testing our system, your machine should have:
 - Java 13 installed
@@ -51,7 +51,7 @@ To test our system and simulate the possible attacks, we provided a set of tests
 
 - You will need to open two consoles to execute our tests. 
 
-- In console number 1, inside the root directory of this repository, you must install all the different components with Maven. Since the tests will work only when the server is running, you should skip the test phase (for now):
+- In console number 1, inside the root directory of this repository, you must install all the different components with Maven. Since the tests will only work when the server is running, you should skip the test phase (for now):
 
 ```bash
 mvn -DskipTests clean install
