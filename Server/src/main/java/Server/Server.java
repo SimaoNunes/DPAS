@@ -48,6 +48,9 @@ public class Server implements Runnable {
         criptoManager = new CryptoManager();
         old_response = new Response(criptoManager.generateRandomNonce());
         old_envelope = new Envelope(old_response, null);
+        String path = "./storage/GeneralBoard/";
+        File file = new File(path);
+        file.mkdirs();
         getUserIdMap();
         getTotalAnnouncementsFromFile();
         newListener();
