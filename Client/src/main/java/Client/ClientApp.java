@@ -48,7 +48,6 @@ public class ClientApp {
     	} 
     	else {
 			if(registerUser()) {
-				clientEndpoint = new ClientEndpoint(userName);
 				runApp();
 			}
     	}

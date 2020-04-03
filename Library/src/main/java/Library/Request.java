@@ -13,7 +13,6 @@ public class Request implements Serializable {
     private String message = null;
     private int number = -1;
     private int[] announcements = null;
-    private String name = null;
     
     ////////////////////////////////////////////////////////////////
     //				                                         	  //
@@ -36,10 +35,9 @@ public class Request implements Serializable {
     }
 
     // Register
-    public Request(String operation, PublicKey key, String name, byte[] nonceServer, byte[] nonceClient){
+    public Request(String operation, PublicKey key, byte[] nonceServer, byte[] nonceClient){
         this.publicKey = key;
         this.operation = operation;
-        this.name = name;
         this.nonceServer = nonceServer;
         this.nonceClient = nonceClient;
     }
@@ -112,14 +110,6 @@ public class Request implements Serializable {
 
     public void setAnnouncements(int[] announcements) {
         this.announcements = announcements;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public byte[] getNonceServer() {

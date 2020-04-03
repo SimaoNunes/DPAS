@@ -160,16 +160,16 @@ public class Server implements Runnable{
     //////////////////////////////////////////////////
     
     public void register(Request request, ObjectOutputStream outStream) {
-        System.out.println("REGISTER Method. Registering user: " + request.getName());
 
         synchronized (userIdMap) {
             String username = criptoManager.checkKey(request.getPublicKey());
+            System.out.println("REGISTER Method. Registering user: " + username);
             String path = "./storage/AnnouncementBoards/" + username;
             File file = new File(path);
             file.mkdirs();
             userIdMap.put(request.getPublicKey(), username);
             saveUserIdMap();
-            System.out.println("User " + request.getName() + " successfully registered!");
+            System.out.println("User " + username + " successfully registered!");
             send(new Response(true, request.getNonceClient()), outStream);
         }
     }
