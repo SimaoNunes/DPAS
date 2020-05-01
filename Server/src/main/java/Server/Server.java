@@ -380,21 +380,15 @@ public class Server implements Runnable {
                 outputStream.writeObject(new Envelope(response, final_bytes));
             }
 
-
-        } catch (IOException e) {
+        } catch ( 
+            IOException | 
+            NoSuchPaddingException | 
+            NoSuchAlgorithmException | 
+            InvalidKeyException | 
+            BadPaddingException | 
+            IllegalBlockSizeException e) {
             e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        }
-
+        } 
     }
 
     private void saveFile(String completePath, String announcement) throws IOException {
@@ -520,8 +514,6 @@ public class Server implements Runnable {
             out.close();
             fileCopy.close();
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -582,9 +574,9 @@ public class Server implements Runnable {
         catch(FileNotFoundException e){
             TotalAnnouncements = new AtomicInteger(0);
             createOriginalAnnouncs();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (
+            IOException | 
+            ClassNotFoundException e) {
             e.printStackTrace();
         }
         System.out.println("Total announcements-> " + TotalAnnouncements);

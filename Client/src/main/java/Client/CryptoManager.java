@@ -54,17 +54,13 @@ public class CryptoManager {
             cipher.init(Cipher.ENCRYPT_MODE, key);
             return cipher.doFinal(request_hash);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
+        } catch (
+            IOException | 
+            NoSuchAlgorithmException | 
+            InvalidKeyException | 
+            NoSuchPaddingException | 
+            BadPaddingException | 
+            IllegalBlockSizeException e) {
             e.printStackTrace();
         }
         return null;
@@ -78,18 +74,14 @@ public class CryptoManager {
             cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, key);
             final_bytes = cipher.doFinal(bytes);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
+        } catch (
+            NoSuchAlgorithmException | 
+            InvalidKeyException | 
+            NoSuchPaddingException | 
+            BadPaddingException | 
+            IllegalBlockSizeException e) {
             e.printStackTrace();
         }
-
         return final_bytes;
     }
 
@@ -116,9 +108,9 @@ public class CryptoManager {
             byte[] response_bytes = bos.toByteArray();
 
             return Arrays.equals(md.digest(response_bytes), hash);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (
+            NoSuchAlgorithmException | 
+            IOException e) {
             e.printStackTrace();
         }
         return false;
@@ -154,20 +146,14 @@ public class CryptoManager {
             ks = KeyStore.getInstance("JKS");
             ks.load(new FileInputStream("Keystores/" + username + "_keystore"), passphrase);
             key = (PrivateKey) ks.getKey(username, passphrase);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnrecoverableEntryException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (
+            NoSuchAlgorithmException | 
+            UnrecoverableEntryException | 
+            KeyStoreException | 
+            CertificateException | 
+            IOException e) {
             e.printStackTrace();
         }
-
         return key;
     }
     
@@ -179,18 +165,13 @@ public class CryptoManager {
             ks = KeyStore.getInstance("JKS");
             ks.load(new FileInputStream("Keystores/" + userName + "_keystore"), passphrase);
             return ks.getCertificate(entity).getPublicKey();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
+        } catch (
+            CertificateException | 
+            NoSuchAlgorithmException | 
+            IOException | 
+            KeyStoreException e) {
             e.printStackTrace();
         }
         return null;
     }
-
 }
