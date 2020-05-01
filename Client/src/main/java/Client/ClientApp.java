@@ -22,6 +22,8 @@ public class ClientApp {
 	private static KeyStore keyStore = null;
 	// Username
 	private static String userName = null;
+
+	private static final String INVALID = "\nInvalid instruction!";
 	
 	
     public static void main(String[] args) {
@@ -36,10 +38,10 @@ public class ClientApp {
 		if(args.length == 2) {
     		userName = args[1]; 																						//FIXME not sanitizing user input
     		// Try to load user's keystore and if this user is the owner of the account
-			try {
+			try(FileInputStream fis = new FileInputStream("Keystores/" + userName + "_keystore")) {
 		    	// Try to load user's keystore
 	        	keyStore = KeyStore.getInstance("JKS");
-				keyStore.load(new FileInputStream("Keystores/" + userName + "_keystore"), "changeit".toCharArray());
+				keyStore.load(fis, "changeit".toCharArray());
 				clientEndpoint = new ClientEndpoint(userName, server);
 				runApp();
 			} catch (KeyStoreException e) {
@@ -67,10 +69,10 @@ public class ClientApp {
 		// Check if username is trusted (aka if username alias is in keyStore)
 		System.out.print("\nInsert a username:\n>> ");
 		inputUserName = scanner.nextLine();																			//FIXME Not sanitizing user input
-		try {
+		try(FileInputStream fis = new FileInputStream("Keystores/" + inputUserName + "_keystore")) {
 	    	// Try to load user's keystore
         	keyStore = KeyStore.getInstance("JKS");
-			keyStore.load(new FileInputStream("Keystores/" + inputUserName + "_keystore"), "changeit".toCharArray());
+			keyStore.load(fis, "changeit".toCharArray());
 			userName = inputUserName;
 			clientEndpoint = new ClientEndpoint(userName, server);
 			clientEndpoint.register();
@@ -135,7 +137,7 @@ public class ClientApp {
 					}				
 					break;
 				default:
-					System.out.println("\nInvalid instruction!");
+					System.out.println(INVALID);
 			}
 		}
 	}
@@ -165,7 +167,7 @@ public class ClientApp {
 					run = false;				
 					break;
 				default:
-					System.out.println("\nInvalid instruction!");
+					System.out.println(INVALID);
 			}
 		}
 	}
@@ -195,7 +197,7 @@ public class ClientApp {
 					run = false;				
 					break;
 				default:
-					System.out.println("\nInvalid instruction!");
+					System.out.println(INVALID);
 			}
 		}
 	}
@@ -234,8 +236,7 @@ public class ClientApp {
 				System.out.println("\nPlease insert a valid number");
 			}
 		}
-		int[] announcsArray = new int[announcsList.size()];
-		announcsArray = toIntArray(announcsList);
+		int[] announcsArray = toIntArray(announcsList);
 		// Post announcement
 		try{
 			if(isGeneral){
@@ -254,22 +255,28 @@ public class ClientApp {
 			System.out.println("\n"+e.getMessage());
 		}
 	}
+
+	private static String waitForInput(){
+        Boolean goodInput = false;
+        String numberOfPosts = null;
+        while(!goodInput) {
+            System.out.print("\nHow many announcements do you want to read?\n>> ");
+            numberOfPosts = scanner.nextLine();
+            if(!numberOfPosts.matches("^[0-9]+$")) {
+                System.out.println("\nPlease insert a valid number");
+            }
+            else {
+                goodInput = true;
+            }
+        }
+        return numberOfPosts;
+    }
 	
 	
 	
 	private static void readMethod(boolean isGeneral) {
-		Boolean goodInput = false;
-		String numberOfPosts = null;
-		while(!goodInput) {
-			System.out.print("\nHow many announcements do you want to read?\n>> ");
-			numberOfPosts = scanner.nextLine();
-			if(!numberOfPosts.matches("^[0-9]+$")) { 
-				System.out.println("\nPlease insert a valid number");
-			}
-			else {
-				goodInput = true;
-			}
-		}
+
+		String numberOfPosts = waitForInput();
 		// Ask for JSONObject with announcements to the Server
 		JSONObject jsonAnnouncs = null;
 		try {
@@ -308,60 +315,41 @@ public class ClientApp {
 		// Get array of announcements in JSON format, iterate over them and print them
         JSONArray array = (JSONArray) jsonAnnouncs.get("announcementList");
         int i = 1;
-        // ReadGeneral
-        if(isGeneral) {
-            for (Object object : array) {
-                JSONObject obj = (JSONObject) object;
+    // ReadGeneral
+        for (Object object : array) {
 
-                String user = (String) obj.get("user");
-                String announcId = (String) obj.get("id");
-                String date = (String) obj.get("date");
-                String msg = (String) obj.get("message");
-                JSONArray refs = (JSONArray) obj.get("ref_announcements");
+            String user = "";
+            String result = "";
 
-                System.out.println("\n" + i++ + ")");
-                System.out.println("Announcement From User: " + user);
-                System.out.println("Id: " + announcId);
-                System.out.println("Date: " + date);
-                System.out.println("Message: " + msg);
-                if(!(refs == null)) {
-	                System.out.print("References:");
-	                for (Object ref : refs) {
-	                    String refString = (String) ref;
-	                    System.out.print(" " + refString);
-	                }
-	                System.out.println();
-                }
+            JSONObject obj = (JSONObject) object;
+            result = "\n" + i++ + ")";
+            if(isGeneral){
+                user = (String) obj.get("user");
+                result += "\nAnnouncement From User: " + user;
             }
-        // Read
-        } else {
-            for (Object object : array) {
-                JSONObject obj = (JSONObject) object;
 
-                String announcId = (String) obj.get("id");
-                String date = (String) obj.get("date");
-                String msg = (String) obj.get("message");
-                JSONArray refs = (JSONArray) obj.get("ref_announcements");
+            String announcId = (String) obj.get("id");
+            String date = (String) obj.get("date");
+            String msg = (String) obj.get("message");
+            JSONArray refs = (JSONArray) obj.get("ref_announcements");
 
-                System.out.println("\n" + i++ + ")");
-                System.out.println("Id: " + announcId);
-                System.out.println("Date: " + date);
-                System.out.println("Message: " + msg);
-                if(!(refs == null)) {
-	                System.out.print("References:");
-	                for (Object ref : refs) {
-	                    String refString = (String) ref;
-	                    System.out.print(" " + refString);
-	                }
-	                System.out.println();
+            result += "\nId: " + announcId + "\nDate: " + date + "\nMessage: " + msg + "\n";
+
+            System.out.println(result);
+            if(!(refs == null)) {
+                System.out.print("References:");
+                for (Object ref : refs) {
+                    String refString = (String) ref;
+                    System.out.print(" " + refString);
                 }
-            }	
+                System.out.println();
+            }
         }
 	}
 	
 	private static int[] toIntArray(List<Integer> list){
 		if(list.size() == 0) {
-			return null;
+			return new int[0];
 		} else {
 			int[] ret = new int[list.size()];
 			for(int i = 0;i < ret.length;i++)
