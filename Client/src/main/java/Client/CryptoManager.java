@@ -2,7 +2,6 @@ package Client;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.security.InvalidKeyException;
@@ -47,12 +46,12 @@ public class CryptoManager {
             out = new ObjectOutputStream(bos);
             out.writeObject(request);
             out.flush();
-            byte[] request_bytes = bos.toByteArray();
-            byte[] request_hash = md.digest(request_bytes);
+            byte[] requestBytes = bos.toByteArray();
+            byte[] requestHash = md.digest(requestBytes);
 
-            cipher = Cipher.getInstance("RSA");
+            cipher = Cipher.getInstance("RSA/None/OAEPWITHSHA-256ANDMGF1PADDING");
             cipher.init(Cipher.ENCRYPT_MODE, key);
-            return cipher.doFinal(request_hash);
+            return cipher.doFinal(requestHash);
 
         } catch (
             IOException | 
@@ -71,7 +70,7 @@ public class CryptoManager {
         Cipher cipher;
 
         try {
-            cipher = Cipher.getInstance("RSA");
+            cipher = Cipher.getInstance("RSA/None/OAEPWITHSHA-256ANDMGF1PADDING");
             cipher.init(Cipher.DECRYPT_MODE, key);
             final_bytes = cipher.doFinal(bytes);
         } catch (
