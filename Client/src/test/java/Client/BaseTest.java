@@ -1,6 +1,5 @@
 package Client;
 
-import Client.ClientEndpoint;
 import Library.Envelope;
 import Library.Request;
 import org.json.simple.JSONArray;

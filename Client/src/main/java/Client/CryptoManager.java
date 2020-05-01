@@ -22,8 +22,6 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-import java.util.Arrays;
-
 import Library.Envelope;
 import Library.Request;
 
