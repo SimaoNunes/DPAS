@@ -44,7 +44,10 @@ public class ClientApp {
 				runApp();
 			} catch (KeyStoreException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded). You sure you typed your name right?");
-			} catch (NoSuchAlgorithmException | CertificateException | IOException e) {
+			} catch (
+				NoSuchAlgorithmException | 
+				CertificateException | 
+				IOException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
 			}
     	} 
@@ -71,24 +74,25 @@ public class ClientApp {
 			userName = inputUserName;
 			clientEndpoint = new ClientEndpoint(userName, server);
 			clientEndpoint.register();
-		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+		} catch (
+			KeyStoreException | 
+			NoSuchAlgorithmException | 
+			CertificateException | 
+			IOException e) {
 			System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded)");
-			return false;
-		} catch (AlreadyRegisteredException e) {
-			System.out.println("\n"+e.getMessage());
 			return false;
 		} catch (UnknownPublicKeyException e) {
 			System.out.println("\nThere seems to be a problem with your authentication. Make sure you have the app properly installed with your CC public key.");
 			return false;
-		} catch (NonceTimeoutException e) {
+		} catch (
+			AlreadyRegisteredException |
+			NonceTimeoutException | 
+			OperationTimeoutException e) {
 			System.out.println("\n"+e.getMessage());
 			return false;
-		} catch (OperationTimeoutException e) {
-			System.out.println("\n"+e.getMessage());
-			return false;
-		} catch (IntegrityException e) {
-			System.out.println("\n" + e.getMessage());
-		} catch (FreshnessException e) {
+		} catch (
+			IntegrityException | 
+			FreshnessException e) {
 			System.out.println("\n" + e.getMessage());
 		}
 		System.out.println("\nHi " + userName + "! You're now registered on DPAS!");
@@ -239,20 +243,15 @@ public class ClientApp {
 			} else {
 				clientEndpoint.post(message, announcsArray);
 			}
-		} catch (UserNotRegisteredException e) {
+		} catch (
+			UserNotRegisteredException | 
+			MessageTooBigException | 
+			InvalidAnnouncementException | 
+			NonceTimeoutException | 
+			OperationTimeoutException |
+			IntegrityException | 
+			FreshnessException e) {
 			System.out.println("\n"+e.getMessage());
-		} catch (MessageTooBigException e) {
-			System.out.println("\n"+e.getMessage());
-		} catch (InvalidAnnouncementException e) {
-			System.out.println("\n"+e.getMessage());
-		} catch (NonceTimeoutException e) {
-			System.out.println("\n"+e.getMessage());
-		} catch (OperationTimeoutException e) {
-			System.out.println("\n" + e.getMessage());
-		} catch (IntegrityException e) {
-			System.out.println("\n" + e.getMessage());
-		} catch (FreshnessException e) {
-			System.out.println("\n" + e.getMessage());
 		}
 	}
 	
@@ -291,19 +290,14 @@ public class ClientApp {
 			}
 		} catch (KeyStoreException e) {
 			System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
-		} catch (InvalidPostsNumberException e) {
-			System.out.println("\n" + e.getMessage());
-		} catch (TooMuchAnnouncementsException e) {
-			System.out.println("\n" + e.getMessage());
-		} catch (UserNotRegisteredException e) {
-			System.out.println("\n" + e.getMessage());
-		} catch (NonceTimeoutException e) {
-			System.out.println("\n" + e.getMessage());
-		} catch (OperationTimeoutException e) {
-			System.out.println("\n" + e.getMessage());
-		} catch (IntegrityException e) {
-			System.out.println("\n" + e.getMessage());
-		} catch (FreshnessException e) {
+		} catch (
+			InvalidPostsNumberException |
+			TooMuchAnnouncementsException |
+			UserNotRegisteredException |
+			NonceTimeoutException | 
+			OperationTimeoutException | 
+			IntegrityException |
+			FreshnessException e) {
 			System.out.println("\n" + e.getMessage());
 		}
 	}

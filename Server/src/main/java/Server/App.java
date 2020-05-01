@@ -9,7 +9,7 @@ public class App
 
 		try {
 			ServerSocket ss = new ServerSocket(9000);
-			Server server = new Server(ss);
+			Server new Server(ss);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

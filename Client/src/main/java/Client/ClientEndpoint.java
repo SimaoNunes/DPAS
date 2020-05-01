@@ -156,10 +156,8 @@ public class ClientEndpoint {
              return sendReceive(new Envelope(new Request("NONCE", key))).getResponse().getNonce();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        } catch (SocketTimeoutException e) {
-            throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
         } catch (IOException e) {
-        	throw new NonceTimeoutException("The operation was not possible, please try again!"); 
+            throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
         }
         return null;
     }
@@ -293,9 +291,7 @@ public class ClientEndpoint {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
             return 0;
-        } catch(SocketTimeoutException e){
-            throw new OperationTimeoutException("There was a problem in the connection we cannot infer precisely if the register was successful. Please try to log in");
-        } catch (IOException e) {
+        } catch(IOException e){
             throw new OperationTimeoutException("There was a problem in the connection we cannot infer precisely if the register was successful. Please try to log in");
         }
     }
@@ -336,14 +332,11 @@ public class ClientEndpoint {
             }
             checkPost(envelope_resp.getResponse());
             return 1;
-        } catch (SocketTimeoutException e) {
-            throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        } catch(IOException e){
-        	throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
+        } catch (IOException e) {
+            throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
         }
-
         return 0;
     }
 
@@ -391,13 +384,11 @@ public class ClientEndpoint {
             }
             checkRead(envelope_resp.getResponse());
             return envelope_resp.getResponse().getJsonObject();
-        } catch (SocketTimeoutException e){
-            throw new OperationTimeoutException("There was a problem with the connection, please try again!");
-        } catch (IOException e) {
-        	throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        }
+        } catch (IOException e) {
+        	throw new OperationTimeoutException("There was a problem with the connection, please try again!");
+        } 
         return null;
     }
 
@@ -419,15 +410,11 @@ public class ClientEndpoint {
 			checkReadGeneral(envelope.getResponse());
             return envelope.getResponse().getJsonObject();
 
-        } catch (SocketTimeoutException e) {
-            throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
         	throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         }
         return null;
-    }
-
-    
+    }    
 }
