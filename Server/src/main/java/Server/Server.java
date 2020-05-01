@@ -123,7 +123,9 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READGENERAL":
-                        if (checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10})) {
+                        if (criptoManager.checkHash(envelope, outStream) && 
+                            criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                            checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10})) {
                             read(envelope.getRequest(), true, outStream);
                         }
                         break;
