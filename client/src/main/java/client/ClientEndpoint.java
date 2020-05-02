@@ -1,6 +1,6 @@
 	package client;
 
-import Exceptions.*;
+import exceptions.*;
 import library.Envelope;
 import library.Request;
 import library.Response;
@@ -17,7 +17,7 @@ public class ClientEndpoint {
     private byte[] serverNonce = null;
     private byte[] clientNonce = null;
 
-    private String server_address = null;
+    private String serverAddress = null;
 
     private PrivateKey privateKey = null;
     private PublicKey publicKey = null;
@@ -45,11 +45,11 @@ public class ClientEndpoint {
     }
 
     public String getServer_address() {
-        return server_address;
+        return serverAddress;
     }
 
     public void setServer_address(String server_address) {
-        this.server_address = server_address;
+        this.serverAddress = server_address;
     }
 
     public boolean isReplay_flag() {
@@ -162,7 +162,7 @@ public class ClientEndpoint {
         } catch (IOException e) {
             throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
         }
-        return null;
+        return new byte[0];
     }
 
     private void startHandshake(PublicKey publicKey) throws NonceTimeoutException {

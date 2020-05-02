@@ -54,12 +54,11 @@ public class CryptoManager {
             ks = KeyStore.getInstance("JKS");
             ks.load(new FileInputStream("keystores/keystore"), passphrase);
 
-            @SuppressWarnings("rawtypes")
-			Enumeration aliases = ks.aliases();
+            Enumeration<String> aliases = ks.aliases();
 
             for (; aliases.hasMoreElements(); ) {
 
-                String alias = (String) aliases.nextElement();
+                String alias = aliases.nextElement();
 
                 if (ks.isCertificateEntry(alias)) {
                     PublicKey key = ks.getCertificate(alias).getPublicKey();

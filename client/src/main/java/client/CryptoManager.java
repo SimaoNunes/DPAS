@@ -70,17 +70,17 @@ public class CryptoManager {
             IllegalBlockSizeException e) {
             e.printStackTrace();
         }
-        return null;
+        return new byte[0];
     }
     
     byte[] decipher(byte[] bytes, PublicKey key){
-        byte[] final_bytes = null;
+        byte[] finalBytes = null;
         Cipher cipher;
 
         try {
             cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, key);
-            final_bytes = cipher.doFinal(bytes);
+            finalBytes = cipher.doFinal(bytes);
         } catch (
             NoSuchAlgorithmException | 
             InvalidKeyException | 
@@ -89,7 +89,7 @@ public class CryptoManager {
             IllegalBlockSizeException e) {
             e.printStackTrace();
         }
-        return final_bytes;
+        return finalBytes;
     }
 
 //////////////////////////////

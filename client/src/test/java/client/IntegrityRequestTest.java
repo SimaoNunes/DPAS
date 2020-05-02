@@ -4,17 +4,17 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import Exceptions.AlreadyRegisteredException;
-import Exceptions.FreshnessException;
-import Exceptions.IntegrityException;
-import Exceptions.InvalidAnnouncementException;
-import Exceptions.InvalidPostsNumberException;
-import Exceptions.MessageTooBigException;
-import Exceptions.NonceTimeoutException;
-import Exceptions.OperationTimeoutException;
-import Exceptions.TooMuchAnnouncementsException;
-import Exceptions.UnknownPublicKeyException;
-import Exceptions.UserNotRegisteredException;
+import exceptions.AlreadyRegisteredException;
+import exceptions.FreshnessException;
+import exceptions.IntegrityException;
+import exceptions.InvalidAnnouncementException;
+import exceptions.InvalidPostsNumberException;
+import exceptions.MessageTooBigException;
+import exceptions.NonceTimeoutException;
+import exceptions.OperationTimeoutException;
+import exceptions.TooMuchAnnouncementsException;
+import exceptions.UnknownPublicKeyException;
+import exceptions.UserNotRegisteredException;
 
 public class IntegrityRequestTest extends BaseTest {
 
