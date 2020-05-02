@@ -1,6 +1,5 @@
 package Library;
 
-import javax.crypto.SealedObject;
 import java.io.Serializable;
 
 public class Envelope implements Serializable {
