@@ -1,4 +1,4 @@
-package Client;
+package client;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -38,7 +38,7 @@ public class ClientApp {
 		if(args.length == 2) {
     		userName = args[1]; 																						//FIXME not sanitizing user input
     		// Try to load user's keystore and if this user is the owner of the account
-			try(FileInputStream fis = new FileInputStream("Keystores/" + userName + "_keystore")) {
+			try(FileInputStream fis = new FileInputStream("keystores/" + userName + "_keystore")) {
 		    	// Try to load user's keystore
 	        	keyStore = KeyStore.getInstance("JKS");
 				keyStore.load(fis, "changeit".toCharArray());
@@ -69,7 +69,7 @@ public class ClientApp {
 		// Check if username is trusted (aka if username alias is in keyStore)
 		System.out.print("\nInsert a username:\n>> ");
 		inputUserName = scanner.nextLine();																			//FIXME Not sanitizing user input
-		try(FileInputStream fis = new FileInputStream("Keystores/" + inputUserName + "_keystore")) {
+		try(FileInputStream fis = new FileInputStream("keystores/" + inputUserName + "_keystore")) {
 	    	// Try to load user's keystore
         	keyStore = KeyStore.getInstance("JKS");
 			keyStore.load(fis, "changeit".toCharArray());

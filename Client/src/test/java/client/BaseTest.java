@@ -1,11 +1,12 @@
-package Client;
+package client;
 
-import Library.Envelope;
-import Library.Request;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+
+import library.Envelope;
+import library.Request;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;

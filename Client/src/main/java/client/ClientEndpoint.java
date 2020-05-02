@@ -1,9 +1,10 @@
-	package Client;
+	package client;
 
 import Exceptions.*;
-import Library.Envelope;
-import Library.Request;
-import Library.Response;
+import library.Envelope;
+import library.Request;
+import library.Response;
+
 import org.json.simple.JSONObject;
 
 import java.io.*;

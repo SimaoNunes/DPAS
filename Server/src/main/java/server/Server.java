@@ -1,8 +1,8 @@
 package server;
 
-import Library.Envelope;
-import Library.Request;
-import Library.Response;
+import library.Envelope;
+import library.Request;
+import library.Response;
 
 import org.apache.commons.io.FileUtils;
 

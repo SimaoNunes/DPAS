@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap; 
 
-import Library.Envelope;
+import library.Envelope;
 
 public class CryptoManager {
 
@@ -47,7 +47,7 @@ public class CryptoManager {
 
         try {
             ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
+            ks.load(new FileInputStream("keystores/keystore"), passphrase);
             key = (PrivateKey) ks.getKey("server", passphrase);
         } catch (
             NoSuchAlgorithmException | 
@@ -71,7 +71,7 @@ public class CryptoManager {
         KeyStore ks = null;
         try {
             ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/keystore"), passphrase);
+            ks.load(new FileInputStream("keystores/keystore"), passphrase);
 
             Enumeration aliases = ks.aliases();
 

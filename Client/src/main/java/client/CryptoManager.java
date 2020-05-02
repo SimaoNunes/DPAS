@@ -1,4 +1,4 @@
-package Client;
+package client;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -21,8 +21,8 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-import Library.Envelope;
-import Library.Request;
+import library.Envelope;
+import library.Request;
 
 public class CryptoManager {
 	
@@ -143,7 +143,7 @@ public class CryptoManager {
 
         try {
             ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/" + username + "_keystore"), passphrase);
+            ks.load(new FileInputStream("keystores/" + username + "_keystore"), passphrase);
             key = (PrivateKey) ks.getKey(username, passphrase);
         } catch (
             NoSuchAlgorithmException | 
@@ -162,7 +162,7 @@ public class CryptoManager {
 
         try{
             ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("Keystores/" + userName + "_keystore"), passphrase);
+            ks.load(new FileInputStream("keystores/" + userName + "_keystore"), passphrase);
             return ks.getCertificate(entity).getPublicKey();
         } catch (
             CertificateException | 

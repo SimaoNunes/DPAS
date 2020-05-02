@@ -1,4 +1,4 @@
-package Client;
+package client;
 
 import Exceptions.*;
 import org.junit.BeforeClass;
