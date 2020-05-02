@@ -31,7 +31,7 @@ public class Server implements Runnable {
 	private ServerSocket server = null;
     private Map<PublicKey, String> userIdMap = null;
     private AtomicInteger TotalAnnouncements;
-    private CryptoManager criptoManager = null;
+    private CryptoManager cryptoManager = null;
 
     /********** Replay attacks variables ***********/
     private boolean test_flag = false;
@@ -46,10 +46,10 @@ public class Server implements Runnable {
 
     protected Server(ServerSocket ss){
     	server = ss;
-        criptoManager = new CryptoManager();
-        old_response = new Response(criptoManager.generateRandomNonce());
+        cryptoManager = new CryptoManager();
+        old_response = new Response(cryptoManager.generateRandomNonce());
         old_envelope = new Envelope(old_response, null);
-        String path = "./storage/GeneralBoard/";
+        String path = "./storage/generalboard/";
         File file = new File(path);
         file.mkdirs();
         getUserIdMap();
@@ -88,8 +88,8 @@ public class Server implements Runnable {
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            criptoManager.checkHash(envelope) &&
-                            criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                            cryptoManager.checkHash(envelope) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-2}))
                             {
                             register(envelope.getRequest(), outStream);
@@ -98,8 +98,8 @@ public class Server implements Runnable {
                     case "POST":
                         System.out.println("POST OPERATION");
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            criptoManager.checkHash(envelope) &&
-                            criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                            cryptoManager.checkHash(envelope) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5})) 
                             {
                             post(envelope.getRequest(), false, outStream);
@@ -107,8 +107,8 @@ public class Server implements Runnable {
                         break;
                     case "POSTGENERAL":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            criptoManager.checkHash(envelope) &&
-                            criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                            cryptoManager.checkHash(envelope) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5}))
                             {
                             post(envelope.getRequest(), true, outStream);
@@ -116,23 +116,23 @@ public class Server implements Runnable {
                         break;
                     case "READ":
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            criptoManager.checkHash(envelope) &&
-                            criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                            cryptoManager.checkHash(envelope) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
                             {
                             read(envelope.getRequest(), false, outStream);
                         }
                         break;
                     case "READGENERAL":
-                        if (criptoManager.checkHash(envelope) &&
-                            criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                        if (cryptoManager.checkHash(envelope) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10})) {
                             read(envelope.getRequest(), true, outStream);
                         }
                         break;
                     case "NONCE":
                         handshake = true;
-                        byte[] randomNonce = criptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
+                        byte[] randomNonce = cryptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
                         if(!drop_nonce_flag) {
                         	send(new Response(randomNonce), outStream);
                         } else {
@@ -201,9 +201,9 @@ public class Server implements Runnable {
     public void register(Request request, ObjectOutputStream outStream) {
 
         synchronized (userIdMap) {
-            String username = criptoManager.checkKey(request.getPublicKey());
+            String username = cryptoManager.checkKey(request.getPublicKey());
             System.out.println("REGISTER Method. Registering user: " + username);
-            String path = "./storage/AnnouncementBoards/" + username;
+            String path = "./storage/announcementboards/" + username;
             File file = new File(path);
             file.mkdirs();
             userIdMap.put(request.getPublicKey(), username);
@@ -224,7 +224,7 @@ public class Server implements Runnable {
     private void post(Request request, Boolean general, ObjectOutputStream outStream){
         // Get userName from keystore
         String username = userIdMap.get(request.getPublicKey());
-        String path = "./storage/AnnouncementBoards/" + username + "/";
+        String path = "./storage/announcementboards/" + username + "/";
         
         // Write to file
         JSONObject announcementObject =  new JSONObject();
@@ -246,7 +246,7 @@ public class Server implements Runnable {
         }
 
         if(general){
-            path = "./storage/GeneralBoard/";
+            path = "./storage/generalboard/";
         }
 
         try {
@@ -277,10 +277,10 @@ public class Server implements Runnable {
         if(!isGeneral) {
             System.out.println("READ method");
             String username = userIdMap.get(request.getPublicKeyToReadFrom());
-            path += "AnnouncementBoards/" + username + "/";
+            path += "announcementboards/" + username + "/";
         } else {
             System.out.println("READGENERAL method");
-            path += "GeneralBoard/";
+            path += "generalboard/";
         }
 
         int total;
@@ -335,10 +335,10 @@ public class Server implements Runnable {
     private String[] getDirectoryList(PublicKey key){
         String path = "./storage/";
         if(key == null) {
-            path += "GeneralBoard/";
+            path += "generalboard/";
         }
         else {
-            path += "AnnouncementBoards/" + userIdMap.get(key) + "/";
+            path += "announcementboards/" + userIdMap.get(key) + "/";
         }
 
         File file = new File(path);
@@ -346,33 +346,14 @@ public class Server implements Runnable {
     }
 
     private void send(Response response, ObjectOutputStream outputStream){
-        MessageDigest md ;
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = null;
-
-        Cipher cipher;
-
         try {
-            md = MessageDigest.getInstance("SHA-256");
-            out = new ObjectOutputStream(bos);
-            out.writeObject(response);
-            out.flush();
-
-            byte[] request_bytes = bos.toByteArray();
-            byte[] response_hash = md.digest(request_bytes);
-
-            cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.ENCRYPT_MODE, criptoManager.getPrivateKey());
-
-            byte[] final_bytes = cipher.doFinal(response_hash);
-
+        	// Sign response
+            byte[] final_bytes = cryptoManager.cipher(response, cryptoManager.getPrivateKey());
             // SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash]
             if(integrity_flag) {
                 response.setSuccess(false);
                 response.setErrorCode(-33);
             }
-
             // SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)]
             if(test_flag && !handshake){
                 outputStream.writeObject(old_envelope);
@@ -380,14 +361,7 @@ public class Server implements Runnable {
             else{
                 outputStream.writeObject(new Envelope(response, final_bytes));
             }
-
-        } catch ( 
-            IOException | 
-            NoSuchPaddingException | 
-            NoSuchAlgorithmException | 
-            InvalidKeyException | 
-            BadPaddingException | 
-            IllegalBlockSizeException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         } 
     }
@@ -426,13 +400,13 @@ public class Server implements Runnable {
         userIdMap.clear();
         saveUserIdMap();
 
-        String path = "./storage/AnnouncementBoards";
+        String path = "./storage/announcementboards";
 
         FileUtils.deleteDirectory(new File(path));
         File files = new File(path);
         files.mkdirs();
 
-        path = "./storage/GeneralBoard";
+        path = "./storage/generalboard";
 
         FileUtils.deleteDirectory(new File(path));
         files = new File(path);
@@ -518,7 +492,6 @@ public class Server implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
 
     }
 
@@ -651,7 +624,7 @@ public class Server implements Runnable {
                     break;
                 // ## UnknownPublicKey ## -> Check if key is null or known by the Server. If method is read, check if key to ready from is null
                 case -7:
-                    if (request.getPublicKey() == null || criptoManager.checkKey(request.getPublicKey()) == "" || (request.getOperation().equals("READ") && (request.getPublicKeyToReadFrom() == null || criptoManager.checkKey(request.getPublicKeyToReadFrom()) == ""))) {
+                    if (request.getPublicKey() == null || cryptoManager.checkKey(request.getPublicKey()) == "" || (request.getOperation().equals("READ") && (request.getPublicKeyToReadFrom() == null || cryptoManager.checkKey(request.getPublicKeyToReadFrom()) == ""))) {
                         send(new Response(false, -7, request.getNonceClient()), outStream);
                         return false;
                     }

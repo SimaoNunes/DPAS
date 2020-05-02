@@ -27,29 +27,37 @@ import library.Request;
 public class CryptoManager {
 	
 /////////////////////////////////////
+//   							   //
+//	 		Hash Methods  		   //
+//	   							   //
+/////////////////////////////////////
+	
+/*	byte[] hashObject(Object obj) {
+		
+	}*/
+	
+/////////////////////////////////////
 //								   //
 //   Cipher and decipher Methods   //
 //	      						   //
 /////////////////////////////////////
 	
     byte[] cipherRequest(Request request, PrivateKey key){
-
         MessageDigest md;
-
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream out = null;
-
         Cipher cipher;
 
         try {
+        	// Hash
             md = MessageDigest.getInstance("SHA-256");
             out = new ObjectOutputStream(bos);
             out.writeObject(request);
             out.flush();
             byte[] requestBytes = bos.toByteArray();
             byte[] requestHash = md.digest(requestBytes);
-
-            cipher = Cipher.getInstance("RSA/None/OAEPWITHSHA-256ANDMGF1PADDING");
+            // Cipher
+            cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.ENCRYPT_MODE, key);
             return cipher.doFinal(requestHash);
 
@@ -70,7 +78,7 @@ public class CryptoManager {
         Cipher cipher;
 
         try {
-            cipher = Cipher.getInstance("RSA/None/OAEPWITHSHA-256ANDMGF1PADDING");
+            cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, key);
             final_bytes = cipher.doFinal(bytes);
         } catch (

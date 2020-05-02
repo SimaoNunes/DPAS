@@ -31,6 +31,7 @@ import java.util.Enumeration;
 import java.util.HashMap; 
 
 import library.Envelope;
+import library.Response;
 
 public class CryptoManager {
 
@@ -38,26 +39,6 @@ public class CryptoManager {
 
     protected CryptoManager(){
         nonces = new HashMap<>();
-    }
-
-    public PrivateKey getPrivateKey(){
-        char[] passphrase = "changeit".toCharArray();
-        KeyStore ks = null;
-        PrivateKey key = null;
-
-        try {
-            ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("keystores/keystore"), passphrase);
-            key = (PrivateKey) ks.getKey("server", passphrase);
-        } catch (
-            NoSuchAlgorithmException | 
-            UnrecoverableEntryException | 
-            KeyStoreException | 
-            CertificateException |
-            IOException e) {
-            e.printStackTrace();
-        }
-        return key;
     }
     
     //////////////////////////////////////////
@@ -73,7 +54,8 @@ public class CryptoManager {
             ks = KeyStore.getInstance("JKS");
             ks.load(new FileInputStream("keystores/keystore"), passphrase);
 
-            Enumeration aliases = ks.aliases();
+            @SuppressWarnings("rawtypes")
+			Enumeration aliases = ks.aliases();
 
             for (; aliases.hasMoreElements(); ) {
 
@@ -155,17 +137,30 @@ public class CryptoManager {
     /////////////////////////////////////////////////////////
 
 
-    public byte[] cipher(byte[] bytes, PrivateKey key){
+    public byte[] cipher(Response response, PrivateKey key) throws IOException{
+        MessageDigest md;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream out = null;
+        Cipher cipher;
         byte[] finalBytes = null;
         try {
-            Cipher cipher = Cipher.getInstance("RSA/None/OAEPWITHSHA-256ANDMGF1PADDING");
+        	// Hash
+            md = MessageDigest.getInstance("SHA-256");
+            out = new ObjectOutputStream(bos);
+            out.writeObject(response);
+            out.flush();
+            byte[] response_bytes = bos.toByteArray();
+            byte[] response_hash = md.digest(response_bytes);
+            // Cipher
+            cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.ENCRYPT_MODE, key);
-            finalBytes = cipher.doFinal(bytes);
+            finalBytes = cipher.doFinal(response_hash);
         } catch (
-            InvalidKeyException | 
-            BadPaddingException | 
-            IllegalBlockSizeException | 
-            NoSuchPaddingException | 
+        	IOException 				|	
+            InvalidKeyException 		| 
+            BadPaddingException 		| 
+            IllegalBlockSizeException	| 
+            NoSuchPaddingException		| 
             NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
@@ -176,7 +171,7 @@ public class CryptoManager {
         byte[] finalBytes = null;
         Cipher cipher = null;
         try {
-            cipher = Cipher.getInstance("RSA/None/OAEPWITHSHA-256ANDMGF1PADDING");
+            cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, key);
             finalBytes = cipher.doFinal(bytes);
         } catch (
@@ -189,4 +184,31 @@ public class CryptoManager {
         }
         return finalBytes;
     }
+    
+///////////////////////////////////////////
+//   									 //
+//	 Methods to get Keys from Keystore   //
+//   									 //
+///////////////////////////////////////////
+    
+    public PrivateKey getPrivateKey(){
+        char[] passphrase = "changeit".toCharArray();
+        KeyStore ks = null;
+        PrivateKey key = null;
+
+        try {
+            ks = KeyStore.getInstance("JKS");
+            ks.load(new FileInputStream("keystores/keystore"), passphrase);
+            key = (PrivateKey) ks.getKey("server", passphrase);
+        } catch (
+            NoSuchAlgorithmException | 
+            UnrecoverableEntryException | 
+            KeyStoreException | 
+            CertificateException |
+            IOException e) {
+            e.printStackTrace();
+        }
+        return key;
+    }
+    
 }
