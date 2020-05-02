@@ -87,7 +87,7 @@ public class Server implements Runnable {
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            criptoManager.checkHash(envelope, outStream) && 
+                            criptoManager.checkHash(envelope) &&
                             criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-2}))
                             {
@@ -97,7 +97,7 @@ public class Server implements Runnable {
                     case "POST":
                         System.out.println("POST OPERATION");
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            criptoManager.checkHash(envelope, outStream) && 
+                            criptoManager.checkHash(envelope) &&
                             criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5})) 
                             {
@@ -106,7 +106,7 @@ public class Server implements Runnable {
                         break;
                     case "POSTGENERAL":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            criptoManager.checkHash(envelope, outStream) && 
+                            criptoManager.checkHash(envelope) &&
                             criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5}))
                             {
@@ -115,7 +115,7 @@ public class Server implements Runnable {
                         break;
                     case "READ":
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            criptoManager.checkHash(envelope, outStream) && 
+                            criptoManager.checkHash(envelope) &&
                             criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
                             {
@@ -123,7 +123,7 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READGENERAL":
-                        if (criptoManager.checkHash(envelope, outStream) && 
+                        if (criptoManager.checkHash(envelope) &&
                             criptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10})) {
                             read(envelope.getRequest(), true, outStream);
