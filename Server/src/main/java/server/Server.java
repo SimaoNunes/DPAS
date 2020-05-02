@@ -1,4 +1,4 @@
-package Server;
+package server;
 
 import Library.Envelope;
 import Library.Request;
@@ -26,8 +26,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server implements Runnable {
-
-    private ServerSocket server = null;
+	
+	
+	private ServerSocket server = null;
     private Map<PublicKey, String> userIdMap = null;
     private AtomicInteger TotalAnnouncements;
     private CryptoManager criptoManager = null;
@@ -44,7 +45,7 @@ public class Server implements Runnable {
     /**********************************************/
 
     protected Server(ServerSocket ss){
-        server = ss;
+    	server = ss;
         criptoManager = new CryptoManager();
         old_response = new Response(criptoManager.generateRandomNonce());
         old_envelope = new Envelope(old_response, null);

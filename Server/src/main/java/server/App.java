@@ -1,4 +1,4 @@
-package Server;
+package server;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -9,7 +9,7 @@ public class App
 
 		try {
 			ServerSocket ss = new ServerSocket(9000);
-			Server new Server(ss);
+			Server server = new Server(ss);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
