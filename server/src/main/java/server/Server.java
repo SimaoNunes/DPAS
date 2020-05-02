@@ -58,6 +58,7 @@ public class Server implements Runnable {
         file.mkdirs();
         getUserIdMap();
         getTotalAnnouncementsFromFile();
+        System.out.println(ss.getLocalPort());
         newListener();
     }
     
