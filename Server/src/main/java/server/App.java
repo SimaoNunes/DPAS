@@ -1,10 +1,11 @@
 package server;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.ServerSocket;
 
 public class App 
 {
+	
     public static void main( String[] args ) {
 
 		try {
@@ -13,5 +14,7 @@ public class App
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
 	}
+    
 }
