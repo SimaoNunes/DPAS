@@ -30,13 +30,15 @@ public class BaseTest {
 	static char[] passphrase = "changeit".toCharArray();
 	static String server_address = "localhost";
 
+	static final int faults = 3;
+
 	@BeforeClass
 	public static void oneTimeSetup() {
 		// Instantiate class to be tested, in this case the ClientEndpoint that will communicate with the Server
-		clientEndpoint1 = new ClientEndpoint("user1", server_address);
-		clientEndpoint2 = new ClientEndpoint("user2", server_address);
-		clientEndpoint3 = new ClientEndpoint("user3", server_address);
-		clientEndpointError = new ClientEndpoint("usererror", server_address);
+		clientEndpoint1 = new ClientEndpoint("user1", server_address, faults);
+		clientEndpoint2 = new ClientEndpoint("user2", server_address, faults);
+		clientEndpoint3 = new ClientEndpoint("user3", server_address, faults);
+		clientEndpointError = new ClientEndpoint("usererror", server_address, faults);
 	}
 
 	@AfterClass
