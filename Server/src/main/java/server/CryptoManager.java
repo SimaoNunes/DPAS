@@ -96,7 +96,7 @@ public class CryptoManager {
         return "";
     }
 
-    public boolean checkHash(Envelope envelope, ObjectOutputStream outStream){
+    public boolean checkHash(Envelope envelope){
 
         MessageDigest md ;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -108,8 +108,8 @@ public class CryptoManager {
             out = new ObjectOutputStream(bos);
             out.writeObject(envelope.getRequest());
             out.flush();
-            byte[] request_bytes = bos.toByteArray();
-            return Arrays.equals(md.digest(request_bytes), hash);
+            byte[] requestBytes = bos.toByteArray();
+            return Arrays.equals(md.digest(requestBytes), hash);
 
         } catch (
             NoSuchAlgorithmException | 
@@ -162,11 +162,11 @@ public class CryptoManager {
 
 
     public byte[] cipher(byte[] bytes, PrivateKey key){
-        byte[] final_bytes = null;
+        byte[] finalBytes = null;
         try {
-            Cipher cipher = Cipher.getInstance("RSA");
+            Cipher cipher = Cipher.getInstance("RSA/None/OAEPWITHSHA-256ANDMGF1PADDING");
             cipher.init(Cipher.ENCRYPT_MODE, key);
-            final_bytes = cipher.doFinal(bytes);
+            finalBytes = cipher.doFinal(bytes);
         } catch (
             InvalidKeyException | 
             BadPaddingException | 
@@ -175,16 +175,16 @@ public class CryptoManager {
             NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-        return final_bytes;
+        return finalBytes;
     }
 
     public byte[] decipher(byte[] bytes, PublicKey key){
-        byte[] final_bytes = null;
+        byte[] finalBytes = null;
         Cipher cipher = null;
         try {
-            cipher = Cipher.getInstance("RSA");
+            cipher = Cipher.getInstance("RSA/None/OAEPWITHSHA-256ANDMGF1PADDING");
             cipher.init(Cipher.DECRYPT_MODE, key);
-            final_bytes = cipher.doFinal(bytes);
+            finalBytes = cipher.doFinal(bytes);
         } catch (
             NoSuchAlgorithmException | 
             NoSuchPaddingException | 
@@ -193,6 +193,6 @@ public class CryptoManager {
             InvalidKeyException e) {
             e.printStackTrace();
         }
-        return final_bytes;
+        return finalBytes;
     }
 }
