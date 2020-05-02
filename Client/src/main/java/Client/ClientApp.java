@@ -286,7 +286,7 @@ public class ClientApp {
 					printAnnouncements(jsonAnnouncs, true);
 			} else {
 				System.out.print("\nWhich User's Announcement Board you want to read from?\n>> ");
-				String userName = scanner.nextLine();																	//FIXME NOT SANITIZING USER INPUT
+				String userName = scanner.nextLine();    //CUIDADO!!!-> NOT SANITIZING USER INPUT
 				if(keyStore.containsAlias(userName)) {
 					jsonAnnouncs = clientEndpoint.read(userName, Integer.parseInt(numberOfPosts));
 					if(!(jsonAnnouncs == null))

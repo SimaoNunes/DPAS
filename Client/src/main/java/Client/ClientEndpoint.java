@@ -8,7 +8,6 @@ import org.json.simple.JSONObject;
 
 import java.io.*;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.security.*;
 import java.util.Arrays;
 
@@ -24,6 +23,9 @@ public class ClientEndpoint {
     private PublicKey serverPublicKey = null;
     private String userName = null;
     private CryptoManager criptoManager = null;
+
+    private String registerErrorMessage = "There was a problem with your request, we cannot infer if you registered. Please try to login.";
+    private String errorMessage = "There was a problem with your request. Please try again.";
 
     /***********Attack Tests Flags************/
 
@@ -275,10 +277,10 @@ public class ClientEndpoint {
                 sendReplays(envelope_req, 2);
             }
             if(!checkNonce(envelope_resp.getResponse())) {
-                throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
+                throw new FreshnessException(registerErrorMessage);
             }
             if(!criptoManager.checkHash(envelope_resp, userName)) {
-                throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
+                throw new IntegrityException(registerErrorMessage);
             }
             checkRegister(envelope_resp.getResponse());
             if(envelope_resp.getResponse().getSuccess()){
@@ -325,10 +327,10 @@ public class ClientEndpoint {
                 sendReplays(envelope_req, 2);
             }
             if(!checkNonce(envelope_resp.getResponse())){
-                throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
+                throw new FreshnessException(errorMessage);
             }
             if(!criptoManager.checkHash(envelope_resp, userName)){
-                throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
+                throw new IntegrityException(errorMessage);
             }
             checkPost(envelope_resp.getResponse());
             return 1;
@@ -377,10 +379,10 @@ public class ClientEndpoint {
                 sendReplays(envelope_req, 2);
             }
             if (!checkNonce(envelope_resp.getResponse())) {
-                throw new FreshnessException("There was a problem with your request, we cannot infer if you registered. Please try to login");
+                throw new FreshnessException(errorMessage);
             }
             if (!criptoManager.checkHash(envelope_resp, userName)) {
-                throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
+                throw new IntegrityException(errorMessage);
             }
             checkRead(envelope_resp.getResponse());
             return envelope_resp.getResponse().getJsonObject();

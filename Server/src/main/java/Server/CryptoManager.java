@@ -130,13 +130,7 @@ public class CryptoManager {
     }
 
     public boolean checkNonce(PublicKey key, byte[] nonce){
-        if(getNonces().containsKey(key)){
-            if(Arrays.equals(getNonces().get(key), nonce)){
-                getNonces().remove(key);
-                return true;
-            }
-        }
-        return false;
+        return getNonces().containsKey(key) && Arrays.equals(getNonces().get(key), nonce);
     }    
 
     public byte[] generateRandomNonce(PublicKey key){
