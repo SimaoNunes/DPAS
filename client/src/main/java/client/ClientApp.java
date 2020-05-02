@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import Exceptions.*;
+import exceptions.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 

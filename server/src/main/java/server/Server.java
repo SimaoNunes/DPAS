@@ -28,27 +28,31 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Server implements Runnable {
 	
 	
-	private ServerSocket server = null;
+	private ServerSocket server;
     private Map<PublicKey, String> userIdMap = null;
-    private AtomicInteger TotalAnnouncements;
+    private AtomicInteger totalAnnouncements;
     private CryptoManager criptoManager = null;
 
+    private static final String STORAGE = "./storage/";
+    private static final String USERMAP = "./storage/UserIdMap.ser";
+    private static final String ANNOUNCEMENTS = "./storage/TotalAnnouncements.ser";
+
     /********** Replay attacks variables ***********/
-    private boolean test_flag = false;
-    private boolean drop_nonce_flag = false;
-    private boolean drop_operation_flag = false;
+    private boolean testFlag = false;
+    private boolean dropNonceFlag = false;
+    private boolean dropOperationFlag = false;
     private boolean handshake = false;
-    private boolean integrity_flag = false;
-    private Response old_response;
-    private Envelope old_envelope;
+    private boolean integrityFlag = false;
+    private Response oldResponse;
+    private Envelope oldEnvelope;
 
     /**********************************************/
 
     protected Server(ServerSocket ss){
     	server = ss;
         criptoManager = new CryptoManager();
-        old_response = new Response(criptoManager.generateRandomNonce());
-        old_envelope = new Envelope(old_response, null);
+        oldResponse = new Response(criptoManager.generateRandomNonce());
+        oldEnvelope = new Envelope(oldResponse, null);
         String path = "./storage/GeneralBoard/";
         File file = new File(path);
         file.mkdirs();
@@ -62,7 +66,7 @@ public class Server implements Runnable {
 //         Main method running          //
 //    									//
 //////////////////////////////////////////
-
+    @SuppressWarnings("all")
     public void run(){
 
         Socket socket = null;
@@ -133,7 +137,7 @@ public class Server implements Runnable {
                     case "NONCE":
                         handshake = true;
                         byte[] randomNonce = criptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
-                        if(!drop_nonce_flag) {
+                        if(!dropNonceFlag) {
                         	send(new Response(randomNonce), outStream);
                         } else {
                         	System.out.println("\nDROPEI\n");
@@ -147,37 +151,31 @@ public class Server implements Runnable {
                         shutDown();
                         break;
                     case "TEST_FLAG_TRUE":
-                        System.out.println("test flag true");
-                        test_flag = true;
+                        testFlag = true;
                         break;
                     case "TEST_FLAG_FALSE":
-                        System.out.println("test flag false");
-                        test_flag = false;
+                        testFlag = false;
                         break;
                     case "INTEGRITY_FLAG_TRUE":
-                        System.out.println("integrity flag a true");
-                        integrity_flag = true;
+                        integrityFlag = true;
                         break;
                     case "INTEGRITY_FLAG_FALSE":
-                    	System.out.println("integrity flag a false");
-                        integrity_flag = false;
+                        integrityFlag = false;
                         break;
                     case "DROP_NONCE_FLAG_TRUE":
-                    	System.out.println("drop nonce flag a true");
-                    	drop_nonce_flag = true;
+                    	dropNonceFlag = true;
                     	break;
                     case "DROP_NONCE_FLAG_FALSE":
-                    	System.out.println("drop nonce flag a true");
-                    	drop_nonce_flag = false;
+                    	dropNonceFlag = false;
                     	break;
                     case "DROP_OPERATION_FLAG_TRUE":
-                    	System.out.println("drop nonce flag a true");
-                    	drop_operation_flag = true;
+                    	dropOperationFlag = true;
                     	break;
                     case "DROP_OPERATION_FLAG_FALSE":
-                    	System.out.println("drop nonce flag a true");
-                    	drop_operation_flag = false;
+                    	dropOperationFlag = false;
                     	break;
+                    default:
+                        break;
                 }
                 socket.close();
             } catch (Exception e) {
@@ -209,7 +207,7 @@ public class Server implements Runnable {
             userIdMap.put(request.getPublicKey(), username);
             saveUserIdMap();
             System.out.println("User " + username + " successfully registered!");
-            if(!drop_operation_flag) {
+            if(!dropNonceFlag) {
             	send(new Response(true, request.getNonceClient()), outStream);
             } else {
             	System.out.println("\n\n\nDROPEI\n\n\n");
@@ -236,11 +234,11 @@ public class Server implements Runnable {
         SimpleDateFormat ft = new SimpleDateFormat ("dd-MM-yyyy 'at' HH:mm");
         announcementObject.put("date", ft.format(dNow).toString());
 
-        int[] ref_announcements = request.getAnnouncements();
-        if(ref_announcements != null){
+        int[] refAnnouncements = request.getAnnouncements();
+        if(refAnnouncements != null){
             JSONArray annoucementsList = new JSONArray();
-            for(int i = 0; i < ref_announcements.length; i++){
-                annoucementsList.add(Integer.toString(ref_announcements[i]));
+            for(int i = 0; i < refAnnouncements.length; i++){
+                annoucementsList.add(Integer.toString(refAnnouncements[i]));
             }
             announcementObject.put("ref_announcements", annoucementsList);
         }
@@ -257,7 +255,7 @@ public class Server implements Runnable {
 
         incrementTotalAnnouncs();
         saveTotalAnnouncements();
-        if(!drop_operation_flag) {
+        if(!dropOperationFlag) {
         	send(new Response(true, request.getNonceClient()), outStream);
         } else {
         	System.out.println("\n\n\nDROPEI\n\n\n");
@@ -273,7 +271,7 @@ public class Server implements Runnable {
         String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
         int directorySize = directoryList.length;
 
-        String path = "./storage/";
+        String path = STORAGE;
         if(!isGeneral) {
             System.out.println("READ method");
             String username = userIdMap.get(request.getPublicKeyToReadFrom());
@@ -305,7 +303,7 @@ public class Server implements Runnable {
             }
             JSONObject announcementsToSend =  new JSONObject();
             announcementsToSend.put("announcementList", annoucementsList);
-            if(!drop_operation_flag) {
+            if(!dropOperationFlag) {
                 send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
             } else {
             	System.out.println("\nDROPEI\n");
@@ -333,7 +331,7 @@ public class Server implements Runnable {
     }
     
     private String[] getDirectoryList(PublicKey key){
-        String path = "./storage/";
+        String path = STORAGE;
         if(key == null) {
             path += "GeneralBoard/";
         }
@@ -359,26 +357,26 @@ public class Server implements Runnable {
             out.writeObject(response);
             out.flush();
 
-            byte[] request_bytes = bos.toByteArray();
-            byte[] response_hash = md.digest(request_bytes);
+            byte[] requestBytes = bos.toByteArray();
+            byte[] responseHash = md.digest(requestBytes);
 
             cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.ENCRYPT_MODE, criptoManager.getPrivateKey());
 
-            byte[] final_bytes = cipher.doFinal(response_hash);
+            byte[] finalBytes = cipher.doFinal(responseHash);
 
             // SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash]
-            if(integrity_flag) {
+            if(integrityFlag) {
                 response.setSuccess(false);
                 response.setErrorCode(-33);
             }
 
             // SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)]
-            if(test_flag && !handshake){
-                outputStream.writeObject(old_envelope);
+            if(testFlag && !handshake){
+                outputStream.writeObject(oldEnvelope);
             }
             else{
-                outputStream.writeObject(new Envelope(response, final_bytes));
+                outputStream.writeObject(new Envelope(response, finalBytes));
             }
 
         } catch ( 
@@ -396,11 +394,8 @@ public class Server implements Runnable {
         byte[] bytesToStore = announcement.getBytes();
         File file = new File(completePath);
 
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(file);
+        try(FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(bytesToStore);
-            fos.close();
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -438,7 +433,6 @@ public class Server implements Runnable {
         files = new File(path);
         files.mkdirs();
 
-        path = "./storage/";
         setTotalAnnouncements(0);
         saveTotalAnnouncements();
     }
@@ -464,15 +458,11 @@ public class Server implements Runnable {
 
     
     private void saveUserIdMap() {
-        try {
-            FileOutputStream fileCopy = new FileOutputStream("./storage/UserIdMap_copy.ser");
-            ObjectOutputStream out = new ObjectOutputStream(fileCopy);
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("./storage/UserIdMap_copy.ser"))) {
             out.writeObject(userIdMap);
-            out.close();
-            fileCopy.close();
             System.out.println("Created updated copy of the userIdMap");
 
-            File original = new File("./storage/UserIdMap.ser");
+            File original = new File(USERMAP);
             File copy = new File("./storage/UserIdMap_copy.ser");
 
             if(original.delete()){
@@ -485,12 +475,8 @@ public class Server implements Runnable {
     }
     
     private void getUserIdMap() {
-        try {
-           FileInputStream fileIn = new FileInputStream("./storage/UserIdMap.ser");
-           ObjectInputStream in = new ObjectInputStream(fileIn);
+        try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(USERMAP))) {
            userIdMap = (Map<PublicKey, String>) in.readObject();
-           in.close();
-           fileIn.close();
         } catch (ClassNotFoundException c) {
            System.out.println("Map<PublicKey, String> class not found");
            c.printStackTrace();
@@ -507,13 +493,8 @@ public class Server implements Runnable {
 
     private void createOriginalUserMap() {
 
-        FileOutputStream fileCopy = null;
-        try {
-            fileCopy = new FileOutputStream("./storage/UserIdMap.ser");
-            ObjectOutputStream out = new ObjectOutputStream(fileCopy);
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(USERMAP))) {
             out.writeObject(userIdMap);
-            out.close();
-            fileCopy.close();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -530,27 +511,23 @@ public class Server implements Runnable {
 
 
     private void incrementTotalAnnouncs(){
-        TotalAnnouncements.incrementAndGet();
+        totalAnnouncements.incrementAndGet();
     }
 
     private void setTotalAnnouncements(int value){
-        TotalAnnouncements.set(value);
+        totalAnnouncements.set(value);
     }
 
     private int getTotalAnnouncements(){
-        return TotalAnnouncements.get();
+        return totalAnnouncements.get();
     }
 
     private void saveTotalAnnouncements(){
-        try {
-            FileOutputStream fileOut = new FileOutputStream("./storage/TotalAnnouncements_copy.ser");
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeObject(TotalAnnouncements.get());
-            out.close();
-            fileOut.close();
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("./storage/TotalAnnouncements_copy.ser"))) {
+            out.writeObject(totalAnnouncements.get());
             System.out.println("Serialized data saved in copy");
 
-            File original = new File("./storage/TotalAnnouncements.ser");
+            File original = new File(ANNOUNCEMENTS);
             File copy = new File("./storage/TotalAnnouncements_copy.ser");
 
             if(original.delete()){
@@ -563,34 +540,26 @@ public class Server implements Runnable {
     }
 
     private void getTotalAnnouncementsFromFile() {
-        try {
-           FileInputStream fileIn = new FileInputStream("./storage/TotalAnnouncements.ser");
-           ObjectInputStream in = new ObjectInputStream(fileIn);
+        try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(ANNOUNCEMENTS))) {
            int a = (int) in.readObject();
            System.out.println(a);
-           TotalAnnouncements = new AtomicInteger(a);
-           in.close();
-           fileIn.close();
+           totalAnnouncements = new AtomicInteger(a);
         }
         catch(FileNotFoundException e){
-            TotalAnnouncements = new AtomicInteger(0);
+            totalAnnouncements = new AtomicInteger(0);
             createOriginalAnnouncs();
         } catch (
             IOException | 
             ClassNotFoundException e) {
             e.printStackTrace();
         }
-        System.out.println("Total announcements-> " + TotalAnnouncements);
+        System.out.println("Total announcements-> " + totalAnnouncements);
     }
 
     private void createOriginalAnnouncs(){
 
-        try {
-            FileOutputStream fileOut = new FileOutputStream("./storage/TotalAnnouncements.ser");
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeObject(TotalAnnouncements.get());
-            out.close();
-            fileOut.close();
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(ANNOUNCEMENTS))) {
+            out.writeObject(totalAnnouncements.get());
 
         } catch (IOException i) {
             i.printStackTrace();
@@ -600,10 +569,10 @@ public class Server implements Runnable {
 
     //////////////////////////////////////////
     //  									//
-    //          Check Exceptions            //
+    //          Check exceptions            //
     //	                                    //
     //////////////////////////////////////////
-
+    @SuppressWarnings("all")
     public boolean checkExceptions(Request request, ObjectOutputStream outStream, int[] codes){
         for (int i = 0; i < codes.length; i++) {
             switch(codes[i]) {
@@ -662,6 +631,9 @@ public class Server implements Runnable {
                         send(new Response(false, -10, request.getNonceClient()), outStream);
                         return false;
                     }
+                    break;
+
+                default:
                     break;
             }
         }

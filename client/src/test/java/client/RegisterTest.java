@@ -1,6 +1,6 @@
 package client;
 
-import Exceptions.*;
+import exceptions.*;
 
 import org.junit.Before;
 import org.junit.Test;
