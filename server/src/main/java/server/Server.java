@@ -30,18 +30,13 @@ public class Server implements Runnable {
     private CryptoManager cryptoManager = null;
 
     // File path strings
-    private static final String STORAGE = "./storage/";
-    private static final String STORAGE_GENERAL_BOARD = "./storage/generalboard";
-    private static final String STORAGE_ANNOUNCEMENT_BOARDS = "./storage/announcementboards/";
-    private static final String GENERAL_BOARD = "generalboard";
-    private static final String ANNOUNCEMENT_BOARDS = "announcementboards/";
-    private static final String USERMAP = "./storage/UserIdMap.ser";
-    private static final String USERMAP_COPY = "./storage/UserIdMap_copy.ser";
-    private static final String TOTAL_ANNOUNCEMENTS = "./storage/TotalAnnouncements.ser";
-    private static final String TOTAL_ANNOUNCEMENTS_COPY = "./storage/TotalAnnouncements_copy.ser";
     private static String storagePath = "";
     private static String userMapPath = "";
-    private static String announcementsPath = "";
+    private static String userMapPathCopy = "";
+    private static String totalAnnouncementsPath = "";
+    private static String totalAnnouncementsPathCopy = "";
+    private static String announcementBoardsPath = "";
+    private static String generalBoardPath = "";
 
     /********** Simulated Attacks Variables ***********/
     
@@ -63,13 +58,15 @@ public class Server implements Runnable {
         cryptoManager = new CryptoManager();
         oldResponse = new Response(cryptoManager.generateRandomNonce());
         oldEnvelope = new Envelope(oldResponse, null);
-
-        // path variables
-        storagePath       = "./storage/port_" + serverPort + "/";
-        userMapPath       = storagePath + "UserIdMap.ser";
-        announcementsPath = storagePath + "TotalAnnouncements.ser";
-        String path       = storagePath + "generalboard/";
-        File file = new File(path);
+        // Path variables
+        storagePath       		   = "./storage/port_" + serverPort + "/";
+        userMapPath       		   = storagePath + "UserIdMap.ser";
+        userMapPathCopy			   = storagePath + "UserIdMap_copy.ser";
+        totalAnnouncementsPath	   = storagePath + "TotalAnnouncements.ser";
+        totalAnnouncementsPathCopy = storagePath + "TotalAnnouncements_copy.ser";
+        announcementBoardsPath	   = storagePath + "announcementboards/";
+        generalBoardPath		   = storagePath + "generalboard/";
+        File file = new File(generalBoardPath);
         file.mkdirs();
         
         getUserIdMap();
@@ -158,7 +155,7 @@ public class Server implements Runnable {
                         if(!dropNonceFlag) {
                         	send(new Response(randomNonce), outStream);
                         } else {
-                        	System.out.println("\nDROPEI\n");
+                        	System.out.println("\nDROPPED\n");
                         }
                         handshake = false;
                         break;
@@ -219,7 +216,7 @@ public class Server implements Runnable {
         synchronized (userIdMap) {
             String username = cryptoManager.checkKey(request.getPublicKey());
             System.out.println("REGISTER Method. Registering user: " + username);
-            String path = storagePath + "announcementboards/" + username;
+            String path = announcementBoardsPath + username;
             File file = new File(path);
             file.mkdirs();
             userIdMap.put(request.getPublicKey(), username);
@@ -228,7 +225,7 @@ public class Server implements Runnable {
             if(!dropNonceFlag) {
             	send(new Response(true, request.getNonceClient()), outStream);
             } else {
-            	System.out.println("\n\n\nDROPPED\n\n\n");
+            	System.out.println("\nDROPPED\n");
             }
         }
     }
@@ -240,7 +237,7 @@ public class Server implements Runnable {
     private void post(Request request, Boolean general, ObjectOutputStream outStream){
         // Get userName from keystore
         String username = userIdMap.get(request.getPublicKey());
-        String path = storagePath + "announcementboards/" + username + "/";        
+        String path = announcementBoardsPath + username + "/";        
         // Write to file
         JSONObject announcementObject =  new JSONObject();
         announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
@@ -262,7 +259,7 @@ public class Server implements Runnable {
         }
 
         if(general){
-            path = storagePath + "generalboard/";
+            path = generalBoardPath;
         }
 
         try {
@@ -276,7 +273,7 @@ public class Server implements Runnable {
         if(!dropOperationFlag) {
         	send(new Response(true, request.getNonceClient()), outStream);
         } else {
-        	System.out.println("\n\n\nDROPPED\n\n\n");
+        	System.out.println("\nDROPPED\n");
         }
     }
     
@@ -289,14 +286,14 @@ public class Server implements Runnable {
         String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
         int directorySize = directoryList.length;
 
-        String path = storagePath;
+        String path = "";
         if(!isGeneral) {
             System.out.println("READ method");
             String username = userIdMap.get(request.getPublicKeyToReadFrom());
-            path += ANNOUNCEMENT_BOARDS + username + "/";
+            path = announcementBoardsPath + username + "/";
         } else {
             System.out.println("READGENERAL method");
-            path += GENERAL_BOARD;
+            path = generalBoardPath;
         }
 
         int total;
@@ -349,12 +346,12 @@ public class Server implements Runnable {
     }
     
     private String[] getDirectoryList(PublicKey key){
-        String path = storagePath;
+        String path = "";
         if(key == null) {
-            path += GENERAL_BOARD;
+            path = generalBoardPath;
         }
         else {
-            path += ANNOUNCEMENT_BOARDS + userIdMap.get(key) + "/";
+            path = announcementBoardsPath + userIdMap.get(key) + "/";
         }
 
         File file = new File(path);
@@ -365,15 +362,17 @@ public class Server implements Runnable {
         try {
         	// Sign response
             byte[] finalBytes = cryptoManager.cipher(response, cryptoManager.getPrivateKey());
-            // SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash]
+            /***** SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash] *****/
             if(integrityFlag) {
                 response.setSuccess(false);
                 response.setErrorCode(-33);
             }
-            // SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)]
+            /************************************************************************************************************/
+            /***** SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)] *****/
             if(testFlag && !handshake){
                 outputStream.writeObject(oldEnvelope);
             }
+            /*********************************************************************************************************************/
             else{
                 outputStream.writeObject(new Envelope(response, finalBytes));
             }
@@ -413,13 +412,13 @@ public class Server implements Runnable {
         userIdMap.clear();
         saveUserIdMap();
 
-        String path = storagePath + "announcementboards";
+        String path = announcementBoardsPath;
 
         FileUtils.deleteDirectory(new File(path));
         File files = new File(path);
         files.mkdirs();
 
-        path = storagePath + "generalboard";
+        path = generalBoardPath;
 
         FileUtils.deleteDirectory(new File(path));
         files = new File(path);
@@ -450,13 +449,12 @@ public class Server implements Runnable {
 
     
     private void saveUserIdMap() {
-        String copyFileName = "UserIdMap_copy.ser";
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(storagePath + copyFileName))) {
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(userMapPathCopy))) {
             out.writeObject(userIdMap);
             System.out.println("Created updated copy of the userIdMap");
 
             File original = new File(userMapPath);
-            File copy = new File(storagePath + copyFileName);
+            File copy = new File(userMapPathCopy);
 
             if(original.delete()){
                 copy.renameTo(original);
@@ -515,13 +513,12 @@ public class Server implements Runnable {
     }
 
     private void saveTotalAnnouncements(){
-        String copyFileName = "TotalAnnouncements_copy.ser";
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(storagePath + copyFileName))) {
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(totalAnnouncementsPathCopy))) {
             out.writeObject(totalAnnouncements.get());
             System.out.println("Serialized data saved in copy");
 
-            File original = new File(announcementsPath);
-            File copy = new File(storagePath + copyFileName);
+            File original = new File(totalAnnouncementsPath);
+            File copy = new File(totalAnnouncementsPathCopy);
 
             if(original.delete()){
                 copy.renameTo(original);
@@ -533,7 +530,7 @@ public class Server implements Runnable {
     }
 
     private void getTotalAnnouncementsFromFile() {
-        try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(announcementsPath))) {
+        try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(totalAnnouncementsPath))) {
            int a = (int) in.readObject();
            System.out.println(a);
            totalAnnouncements = new AtomicInteger(a);
@@ -551,7 +548,7 @@ public class Server implements Runnable {
 
     private void createOriginalAnnouncs(){
 
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(announcementsPath))) {
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(totalAnnouncementsPath))) {
             out.writeObject(totalAnnouncements.get());
         } catch (IOException i) {
             i.printStackTrace();

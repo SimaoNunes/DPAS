@@ -118,7 +118,7 @@ public class ClientApp {
 		String inputUserName = null;
 		// Check if username is trusted (aka if username alias is in keyStore)
 		System.out.print("\nInsert a username:\n>> ");
-		inputUserName = scanner.nextLine();																			//FIXME Not sanitizing user input
+		inputUserName = scanner.nextLine();																//FIXME Not sanitizing user input
 		try(FileInputStream fis = new FileInputStream("keystores/" + inputUserName + "_keystore")) {
 	    	// Try to load user's keystore
 	    	keyStore = KeyStore.getInstance("JKS");
@@ -360,7 +360,7 @@ public class ClientApp {
 
             System.out.println(result);
             if(!(refs == null)) {
-                System.out.print("References:");
+                System.out.print("References IDs:");
                 for (Object ref : refs) {
                     String refString = (String) ref;
                     System.out.print(" " + refString);
