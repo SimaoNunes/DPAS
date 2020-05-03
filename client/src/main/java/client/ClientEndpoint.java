@@ -34,8 +34,8 @@ import java.util.concurrent.CompletableFuture;
 
     /*********** Simulated Attacks Flags ************/
 
-    private boolean replay_flag = false;
-    private boolean integrity_flag = false;
+    private boolean replayFlag = false;
+    private boolean integrityFlag = false;
 
     /************************************************/
 
@@ -61,24 +61,24 @@ import java.util.concurrent.CompletableFuture;
         return serverAddress;
     }
 
-    public void setServerAddress(String server_address) {
-        this.serverAddress = server_address;
+    public void setServerAddress(String serverAddress) {
+        this.serverAddress = serverAddress;
     }
 
     public boolean isReplayFlag() {
-        return replay_flag;
+        return replayFlag;
     }
 
-    public void setReplayFlag(boolean replay_flag) {
-        this.replay_flag = replay_flag;
+    public void setReplayFlag(boolean replayFlag) {
+        this.replayFlag = replayFlag;
     }
 
     public boolean isIntegrityFlag() {
-		return integrity_flag;
+		return integrityFlag;
 	}
 
-	public void setIntegrityFlag(boolean integrity_flag) {
-		this.integrity_flag = integrity_flag;
+	public void setIntegrityFlag(boolean integrityFlag) {
+		this.integrityFlag = integrityFlag;
 	}
 
 	public String getUsername() {
@@ -287,7 +287,6 @@ import java.util.concurrent.CompletableFuture;
         	envelopeRequest.getRequest().setPublicKey(criptoManager.getPublicKeyFromKs(userName, "user3"));
         }
         /******************************************************************************************/
-        
         try {
             Envelope envelopeResponse = sendReceive(envelopeRequest);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
@@ -340,7 +339,6 @@ import java.util.concurrent.CompletableFuture;
         	envelopeRequest.getRequest().setMessage("Olá, eu odeio-te");
         }
         /************************************************************/
-
         try {
 
             Envelope envelopeResponse = sendReceive(envelopeRequest, port);
