@@ -29,9 +29,9 @@ public class Server implements Runnable {
     private AtomicInteger totalAnnouncements;
     private CryptoManager cryptoManager = null;
 
-    private static final String STORAGE = "./storage/";
-    private static final String USERMAP = "./storage/UserIdMap.ser";
-    private static final String ANNOUNCEMENTS = "./storage/TotalAnnouncements.ser";
+    private String storagePath;
+    private String userMapPath;
+    private String announcementsPath;
 
     /********** Replay attacks variables ***********/
     private boolean testFlag = false;
@@ -45,16 +45,26 @@ public class Server implements Runnable {
     /**********************************************/
 
     protected Server(ServerSocket ss){
-    	server = ss;
+
+        server = ss;
+        String serverPort = ss.getLocalPort() + "";  //adding "" converts int to string
+
         cryptoManager = new CryptoManager();
-        String path = "./storage/generalboard/";
         oldResponse = new Response(cryptoManager.generateRandomNonce());
         oldEnvelope = new Envelope(oldResponse, null);
+
+        // path variables
+        storagePath       = "./storage/port_" + serverPort + "/";
+        userMapPath       = storagePath + "UserIdMap.ser";
+        announcementsPath = storagePath + "TotalAnnouncements.ser";
+        String path       = storagePath + "generalboard/";
         File file = new File(path);
         file.mkdirs();
+        
         getUserIdMap();
         getTotalAnnouncementsFromFile();
-        System.out.println(ss.getLocalPort());
+        
+        System.out.println("Port: " + serverPort);
         newListener();
     }
     
@@ -198,7 +208,7 @@ public class Server implements Runnable {
         synchronized (userIdMap) {
             String username = cryptoManager.checkKey(request.getPublicKey());
             System.out.println("REGISTER Method. Registering user: " + username);
-            String path = "./storage/announcementboards/" + username;
+            String path = storagePath + "announcementboards/" + username;
             File file = new File(path);
             file.mkdirs();
             userIdMap.put(request.getPublicKey(), username);
@@ -219,7 +229,7 @@ public class Server implements Runnable {
     private void post(Request request, Boolean general, ObjectOutputStream outStream){
         // Get userName from keystore
         String username = userIdMap.get(request.getPublicKey());
-        String path = "./storage/announcementboards/" + username + "/";
+        String path = storagePath + "announcementboards/" + username + "/";
         
         // Write to file
         JSONObject announcementObject =  new JSONObject();
@@ -241,7 +251,7 @@ public class Server implements Runnable {
         }
 
         if(general){
-            path = "./storage/generalboard/";
+            path = storagePath + "generalboard/";
         }
 
         try {
@@ -268,7 +278,7 @@ public class Server implements Runnable {
         String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
         int directorySize = directoryList.length;
 
-        String path = STORAGE;
+        String path = storagePath;
         if(!isGeneral) {
             System.out.println("READ method");
             String username = userIdMap.get(request.getPublicKeyToReadFrom());
@@ -328,7 +338,7 @@ public class Server implements Runnable {
     }
     
     private String[] getDirectoryList(PublicKey key){
-        String path = STORAGE;
+        String path = storagePath;
         if(key == null) {
             path += "generalboard/";
         }
@@ -392,13 +402,13 @@ public class Server implements Runnable {
         userIdMap.clear();
         saveUserIdMap();
 
-        String path = "./storage/announcementboards";
+        String path = storagePath + "announcementboards";
 
         FileUtils.deleteDirectory(new File(path));
         File files = new File(path);
         files.mkdirs();
 
-        path = "./storage/generalboard";
+        path = storagePath + "generalboard";
 
         FileUtils.deleteDirectory(new File(path));
         files = new File(path);
@@ -433,8 +443,8 @@ public class Server implements Runnable {
             out.writeObject(userIdMap);
             System.out.println("Created updated copy of the userIdMap");
 
-            File original = new File(USERMAP);
-            File copy = new File("./storage/UserIdMap_copy.ser");
+            File original = new File(userMapPath);
+            File copy = new File(storagePath + "UserIdMap_copy.ser");
 
             if(original.delete()){
                 copy.renameTo(original);
@@ -446,7 +456,7 @@ public class Server implements Runnable {
     }
     
     private void getUserIdMap() {
-        try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(USERMAP))) {
+        try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(userMapPath))) {
            userIdMap = (Map<PublicKey, String>) in.readObject();
         } catch (ClassNotFoundException c) {
            System.out.println("Map<PublicKey, String> class not found");
@@ -464,7 +474,7 @@ public class Server implements Runnable {
 
     private void createOriginalUserMap() {
 
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(USERMAP))) {
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(userMapPath))) {
             out.writeObject(userIdMap);
 
         } catch (IOException e) {
@@ -497,8 +507,8 @@ public class Server implements Runnable {
             out.writeObject(totalAnnouncements.get());
             System.out.println("Serialized data saved in copy");
 
-            File original = new File(ANNOUNCEMENTS);
-            File copy = new File("./storage/TotalAnnouncements_copy.ser");
+            File original = new File(announcementsPath);
+            File copy = new File(storagePath + "TotalAnnouncements_copy.ser");
 
             if(original.delete()){
                 copy.renameTo(original);
@@ -510,7 +520,7 @@ public class Server implements Runnable {
     }
 
     private void getTotalAnnouncementsFromFile() {
-        try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(ANNOUNCEMENTS))) {
+        try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(announcementsPath))) {
            int a = (int) in.readObject();
            System.out.println(a);
            totalAnnouncements = new AtomicInteger(a);
@@ -528,7 +538,7 @@ public class Server implements Runnable {
 
     private void createOriginalAnnouncs(){
 
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(ANNOUNCEMENTS))) {
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(announcementsPath))) {
             out.writeObject(totalAnnouncements.get());
 
         } catch (IOException i) {
