@@ -439,12 +439,13 @@ public class Server implements Runnable {
 
     
     private void saveUserIdMap() {
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("./storage/UserIdMap_copy.ser"))) {
+        String copyFileName = "UserIdMap_copy.ser";
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(storagePath + copyFileName))) {
             out.writeObject(userIdMap);
             System.out.println("Created updated copy of the userIdMap");
 
             File original = new File(userMapPath);
-            File copy = new File(storagePath + "UserIdMap_copy.ser");
+            File copy = new File(storagePath + copyFileName);
 
             if(original.delete()){
                 copy.renameTo(original);
@@ -503,12 +504,13 @@ public class Server implements Runnable {
     }
 
     private void saveTotalAnnouncements(){
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("./storage/TotalAnnouncements_copy.ser"))) {
+        String copyFileName = "TotalAnnouncements_copy.ser";
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(storagePath + copyFileName))) {
             out.writeObject(totalAnnouncements.get());
             System.out.println("Serialized data saved in copy");
 
             File original = new File(announcementsPath);
-            File copy = new File(storagePath + "TotalAnnouncements_copy.ser");
+            File copy = new File(storagePath + copyFileName);
 
             if(original.delete()){
                 copy.renameTo(original);
