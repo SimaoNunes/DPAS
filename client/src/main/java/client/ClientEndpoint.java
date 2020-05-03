@@ -27,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
     private CryptoManager criptoManager = null;
 
     private int nFaults;
+    private static final int PORT = 9000;
 
     private String registerErrorMessage = "There was a problem with your request, we cannot infer if you registered. Please try to login.";
     private String errorMessage = "There was a problem with your request. Please try again.";
@@ -128,8 +129,8 @@ import java.util.concurrent.CompletableFuture;
         this.serverPublicKey = serverPublicKey;
     }
 
-    private Socket createSocket() throws IOException {
-        return new Socket(getServerAddress(), 9000);
+    private Socket createSocket(int port) throws IOException {
+        return new Socket(getServerAddress(), port);
     }
 
     private ObjectOutputStream createOutputStream(Socket socket) throws IOException {
@@ -140,8 +141,8 @@ import java.util.concurrent.CompletableFuture;
         return new ObjectInputStream(socket.getInputStream());
     }
 
-    private Envelope sendReceive(Envelope envelope) throws IOException, ClassNotFoundException {
-        Socket socket = createSocket();
+    private Envelope sendReceive(Envelope envelope, int port) throws IOException, ClassNotFoundException {
+        Socket socket = createSocket(port);
         socket.setSoTimeout(4000);
         createOutputStream(socket).writeObject(envelope);
         return (Envelope) createInputStream(socket).readObject();
@@ -160,10 +161,6 @@ import java.util.concurrent.CompletableFuture;
         }
     }
 
-    private void broadcast(Envelope envelope){
-        CompletableFuture<>
-
-    }
 
 //////////////////////////
 //						//
@@ -171,9 +168,9 @@ import java.util.concurrent.CompletableFuture;
 //						//
 //////////////////////////
 
-    private byte[] askForServerNonce(PublicKey key) throws NonceTimeoutException {
+    private byte[] askForServerNonce(PublicKey key, int port) throws NonceTimeoutException {
         try {
-             return sendReceive(new Envelope(new Request("NONCE", key))).getResponse().getNonce();
+             return sendReceive(new Envelope(new Request("NONCE", key)), port).getResponse().getNonce();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -326,23 +323,7 @@ import java.util.concurrent.CompletableFuture;
 
 
 
-    public void broadcastPost(String message, int[] announcs, boolean isGeneral) throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException {
-        CompletableFuture[] tasks = new CompletableFuture[(getnFaults()*3 + 1)];
-        for (int i = 0; i < tasks.length ; i++){
-            tasks[i] = new CompletableFuture();
-            tasks[i].supplyAsync(() -> post(message, announcs, true))
-        }
-        if(isGeneral){
-
-            post(message, announcs, true);
-        }
-        else{
-            post(message, announcs, false);
-        }
-
-    }
-
-    public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey) throws InvalidAnnouncementException,
+    public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
         if(isGeneral){
@@ -362,7 +343,7 @@ import java.util.concurrent.CompletableFuture;
 
         try {
 
-            Envelope envelopeResponse = sendReceive(envelopeRequest);
+            Envelope envelopeResponse = sendReceive(envelopeRequest, port);
             /***** SIMULATE ATTACKER: replay register *****/
             if(isReplayFlag()){
                 sendReplays(envelopeRequest, 2);
@@ -385,17 +366,62 @@ import java.util.concurrent.CompletableFuture;
         return 0;
     }
 
-    public int post(String message, int[] announcs, boolean isGeneral) throws NonceTimeoutException, UserNotRegisteredException, InvalidAnnouncementException, IntegrityException, MessageTooBigException, FreshnessException, OperationTimeoutException {
-        startHandshake(getPublicKey());
-        return postAux(getPublicKey(), message, announcs, isGeneral, getServerNonce(), getClientNonce(), getPrivateKey());
+    public int post(String message, int[] announcs, boolean isGeneral) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException  {
+        int responses = 0;
+        int counter = 0;
+        int port = PORT;
+
+        int[] results = new int[(getnFaults()*3 + 1)/2 + 1];
+
+        CompletableFuture<Integer>[] tasks = new CompletableFuture[getnFaults()*3 + 1];
+
+        for (int i = 0; i < tasks.length; i++) {
+
+            int finalPort = port;
+
+            tasks[i] = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return postMethod(message, announcs, isGeneral, finalPort);
+                } catch (MessageTooBigException e) {
+                    return -4;
+                } catch (UserNotRegisteredException e) {
+                    return -1;
+                } catch (InvalidAnnouncementException e) {
+                    return -5;
+                } catch (NonceTimeoutException e) {
+                    return -11;
+                } catch (OperationTimeoutException e) {
+                    return -12;
+                } catch (FreshnessException e) {
+                    return -13;
+                } catch (IntegrityException e) {
+                    return -14;
+                }
+            });
+            port++;
+        }
+
+        while(responses < (getnFaults()*3 + 1)/2){
+            for(int i = 0; i < tasks.length; i ++){
+                if(tasks[i].isDone()){
+                    results[counter++] = tasks[i].get().intValue();
+                    responses++;
+                }
+                if(i == tasks.length -1)
+                    i = 0;
+            }
+        }
+        // gonna use first position but later verify if all equal
+        System.out.println(results[0]);
+        return results[0];
     }
 
-    /*public int post(String message, int[] announcs, boolean) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int postMethod(String message, int[] announcs, boolean isGeneral, int port) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(getPublicKey());
-        return postAux(getPublicKey(), message, announcs, false, getServerNonce(), getClientNonce(), getPrivateKey());
+        return postAux(getPublicKey(), message, announcs, isGeneral, getServerNonce(), getClientNonce(), getPrivateKey(), port);
     }
     
-    public int postGeneral(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    /*public int postGeneral(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(getPublicKey());
         return postAux(getPublicKey(), message, announcs, true, getServerNonce(), getClientNonce(), getPrivateKey());
     }*/
@@ -404,7 +430,7 @@ import java.util.concurrent.CompletableFuture;
     //				      READ						//
     //////////////////////////////////////////////////
 
-    public JSONObject read(String announcUserName, int number) throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public JSONObject read(String announcUserName, int number, int port) throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
         startHandshake(getPublicKey());
         
@@ -421,7 +447,7 @@ import java.util.concurrent.CompletableFuture;
         /**********************************************************************************************************************************************************/
 
         try {
-            Envelope envelopeResponse = sendReceive(envelopeRequest);
+            Envelope envelopeResponse = sendReceive(envelopeRequest, port);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
                 sendReplays(envelopeRequest, 2);
@@ -444,7 +470,7 @@ import java.util.concurrent.CompletableFuture;
         return null;
     }
 
-    public JSONObject readGeneral(int number) throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, NonceTimeoutException, UserNotRegisteredException, FreshnessException {
+    public JSONObject readGeneral(int number, int port) throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, NonceTimeoutException, UserNotRegisteredException, FreshnessException {
 
     	startHandshake(getPublicKey());
 
@@ -453,7 +479,7 @@ import java.util.concurrent.CompletableFuture;
     	Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
         try {
-            Envelope envelopeResponse = sendReceive(envelopeRequest);
+            Envelope envelopeResponse = sendReceive(envelopeRequest, port);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
                 sendReplays(new Envelope(request, null), 2);

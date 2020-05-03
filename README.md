@@ -8,7 +8,7 @@ This is Java API that wants to solve the problems concerned with the emergence o
 - Users can read all the announcements of other users and obtain their cronological order
 - When posting announcements, users can refer to previous announcements posted by them or other users.
 
-## Exceptions Guide
+## exceptions Guide
 
 Each error code sent by the server is translated into an exception client side.
 
@@ -23,6 +23,12 @@ Each error code sent by the server is translated into an exception client side.
 - -9 -> ErrorWrittingFile
 - -10 -> TooMuchAnnouncements
 
+(Exception from endpoint to app)
+
+- -11 -> NonceTimeout
+- -12 -> OperationTimeout
+- -13 -> Freshness
+- -14 -> Integrity
 ## How to test 
 
 To test our system and simulate possible attacks, we provided a set of tests inside the Client's module. 
