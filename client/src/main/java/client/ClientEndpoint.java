@@ -159,6 +159,10 @@ public class ClientEndpoint {
         }
     }
 
+    private void broadcast(Envelope envelope){
+
+    }
+
 
 //////////////////////////
 //						//
