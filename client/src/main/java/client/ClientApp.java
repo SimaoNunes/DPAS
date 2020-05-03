@@ -224,9 +224,9 @@ public class ClientApp {
 		// Post announcement
 		try{
 			if(isGeneral){
-				clientEndpoint.postGeneral(message, announcsArray);
+				clientEndpoint.broadcastPost(message, announcsArray, true);
 			} else {
-				clientEndpoint.post(message, announcsArray);
+				clientEndpoint.broadcastPost(message, announcsArray, false);
 			}
 		} catch (
 			UserNotRegisteredException 	 | 

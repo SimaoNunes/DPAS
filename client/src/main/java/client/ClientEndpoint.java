@@ -11,8 +11,9 @@ import java.io.*;
 import java.net.Socket;
 import java.security.*;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 
-public class ClientEndpoint {
+    public class ClientEndpoint {
 
     private byte[] serverNonce = null;
     private byte[] clientNonce = null;
@@ -160,6 +161,7 @@ public class ClientEndpoint {
     }
 
     private void broadcast(Envelope envelope){
+        CompletableFuture<>
 
     }
 
@@ -322,6 +324,24 @@ public class ClientEndpoint {
     //					   POST  					//
     //////////////////////////////////////////////////
 
+
+
+    public void broadcastPost(String message, int[] announcs, boolean isGeneral) throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException {
+        CompletableFuture[] tasks = new CompletableFuture[(getnFaults()*3 + 1)];
+        for (int i = 0; i < tasks.length ; i++){
+            tasks[i] = new CompletableFuture();
+            tasks[i].supplyAsync(() -> post(message, announcs, true))
+        }
+        if(isGeneral){
+
+            post(message, announcs, true);
+        }
+        else{
+            post(message, announcs, false);
+        }
+
+    }
+
     public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
@@ -365,7 +385,12 @@ public class ClientEndpoint {
         return 0;
     }
 
-    public int post(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int post(String message, int[] announcs, boolean isGeneral) throws NonceTimeoutException, UserNotRegisteredException, InvalidAnnouncementException, IntegrityException, MessageTooBigException, FreshnessException, OperationTimeoutException {
+        startHandshake(getPublicKey());
+        return postAux(getPublicKey(), message, announcs, isGeneral, getServerNonce(), getClientNonce(), getPrivateKey());
+    }
+
+    /*public int post(String message, int[] announcs, boolean) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(getPublicKey());
         return postAux(getPublicKey(), message, announcs, false, getServerNonce(), getClientNonce(), getPrivateKey());
     }
@@ -373,7 +398,7 @@ public class ClientEndpoint {
     public int postGeneral(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(getPublicKey());
         return postAux(getPublicKey(), message, announcs, true, getServerNonce(), getClientNonce(), getPrivateKey());
-    }
+    }*/
 
     //////////////////////////////////////////////////
     //				      READ						//
