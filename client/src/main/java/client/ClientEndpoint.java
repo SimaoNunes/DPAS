@@ -25,6 +25,8 @@ public class ClientEndpoint {
     private String userName = null;
     private CryptoManager criptoManager = null;
 
+    private int nFaults;
+
     private String registerErrorMessage = "There was a problem with your request, we cannot infer if you registered. Please try to login.";
     private String errorMessage = "There was a problem with your request. Please try again.";
 
@@ -35,13 +37,22 @@ public class ClientEndpoint {
 
     /*****************************************/
 
-    public ClientEndpoint(String userName, String server){
+    public ClientEndpoint(String userName, String server, int faults){
     	criptoManager = new CryptoManager();
         setPrivateKey(criptoManager.getPrivateKeyFromKs(userName));
         setPublicKey(criptoManager.getPublicKeyFromKs(userName, userName));
         setServerPublicKey(criptoManager.getPublicKeyFromKs(userName, "server"));
         setUsername(userName);
         setServer_address(server);
+        setnFaults(faults);
+    }
+
+    public int getnFaults() {
+        return nFaults;
+    }
+
+    public void setnFaults(int nFaults) {
+        this.nFaults = nFaults;
     }
 
     public String getServer_address() {
@@ -147,6 +158,7 @@ public class ClientEndpoint {
             e.printStackTrace();
         }
     }
+
 
 //////////////////////////
 //						//

@@ -1,7 +1,6 @@
 package client;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
@@ -30,11 +29,12 @@ public class ClientApp {
     	System.out.println("\n======================  DPAS Application ======================");
     	// Check if arguments are being wrongly used (should only receive username, or no arguments at all)
     	if(args.length > 2 || args.length == 0) {
-    		System.out.println("\nWrong way of running app. Either give a single argument with the IP of the server" +
-									   " or provide user and IP in this order or don't provide at all and register");
+    		System.out.println("\nWrong way of running app. Either give the number of faults the system supports" +
+									   " or provide faults and user in this order or don't provide at all and register");
     	}
     	// Check if user name is provided. Otherwise register a new user
-    	String server = args[0];
+    	int faults = Integer.parseInt(args[0]);
+    	String server = getServerAddress();
 		if(args.length == 2) {
     		userName = args[1]; 																						//FIXME not sanitizing user input
     		// Try to load user's keystore and if this user is the owner of the account
@@ -42,7 +42,7 @@ public class ClientApp {
 		    	// Try to load user's keystore
 	        	keyStore = KeyStore.getInstance("JKS");
 				keyStore.load(fis, "changeit".toCharArray());
-				clientEndpoint = new ClientEndpoint(userName, server);
+				clientEndpoint = new ClientEndpoint(userName, server, faults);
 				runApp();
 			} catch (KeyStoreException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded). You sure you typed your name right?");
@@ -54,16 +54,37 @@ public class ClientApp {
 			}
     	} 
     	else {
-			if(registerUser(server)) {
+			if(registerUser(server, faults)) {
 				runApp();
 			}
     	}
     	System.out.println("\n============================  End  ============================");
     }
+
+    private static String getServerAddress(){
+    	File file = new File("server_address.txt");
+
+		String address = null;
+
+		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
+
+			address = br.readLine();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(address == null){
+			return "localhost";
+		}
+		else{
+			return address;
+		}
+
+	}
     
     
     
-	private static Boolean registerUser(String server) {
+	private static Boolean registerUser(String server, int faults) {
 		System.out.println("\nPlease register yourself in the DPAS.");
     	String inputUserName = null;
 		// Check if username is trusted (aka if username alias is in keyStore)
@@ -74,7 +95,7 @@ public class ClientApp {
         	keyStore = KeyStore.getInstance("JKS");
 			keyStore.load(fis, "changeit".toCharArray());
 			userName = inputUserName;
-			clientEndpoint = new ClientEndpoint(userName, server);
+			clientEndpoint = new ClientEndpoint(userName, server, faults);
 			clientEndpoint.register();
 		} catch (
 			KeyStoreException | 
