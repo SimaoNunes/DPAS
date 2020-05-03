@@ -382,6 +382,7 @@ public class ClientApp {
 		}
 	}
 	
+	
     private static String getServerAddress(){
     	File file = new File("server_address.txt");
 

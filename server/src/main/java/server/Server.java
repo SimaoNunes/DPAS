@@ -50,7 +50,7 @@ public class Server implements Runnable {
     
     /**************************************************/
 
-    protected Server(ServerSocket ss){
+    protected Server(ServerSocket ss) {
 
         server = ss;
         String serverPort = ss.getLocalPort() + "";  //adding "" converts int to string
@@ -222,7 +222,7 @@ public class Server implements Runnable {
             userIdMap.put(request.getPublicKey(), username);
             saveUserIdMap();
             System.out.println("User " + username + " successfully registered!");
-            if(!dropNonceFlag) {
+            if(!dropOperationFlag) {
             	send(new Response(true, request.getNonceClient()), outStream);
             } else {
             	System.out.println("\nDROPPED\n");
