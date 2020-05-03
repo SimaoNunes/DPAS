@@ -29,11 +29,22 @@ public class Server implements Runnable {
     private AtomicInteger totalAnnouncements;
     private CryptoManager cryptoManager = null;
 
-    private String storagePath;
-    private String userMapPath;
-    private String announcementsPath;
+    // File path strings
+    private static final String STORAGE = "./storage/";
+    private static final String STORAGE_GENERAL_BOARD = "./storage/generalboard";
+    private static final String STORAGE_ANNOUNCEMENT_BOARDS = "./storage/announcementboards/";
+    private static final String GENERAL_BOARD = "generalboard";
+    private static final String ANNOUNCEMENT_BOARDS = "announcementboards/";
+    private static final String USERMAP = "./storage/UserIdMap.ser";
+    private static final String USERMAP_COPY = "./storage/UserIdMap_copy.ser";
+    private static final String TOTAL_ANNOUNCEMENTS = "./storage/TotalAnnouncements.ser";
+    private static final String TOTAL_ANNOUNCEMENTS_COPY = "./storage/TotalAnnouncements_copy.ser";
+    private static String storagePath = "";
+    private static String userMapPath = "";
+    private static String announcementsPath = "";
 
-    /********** Replay attacks variables ***********/
+    /********** Simulated Attacks Variables ***********/
+    
     private boolean testFlag = false;
     private boolean dropNonceFlag = false;
     private boolean dropOperationFlag = false;
@@ -41,8 +52,8 @@ public class Server implements Runnable {
     private boolean integrityFlag = false;
     private Response oldResponse;
     private Envelope oldEnvelope;
-
-    /**********************************************/
+    
+    /**************************************************/
 
     protected Server(ServerSocket ss){
 
@@ -82,7 +93,6 @@ public class Server implements Runnable {
 
         try{
             socket = server.accept();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -107,7 +117,6 @@ public class Server implements Runnable {
                         }
                         break;
                     case "POST":
-                        System.out.println("POST OPERATION");
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
                             cryptoManager.checkHash(envelope) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
@@ -135,9 +144,11 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READGENERAL":
-                        if (cryptoManager.checkHash(envelope) &&
+                        if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
+                        	cryptoManager.checkHash(envelope) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
-                            checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10})) {
+                            checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10}))
+                        	{
                             read(envelope.getRequest(), true, outStream);
                         }
                         break;
@@ -217,7 +228,7 @@ public class Server implements Runnable {
             if(!dropNonceFlag) {
             	send(new Response(true, request.getNonceClient()), outStream);
             } else {
-            	System.out.println("\n\n\nDROPEI\n\n\n");
+            	System.out.println("\n\n\nDROPPED\n\n\n");
             }
         }
     }
@@ -229,8 +240,7 @@ public class Server implements Runnable {
     private void post(Request request, Boolean general, ObjectOutputStream outStream){
         // Get userName from keystore
         String username = userIdMap.get(request.getPublicKey());
-        String path = storagePath + "announcementboards/" + username + "/";
-        
+        String path = storagePath + "announcementboards/" + username + "/";        
         // Write to file
         JSONObject announcementObject =  new JSONObject();
         announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
@@ -242,6 +252,7 @@ public class Server implements Runnable {
         announcementObject.put("date", ft.format(dNow).toString());
 
         int[] refAnnouncements = request.getAnnouncements();
+        
         if(refAnnouncements != null){
             JSONArray annoucementsList = new JSONArray();
             for(int i = 0; i < refAnnouncements.length; i++){
@@ -265,7 +276,7 @@ public class Server implements Runnable {
         if(!dropOperationFlag) {
         	send(new Response(true, request.getNonceClient()), outStream);
         } else {
-        	System.out.println("\n\n\nDROPEI\n\n\n");
+        	System.out.println("\n\n\nDROPPED\n\n\n");
         }
     }
     
@@ -282,10 +293,10 @@ public class Server implements Runnable {
         if(!isGeneral) {
             System.out.println("READ method");
             String username = userIdMap.get(request.getPublicKeyToReadFrom());
-            path += "announcementboards/" + username + "/";
+            path += ANNOUNCEMENT_BOARDS + username + "/";
         } else {
             System.out.println("READGENERAL method");
-            path += "generalboard/";
+            path += GENERAL_BOARD;
         }
 
         int total;
@@ -313,7 +324,7 @@ public class Server implements Runnable {
             if(!dropOperationFlag) {
                 send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
             } else {
-            	System.out.println("\nDROPEI\n");
+            	System.out.println("\nDROPPED\n");
             }
         } catch(Exception e){
             e.printStackTrace();
@@ -340,10 +351,10 @@ public class Server implements Runnable {
     private String[] getDirectoryList(PublicKey key){
         String path = storagePath;
         if(key == null) {
-            path += "generalboard/";
+            path += GENERAL_BOARD;
         }
         else {
-            path += "announcementboards/" + userIdMap.get(key) + "/";
+            path += ANNOUNCEMENT_BOARDS + userIdMap.get(key) + "/";
         }
 
         File file = new File(path);
@@ -542,11 +553,9 @@ public class Server implements Runnable {
 
         try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(announcementsPath))) {
             out.writeObject(totalAnnouncements.get());
-
         } catch (IOException i) {
             i.printStackTrace();
         }
-
     }
 
     //////////////////////////////////////////
@@ -567,10 +576,10 @@ public class Server implements Runnable {
                     break;
                 // ## AlreadyRegistered ## -> check if user is already registered
                 case -2:
-                        if (userIdMap.containsKey(request.getPublicKey())) {
-                            send(new Response(false, -2, request.getNonceClient()), outStream);
-                            return false;
-                        }
+                    if (userIdMap.containsKey(request.getPublicKey())) {
+                        send(new Response(false, -2, request.getNonceClient()), outStream);
+                        return false;
+                    }
                     break;
                 // ## UserNotRegistered ## -> check if user to read from is registed
                 case -3:
@@ -621,4 +630,5 @@ public class Server implements Runnable {
         }
         return true;
     }
+    
 }

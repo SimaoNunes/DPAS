@@ -34,14 +34,14 @@ public class IntegrityRequestTest extends BaseTest {
 	
 	@After
 	public void turnFlagOff() {
-		clientEndpoint1.setIntegrity_flag(false);
+		clientEndpoint1.setIntegrityFlag(false);
 	}
 
 	@Test(expected = OperationTimeoutException.class)
 	public void Should_Ignore_When_PostIsTamperedWith() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException,
 			OperationTimeoutException, FreshnessException, IntegrityException {
 		// Flag will make endpoint send the message "Olá, eu odeio-te" but with the old hash. Server must detect this
-		clientEndpoint1.setIntegrity_flag(true);
+		clientEndpoint1.setIntegrityFlag(true);
 		clientEndpoint1.post("Olá, gosto muito de ti", null);
 	}
 	
@@ -49,7 +49,7 @@ public class IntegrityRequestTest extends BaseTest {
 	public void Should_Ignore_When_PostGeneralIsTamperedWith() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException,
 			OperationTimeoutException, FreshnessException, IntegrityException {
 		// Flag will make endpoint send the message "Olá, eu odeio-te" but with the old hash. Server must detect this
-		clientEndpoint1.setIntegrity_flag(true);
+		clientEndpoint1.setIntegrityFlag(true);
 		clientEndpoint1.postGeneral("Olá, gosto muito de ti", null);
 	}
 
@@ -57,7 +57,7 @@ public class IntegrityRequestTest extends BaseTest {
 	public void Should_Ignore_When_ReadIsTamperedWith() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException,
 			NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		// Flag will make endpoint send that userX wants to read from user3
-		clientEndpoint1.setIntegrity_flag(true);
+		clientEndpoint1.setIntegrityFlag(true);
 		clientEndpoint1.read("user2", 1);
 	}
 	
@@ -65,7 +65,7 @@ public class IntegrityRequestTest extends BaseTest {
 	public void Should_Ignore_When_RegisterIsTamperedWith() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException,
 			OperationTimeoutException, FreshnessException, IntegrityException {
 		// Flag will make endpoint send a register with the pubKey from user3
-		clientEndpoint1.setIntegrity_flag(true);
+		clientEndpoint1.setIntegrityFlag(true);
 		clientEndpoint1.register();
 	}
 	

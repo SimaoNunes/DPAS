@@ -91,7 +91,6 @@ public class CryptoManager {
             out.flush();
             byte[] requestBytes = bos.toByteArray();
             return Arrays.equals(md.digest(requestBytes), hash);
-
         } catch (
             NoSuchAlgorithmException | 
             IOException e) {
@@ -174,9 +173,9 @@ public class CryptoManager {
             cipher.init(Cipher.DECRYPT_MODE, key);
             finalBytes = cipher.doFinal(bytes);
         } catch (
-            NoSuchAlgorithmException | 
-            NoSuchPaddingException | 
-            BadPaddingException | 
+            NoSuchAlgorithmException  | 
+            NoSuchPaddingException 	  | 
+            BadPaddingException 	  | 
             IllegalBlockSizeException | 
             InvalidKeyException e) {
             e.printStackTrace();
@@ -200,10 +199,10 @@ public class CryptoManager {
             ks.load(new FileInputStream("keystores/keystore"), passphrase);
             key = (PrivateKey) ks.getKey("server", passphrase);
         } catch (
-            NoSuchAlgorithmException | 
+            NoSuchAlgorithmException	| 
             UnrecoverableEntryException | 
-            KeyStoreException | 
-            CertificateException |
+            KeyStoreException 			| 
+            CertificateException 		|
             IOException e) {
             e.printStackTrace();
         }

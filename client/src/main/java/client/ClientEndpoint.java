@@ -30,12 +30,12 @@ public class ClientEndpoint {
     private String registerErrorMessage = "There was a problem with your request, we cannot infer if you registered. Please try to login.";
     private String errorMessage = "There was a problem with your request. Please try again.";
 
-    /***********Attack Tests Flags************/
+    /*********** Simulated Attacks Flags ************/
 
     private boolean replay_flag = false;
     private boolean integrity_flag = false;
 
-    /*****************************************/
+    /************************************************/
 
     public ClientEndpoint(String userName, String server, int faults){
     	criptoManager = new CryptoManager();
@@ -43,39 +43,39 @@ public class ClientEndpoint {
         setPublicKey(criptoManager.getPublicKeyFromKs(userName, userName));
         setServerPublicKey(criptoManager.getPublicKeyFromKs(userName, "server"));
         setUsername(userName);
-        setServer_address(server);
-        setnFaults(faults);
+        setServerAddress(server);
+        setNFaults(faults);
     }
 
     public int getnFaults() {
         return nFaults;
     }
 
-    public void setnFaults(int nFaults) {
+    public void setNFaults(int nFaults) {
         this.nFaults = nFaults;
     }
 
-    public String getServer_address() {
+    public String getServerAddress() {
         return serverAddress;
     }
 
-    public void setServer_address(String server_address) {
+    public void setServerAddress(String server_address) {
         this.serverAddress = server_address;
     }
 
-    public boolean isReplay_flag() {
+    public boolean isReplayFlag() {
         return replay_flag;
     }
 
-    public void setReplay_flag(boolean replay_flag) {
+    public void setReplayFlag(boolean replay_flag) {
         this.replay_flag = replay_flag;
     }
 
-    public boolean isIntegrity_flag() {
+    public boolean isIntegrityFlag() {
 		return integrity_flag;
 	}
 
-	public void setIntegrity_flag(boolean integrity_flag) {
+	public void setIntegrityFlag(boolean integrity_flag) {
 		this.integrity_flag = integrity_flag;
 	}
 
@@ -128,7 +128,7 @@ public class ClientEndpoint {
     }
 
     private Socket createSocket() throws IOException {
-        return new Socket(getServer_address(), 9000);
+        return new Socket(getServerAddress(), 9000);
     }
 
     private ObjectOutputStream createOutputStream(Socket socket) throws IOException {
@@ -162,7 +162,6 @@ public class ClientEndpoint {
     private void broadcast(Envelope envelope){
 
     }
-
 
 //////////////////////////
 //						//
@@ -250,15 +249,18 @@ public class ClientEndpoint {
         }
     }
     
-    public void checkReadGeneral(Response response) throws InvalidPostsNumberException, TooMuchAnnouncementsException {
+    public void checkReadGeneral(Response response) throws InvalidPostsNumberException, TooMuchAnnouncementsException, UserNotRegisteredException {
         if(!response.getSuccess()){
-		    int error = response.getErrorCode();
-		    if(error == -6) {
-		        throw new InvalidPostsNumberException("Invalid announcements number to be read!");
-		    }
-		    else if(error == -10){
-		        throw new TooMuchAnnouncementsException("There are not that much announcements to be read!");
-		    }
+            int error = response.getErrorCode();
+            if(error == -1) {
+                throw new UserNotRegisteredException("This user is not registered!");
+            }
+            else if(error == -6) {
+                throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+            }
+            else if(error == -10) {
+                throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
+            }
 		}
 	}
 
@@ -279,28 +281,29 @@ public class ClientEndpoint {
 
         Request request = new Request("REGISTER", getPublicKey(), getServerNonce(), getClientNonce());
 
-        Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
-
-        // SIMULATE ATTACKER: changing the userX key to userY pubKey [in this case user3]
-        if(isIntegrity_flag()) {
-        	envelope_req.getRequest().setPublicKey(criptoManager.getPublicKeyFromKs(userName, "user3"));
+        Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
+        
+        /***** SIMULATE ATTACKER: changing the userX key to userY pubKey [in this case user3] *****/
+        if(isIntegrityFlag()) {
+        	envelopeRequest.getRequest().setPublicKey(criptoManager.getPublicKeyFromKs(userName, "user3"));
         }
-
+        /******************************************************************************************/
+        
         try {
-            Envelope envelope_resp = sendReceive(envelope_req);
-
-            // SIMULATE ATTACKER: send replayed messages to the server
-            if(replay_flag){
-                sendReplays(envelope_req, 2);
+            Envelope envelopeResponse = sendReceive(envelopeRequest);
+            /***** SIMULATE ATTACKER: send replayed messages to the server *****/
+            if(isReplayFlag()){
+                sendReplays(envelopeRequest, 2);
             }
-            if(!checkNonce(envelope_resp.getResponse())) {
+            /********************************************************************/
+            if(!checkNonce(envelopeResponse.getResponse())) {
                 throw new FreshnessException(registerErrorMessage);
             }
-            if(!criptoManager.checkHash(envelope_resp, userName)) {
+            if(!criptoManager.checkHash(envelopeResponse, userName)) {
                 throw new IntegrityException(registerErrorMessage);
             }
-            checkRegister(envelope_resp.getResponse());
-            if(envelope_resp.getResponse().getSuccess()){
+            checkRegister(envelopeResponse.getResponse());
+            if(envelopeResponse.getResponse().getSuccess()){
                 // On success, return 1
                 return 1;
             }
@@ -329,27 +332,30 @@ public class ClientEndpoint {
             request = new Request("POST", key, message, announcs, serverNonce, clientNonce);
         }
 
-        Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, privateKey));
+        Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, privateKey));
 
-        // SIMULATE ATTACKER: changing the message (tamper)
-        if(isIntegrity_flag()) {
-        	envelope_req.getRequest().setMessage("Olá, eu odeio-te");
+        /***** SIMULATE ATTACKER: changing the message (tamper) *****/
+        if(isIntegrityFlag()) {
+        	envelopeRequest.getRequest().setMessage("Olá, eu odeio-te");
         }
+        /************************************************************/
 
         try {
 
-            Envelope envelope_resp = sendReceive(envelope_req);
-            // SIMULATE ATTACKER: replay register
-            if(replay_flag){
-                sendReplays(envelope_req, 2);
+            Envelope envelopeResponse = sendReceive(envelopeRequest);
+            /***** SIMULATE ATTACKER: replay register *****/
+            if(isReplayFlag()){
+                sendReplays(envelopeRequest, 2);
             }
-            if(!checkNonce(envelope_resp.getResponse())){
+            /**********************************************/
+            if(!checkNonce(envelopeResponse.getResponse())){
                 throw new FreshnessException(errorMessage);
             }
-            if(!criptoManager.checkHash(envelope_resp, userName)){
+            if(!criptoManager.checkHash(envelopeResponse, userName)){
                 throw new IntegrityException(errorMessage);
             }
-            checkPost(envelope_resp.getResponse());
+            checkPost(envelopeResponse.getResponse());
+            // On success, return 1
             return 1;
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -381,28 +387,30 @@ public class ClientEndpoint {
 
     	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(), getClientNonce());
 
-        Envelope envelope_req = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
+        Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
         
-        // SIMULATE ATTACKER: changing the read to use from. User might think is going to read from user X but reads from X [in this case user3] (tamper)
-        if(isIntegrity_flag()) {
-        	envelope_req.getRequest().setPublicKeyToReadFrom(criptoManager.getPublicKeyFromKs(userName, "user3"));
+        /***** SIMULATE ATTACKER: changing the user to read from. User might think is going to read from user X but reads from Y [in this case user3] (tamper) *****/
+        if(isIntegrityFlag()) {
+        	envelopeRequest.getRequest().setPublicKeyToReadFrom(criptoManager.getPublicKeyFromKs(userName, "user3"));
         }
+        /**********************************************************************************************************************************************************/
 
         try {
-            Envelope envelope_resp = sendReceive(envelope_req);
-
-            // SIMULATE ATTACKER: send replayed messages to the server
-            if(replay_flag){
-                sendReplays(envelope_req, 2);
+            Envelope envelopeResponse = sendReceive(envelopeRequest);
+            /***** SIMULATE ATTACKER: send replayed messages to the server *****/
+            if(isReplayFlag()){
+                sendReplays(envelopeRequest, 2);
             }
-            if (!checkNonce(envelope_resp.getResponse())) {
+            /*******************************************************************/
+            if (!checkNonce(envelopeResponse.getResponse())) {
                 throw new FreshnessException(errorMessage);
             }
-            if (!criptoManager.checkHash(envelope_resp, userName)) {
+            if (!criptoManager.checkHash(envelopeResponse, userName)) {
                 throw new IntegrityException(errorMessage);
             }
-            checkRead(envelope_resp.getResponse());
-            return envelope_resp.getResponse().getJsonObject();
+            checkRead(envelopeResponse.getResponse());
+            return envelopeResponse.getResponse().getJsonObject();
+            
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -411,23 +419,29 @@ public class ClientEndpoint {
         return null;
     }
 
-    public JSONObject readGeneral(int number) throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException {
+    public JSONObject readGeneral(int number) throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, NonceTimeoutException, UserNotRegisteredException, FreshnessException {
 
-        Request request = new Request("READGENERAL", number);
+    	startHandshake(getPublicKey());
+
+    	Request request = new Request("READGENERAL", getPublicKey(), number, getServerNonce(), getClientNonce());
+    	
+    	Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
         try {
-            Envelope envelope = sendReceive(new Envelope(request, null));
-
-            // SIMULATE ATTACKER: send replayed messages to the server
-            if(replay_flag){
+            Envelope envelopeResponse = sendReceive(envelopeRequest);
+            /***** SIMULATE ATTACKER: send replayed messages to the server *****/
+            if(isReplayFlag()){
                 sendReplays(new Envelope(request, null), 2);
             }
-
-            if(!criptoManager.checkHash(envelope, userName)){
+            /*******************************************************************/
+            if (!checkNonce(envelopeResponse.getResponse())) {
+                throw new FreshnessException(errorMessage);
+            }
+            if(!criptoManager.checkHash(envelopeResponse, userName)){
                 throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
-			checkReadGeneral(envelope.getResponse());
-            return envelope.getResponse().getJsonObject();
+			checkReadGeneral(envelopeResponse.getResponse());
+            return envelopeResponse.getResponse().getJsonObject();
 
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
