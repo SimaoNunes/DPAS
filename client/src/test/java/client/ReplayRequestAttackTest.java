@@ -26,12 +26,12 @@ public class ReplayRequestAttackTest extends BaseTest {
     
     @Before
     public void setReplayFlagTrue() {
-    	clientEndpoint1.setReplay_flag(true);
+    	clientEndpoint1.setReplayFlag(true);
     }
     
     @AfterClass
     public static void setReplayFlagFalse() {
-    	clientEndpoint1.setReplay_flag(false);
+    	clientEndpoint1.setReplayFlag(false);
     }
 
     @Test(expected = TooMuchAnnouncementsException.class)
@@ -74,7 +74,7 @@ public class ReplayRequestAttackTest extends BaseTest {
     @Test
     public void Should_not_Register_More_Than_One_Time() throws NonceTimeoutException, OperationTimeoutException, IntegrityException, FreshnessException, UnknownPublicKeyException,
     		AlreadyRegisteredException {
-        clientEndpoint2.setReplay_flag(true);
+        clientEndpoint2.setReplayFlag(true);
         assertEquals(1, clientEndpoint2.register());
     }
 

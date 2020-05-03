@@ -24,7 +24,6 @@ public class Request implements Serializable {
         this.operation = operation;
     }
 
-
     public Request(String operation, PublicKey key, String message,  int[] announcs, byte[] nonceServer, byte[] nonceClient){
         this.operation = operation;
         this.publicKey = key;
@@ -36,24 +35,24 @@ public class Request implements Serializable {
 
     // Register
     public Request(String operation, PublicKey key, byte[] nonceServer, byte[] nonceClient){
+    	this.operation = operation;
         this.publicKey = key;
-        this.operation = operation;
         this.nonceServer = nonceServer;
         this.nonceClient = nonceClient;
     }
     
     // Register (DELETEALL) (ASK FOR NONCE)
     public Request(String operation, PublicKey key){
+    	this.operation = operation;
         this.publicKey = key;
-        this.operation = operation;
     }
     
     // Post
     public Request(String operation, PublicKey key, String message, int[] announcs) {
-        this.publicKey = key;
+    	this.operation = operation;
+    	this.publicKey = key;
         this.message = message;
         this.announcements = announcs;
-        this.operation = operation;
     }
     
     // Read
@@ -67,9 +66,12 @@ public class Request implements Serializable {
     }
     
     // ReadGeneral
-    public Request(String operation, int number) {
+    public Request(String operation, PublicKey key, int number, byte[] nonceServer, byte[] nonceClient) {
+    	this.operation = operation;
+        this.publicKey = key;
         this.number = number;
-        this.operation = operation;
+        this.nonceServer = nonceServer;
+        this.nonceClient = nonceClient;
     }
 
     public String getOperation() {

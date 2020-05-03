@@ -52,7 +52,7 @@ public class IntegrityResponseTest extends BaseTest{
     }
 
     @Test(expected = IntegrityException.class)
-    public void Should_throw_Integrity_Exception_ReadGeneral() throws IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
+    public void Should_throw_Integrity_Exception_ReadGeneral() throws IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, NonceTimeoutException, UserNotRegisteredException, FreshnessException {
         setIntegrityFlag(true);
 
         clientEndpoint1.readGeneral(1);
