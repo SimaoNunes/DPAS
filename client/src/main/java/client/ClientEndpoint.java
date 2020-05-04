@@ -155,20 +155,8 @@ import java.util.concurrent.ExecutionException;
         Socket socket = createSocket(port);
         socket.setSoTimeout(4000);
         createOutputStream(socket).writeObject(envelope);
-        return (Envelope) createInputStream(socket).readObject();
-    }
-
-    private void sendReplays(Envelope envelope, int n_replays) {
-        try {
-            int i = 0;
-            while(i < n_replays){
-                Socket socket = createSocket(PORT);
-                createOutputStream(socket).writeObject(envelope);
-                i++;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Envelope responseEnvelope = (Envelope) createInputStream(socket).readObject();
+        return responseEnvelope;
     }
 
 
@@ -180,11 +168,12 @@ import java.util.concurrent.ExecutionException;
 
     private byte[] askForServerNonce(PublicKey key, int port) throws NonceTimeoutException {
         try {
-             return sendReceive(new Envelope(new Request("NONCE", key)), port).getResponse().getNonce();
+        	return sendReceive(new Envelope(new Request("NONCE", key)), port).getResponse().getNonce();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        } catch (EOFException e) {
+            throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
         } catch (IOException e) {
-            e.printStackTrace();
             throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
         }
         return new byte[0];
@@ -342,8 +331,6 @@ import java.util.concurrent.ExecutionException;
     //					   POST  					//
     //////////////////////////////////////////////////
 
-
-
     public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
@@ -383,7 +370,6 @@ import java.util.concurrent.ExecutionException;
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
             throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
         }
         return 0;
