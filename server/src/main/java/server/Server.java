@@ -102,7 +102,6 @@ public class Server implements Runnable {
             try {
                 System.out.println("User connected.");
                 Envelope envelope = (Envelope) inStream.readObject();
-
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
@@ -115,7 +114,7 @@ public class Server implements Runnable {
                         break;
                     case "POST":
                         System.out.println("POST METHOD");
-                        if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5})) 
@@ -134,7 +133,7 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READ":
-                        if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
@@ -143,7 +142,7 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READGENERAL":
-                        if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10}))
@@ -157,7 +156,7 @@ public class Server implements Runnable {
                         if(!dropNonceFlag) {
                         	send(new Response(randomNonce), outStream);
                         } else {
-                        	System.out.println("\nDROPPED\n");
+                        	System.out.println("DROPPED NONCE");
                         }
                         handshake = false;
                         break;
@@ -227,7 +226,7 @@ public class Server implements Runnable {
             if(!dropOperationFlag) {
             	send(new Response(true, request.getNonceClient()), outStream);
             } else {
-            	System.out.println("\nDROPPED\n");
+            	System.out.println("DROPPED REGISTER");
             }
         }
     }
@@ -276,9 +275,10 @@ public class Server implements Runnable {
         incrementTotalAnnouncs();
         saveTotalAnnouncements();
         if(!dropOperationFlag) {
+        	
         	send(new Response(true, request.getNonceClient()), outStream);
         } else {
-        	System.out.println("\nDROPPED\n");
+        	System.out.println("DROPPED POST");
         }
     }
     
@@ -326,7 +326,7 @@ public class Server implements Runnable {
             if(!dropOperationFlag) {
                 send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
             } else {
-            	System.out.println("\nDROPPED\n");
+            	System.out.println("DROPPED READ");
             }
         } catch(Exception e){
             e.printStackTrace();

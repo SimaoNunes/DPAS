@@ -37,6 +37,7 @@ public class ReplayRequestAttackTest extends BaseTest {
     @Test(expected = TooMuchAnnouncementsException.class)
     public void Should_not_Post_More_Than_One() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException,
     		IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
+
         clientEndpoint1.post("USER1 ANNOUNC MESSAGE2", null, false);
         clientEndpoint1.read("user1", 3); //se o replay for bem sucedido, ha 3 posts no server
     }
@@ -45,31 +46,8 @@ public class ReplayRequestAttackTest extends BaseTest {
     public void Should_not_Post_More_Than_One_General() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException,
     		IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
 
-        clientEndpoint1.post("this message will not be repeated", null, true);
-        clientEndpoint1.readGeneral(4); //se o replay for bem sucedido, ha 3 posts no server
-    }
-
-    @Test
-    public void Should_not_Read_More_Than_One() throws UserNotRegisteredException, NonceTimeoutException, OperationTimeoutException,
-    		InvalidPostsNumberException, IntegrityException, TooMuchAnnouncementsException, FreshnessException {
-        clientEndpoint1.read("user1", 2);
-        
-        String[] result1 = getMessagesFromJSON(clientEndpoint1.read("user1", 2));
-
-        assertEquals(result1[0], "this message will not be repeated");
-        assertEquals(result1[1], "USER1 MESSAGE1");
-        assertEquals(result1.length, 2);
-    }
-
-    @Test
-    public void Should_not_Read_More_Than_One_General() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException,
-    		NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException, InvalidPostsNumberException, TooMuchAnnouncementsException {
-        clientEndpoint1.post("USER1 MESSAGE3", null, true);
-
-        String[] result1 = getMessagesFromJSON(clientEndpoint1.readGeneral(1));
-
-        assertEquals(result1[0], "USER1 MESSAGE3");
-        assertEquals(result1.length, 1);
+        clientEndpoint1.post("USER1 GENERAL MESSAGE2", null, true);
+        clientEndpoint1.readGeneral(3); // se o replay for bem sucedido, ha 3 posts no server
     }
 
 

@@ -33,12 +33,13 @@ import java.util.concurrent.ExecutionException;
     private String registerErrorMessage = "There was a problem with your request, we cannot infer if you registered. Please try to login.";
     private String errorMessage = "There was a problem with your request. Please try again.";
 
-    /*********** Simulated Attacks Flags ************/
+    /*********** Simulated Attacks Variables ************/
 
+    private ReplayAttacker replayAttacker = null;
     private boolean replayFlag = false;
     private boolean integrityFlag = false;
 
-    /************************************************/
+    /****************************************************/
 
     public ClientEndpoint(String userName, String server, int faults){
     	criptoManager = new CryptoManager();
@@ -67,6 +68,10 @@ import java.util.concurrent.ExecutionException;
     public void setServerAddress(String serverAddress) {
         this.serverAddress = serverAddress;
     }
+    
+    public void instantiateReplayAttacker() {
+    	this.replayAttacker = new ReplayAttacker(this.serverAddress);
+    }
 
     public boolean isReplayFlag() {
         return replayFlag;
@@ -74,6 +79,8 @@ import java.util.concurrent.ExecutionException;
 
     public void setReplayFlag(boolean replayFlag) {
         this.replayFlag = replayFlag;
+        if(replayFlag)
+        	this.instantiateReplayAttacker();
     }
 
     public boolean isIntegrityFlag() {
@@ -151,7 +158,7 @@ import java.util.concurrent.ExecutionException;
         return (Envelope) createInputStream(socket).readObject();
     }
 
-    private void sendReplays(Envelope envelope, int n_replays){
+    private void sendReplays(Envelope envelope, int n_replays) {
         try {
             int i = 0;
             while(i < n_replays){
@@ -306,7 +313,7 @@ import java.util.concurrent.ExecutionException;
             Envelope envelopeResponse = sendReceive(envelopeRequest, port);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
-                sendReplays(envelopeRequest, 2);
+                this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /********************************************************************/
             if(!checkNonce(envelopeResponse.getResponse(), port)) {
@@ -358,9 +365,10 @@ import java.util.concurrent.ExecutionException;
         try {
 
             Envelope envelopeResponse = sendReceive(envelopeRequest, port);
+
             /***** SIMULATE ATTACKER: replay register *****/
             if(isReplayFlag()){
-                sendReplays(envelopeRequest, 2);
+                this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /**********************************************/
             if(!checkNonce(envelopeResponse.getResponse(), port)){
@@ -511,7 +519,7 @@ import java.util.concurrent.ExecutionException;
             Envelope envelopeResponse = sendReceive(envelopeRequest, PORT);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
-                sendReplays(envelopeRequest, 2);
+            	this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /*******************************************************************/
             if (!checkNonce(envelopeResponse.getResponse(), PORT)) {
@@ -543,7 +551,7 @@ import java.util.concurrent.ExecutionException;
             Envelope envelopeResponse = sendReceive(envelopeRequest, PORT);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
-                sendReplays(new Envelope(request, null), 2);
+            	this.replayAttacker.sendReplays(new Envelope(request, null), 2);
             }
             /*******************************************************************/
             if (!checkNonce(envelopeResponse.getResponse(), PORT)) {
