@@ -47,7 +47,7 @@ public class ClientEndpoint {
         setNFaults(faults);
     }
 
-    public int getnFaults() {
+    public int getNFaults() {
         return nFaults;
     }
 
@@ -278,7 +278,7 @@ public class ClientEndpoint {
 
         Request request = new Request("REGISTER", getPublicKey(), getServerNonce(), getClientNonce());
 
-        Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
+        Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
         
         /***** SIMULATE ATTACKER: changing the userX key to userY pubKey [in this case user3] *****/
         if(isIntegrityFlag()) {
@@ -295,7 +295,7 @@ public class ClientEndpoint {
             if(!checkNonce(envelopeResponse.getResponse())) {
                 throw new FreshnessException(registerErrorMessage);
             }
-            if(!criptoManager.checkHash(envelopeResponse, userName)) {
+            if(!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)) {
                 throw new IntegrityException(registerErrorMessage);
             }
             checkRegister(envelopeResponse.getResponse());
@@ -321,6 +321,7 @@ public class ClientEndpoint {
     public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
+        
         if(isGeneral){
             request = new Request("POSTGENERAL", key, message, announcs, serverNonce, clientNonce);
         }
@@ -328,7 +329,7 @@ public class ClientEndpoint {
             request = new Request("POST", key, message, announcs, serverNonce, clientNonce);
         }
 
-        Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, privateKey));
+        Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, privateKey));
 
         /***** SIMULATE ATTACKER: changing the message (tamper) *****/
         if(isIntegrityFlag()) {
@@ -346,7 +347,7 @@ public class ClientEndpoint {
             if(!checkNonce(envelopeResponse.getResponse())){
                 throw new FreshnessException(errorMessage);
             }
-            if(!criptoManager.checkHash(envelopeResponse, userName)){
+            if(!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)){
                 throw new IntegrityException(errorMessage);
             }
             checkPost(envelopeResponse.getResponse());
@@ -382,7 +383,7 @@ public class ClientEndpoint {
 
     	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(), getClientNonce());
 
-        Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
+        Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
         
         /***** SIMULATE ATTACKER: changing the user to read from. User might think is going to read from user X but reads from Y [in this case user3] (tamper) *****/
         if(isIntegrityFlag()) {
@@ -400,7 +401,7 @@ public class ClientEndpoint {
             if (!checkNonce(envelopeResponse.getResponse())) {
                 throw new FreshnessException(errorMessage);
             }
-            if (!criptoManager.checkHash(envelopeResponse, userName)) {
+            if (!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)) {
                 throw new IntegrityException(errorMessage);
             }
             checkRead(envelopeResponse.getResponse());
@@ -420,7 +421,7 @@ public class ClientEndpoint {
 
     	Request request = new Request("READGENERAL", getPublicKey(), number, getServerNonce(), getClientNonce());
     	
-    	Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
+    	Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
 
         try {
             Envelope envelopeResponse = sendReceive(envelopeRequest);
@@ -432,7 +433,7 @@ public class ClientEndpoint {
             if (!checkNonce(envelopeResponse.getResponse())) {
                 throw new FreshnessException(errorMessage);
             }
-            if(!criptoManager.checkHash(envelopeResponse, userName)){
+            if(!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)){
                 throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
 			checkReadGeneral(envelopeResponse.getResponse());

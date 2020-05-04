@@ -12,6 +12,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
@@ -23,105 +25,64 @@ import javax.crypto.NoSuchPaddingException;
 
 import library.Envelope;
 import library.Request;
+import library.Response;
 
 public class CryptoManager {
 	
 /////////////////////////////////////
 //   							   //
-//	 		Hash Methods  		   //
+//	 		Sign Methods  		   //
 //	   							   //
 /////////////////////////////////////
 	
-/*	byte[] hashObject(Object obj) {
-		
-	}*/
+	byte[] signRequest(Request request, PrivateKey key) {
+		try {
+			// Initialize needed structures
+			Signature signature = Signature.getInstance("SHA256withRSA");
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream out = new ObjectOutputStream(bos);
+			// Convert request to byteArray
+			out.writeObject(request);
+			out.flush();
+			byte[] requestBytes = bos.toByteArray();
+			// Sign with private key
+			signature.initSign(key);
+			signature.update(requestBytes);
+			return signature.sign();
+		} catch (
+			InvalidKeyException		 |
+			NoSuchAlgorithmException |
+			SignatureException		 |
+			IOException e) {
+			e.printStackTrace();
+		}
+		return new byte[0];
+	}
 	
-/////////////////////////////////////
-//								   //
-//   Cipher and decipher Methods   //
-//	      						   //
-/////////////////////////////////////
-	
-    byte[] cipherRequest(Request request, PrivateKey key){
-        MessageDigest md;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = null;
-        Cipher cipher;
-
-        try {
-        	// Hash
-            md = MessageDigest.getInstance("SHA-256");
-            out = new ObjectOutputStream(bos);
-            out.writeObject(request);
-            out.flush();
-            byte[] requestBytes = bos.toByteArray();
-            byte[] requestHash = md.digest(requestBytes);
-            // Cipher
-            cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            return cipher.doFinal(requestHash);
-
-        } catch (
-            IOException | 
-            NoSuchAlgorithmException | 
-            InvalidKeyException | 
-            NoSuchPaddingException | 
-            BadPaddingException | 
-            IllegalBlockSizeException e) {
-            e.printStackTrace();
-        }
-        return new byte[0];
-    }
-    
-    byte[] decipher(byte[] bytes, PublicKey key){
-        byte[] finalBytes = null;
-        Cipher cipher;
-
-        try {
-            cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            finalBytes = cipher.doFinal(bytes);
-        } catch (
-            NoSuchAlgorithmException | 
-            InvalidKeyException | 
-            NoSuchPaddingException | 
-            BadPaddingException | 
-            IllegalBlockSizeException e) {
-            e.printStackTrace();
-        }
-        return finalBytes;
-    }
-
-//////////////////////////////
-//							//
-//	Check Envelope's Hash	//
-//							//
-//////////////////////////////
-    
-    public boolean checkHash(Envelope envelope, String userName){
-        MessageDigest md;
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = null;
-
-        byte[] hash = this.decipher(envelope.getHash(), getPublicKeyFromKs(userName, "server"));
-
-        try {
-            md = MessageDigest.getInstance("SHA-256");
-
-            out = new ObjectOutputStream(bos);
-            out.writeObject(envelope.getResponse());
-            out.flush();
-            byte[] response_bytes = bos.toByteArray();
-
-            return Arrays.equals(md.digest(response_bytes), hash);
-        } catch (
-            NoSuchAlgorithmException | 
-            IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
+	boolean verifyResponse(Response response, byte[] signature, String username) {
+		try {
+			// Initialize needed structures
+			PublicKey key = getPublicKeyFromKs(username, "server");
+			Signature verifySignature = Signature.getInstance("SHA256withRSA");
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream out = new ObjectOutputStream(bos);
+			// Convert response to byteArray
+			out.writeObject(response);
+			out.flush();
+			byte[] responseBytes = bos.toByteArray();
+			// Verify signature
+			verifySignature.initVerify(key);
+			verifySignature.update(responseBytes);
+			return verifySignature.verify(signature);
+		} catch (
+			InvalidKeyException 	 |
+			NoSuchAlgorithmException |
+			SignatureException 		 |
+			IOException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
     
     
 //////////////////////////////

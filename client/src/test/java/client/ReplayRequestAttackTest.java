@@ -48,34 +48,4 @@ public class ReplayRequestAttackTest extends BaseTest {
         clientEndpoint1.readGeneral(3); //se o replay for bem sucedido, ha 3 posts no server
     }
 
-    @Test
-    public void Should_not_Read_More_Than_One() throws UserNotRegisteredException, NonceTimeoutException, OperationTimeoutException,
-    		InvalidPostsNumberException, IntegrityException, TooMuchAnnouncementsException, FreshnessException {
-        clientEndpoint1.read("user1", 2);
-        
-        String[] result1 = getMessagesFromJSON(clientEndpoint1.read("user1", 2));
-
-        assertEquals(result1[0], "USER1 GENERAL MESSAGE2");
-        assertEquals(result1[1], "USER1 MESSAGE1");
-        assertEquals(result1.length, 2);
-    }
-
-    @Test
-    public void Should_not_Read_More_Than_One_General() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException,
-    		NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException, InvalidPostsNumberException, TooMuchAnnouncementsException {
-        clientEndpoint1.postGeneral("USER1 MESSAGE3", null);
-
-        String[] result1 = getMessagesFromJSON(clientEndpoint1.readGeneral(1));
-
-        assertEquals(result1[0], "USER1 MESSAGE3");
-        assertEquals(result1.length, 1);
-    }
-
-    @Test
-    public void Should_not_Register_More_Than_One_Time() throws NonceTimeoutException, OperationTimeoutException, IntegrityException, FreshnessException, UnknownPublicKeyException,
-    		AlreadyRegisteredException {
-        clientEndpoint2.setReplayFlag(true);
-        assertEquals(1, clientEndpoint2.register());
-    }
-
 }

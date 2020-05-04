@@ -1,17 +1,11 @@
-
 package server;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Signature;
+import java.security.SignatureException;
 
-import javax.crypto.Cipher;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-
-import java.security.MessageDigest;
 import java.security.KeyStore;
 
 import java.security.NoSuchAlgorithmException;
@@ -30,7 +24,7 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap; 
 
-import library.Envelope;
+import library.Request;
 import library.Response;
 
 public class CryptoManager {
@@ -41,11 +35,67 @@ public class CryptoManager {
         nonces = new HashMap<>();
     }
     
-    //////////////////////////////////////////
-    //										//
-    //            Check Methods             //
-    //    									//
-    //////////////////////////////////////////
+    
+/////////////////////////////////////
+//								   //
+//			Sign Methods  		   //
+//	  							   //
+/////////////////////////////////////
+    
+	byte[] signResponse(Response response, PrivateKey key) {
+		try {
+			// Initialize needed structures
+			Signature signature = Signature.getInstance("SHA256withRSA");
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream out = new ObjectOutputStream(bos);
+			// Convert response to byteArray
+			out.writeObject(response);
+			out.flush();
+			byte[] requestBytes = bos.toByteArray();
+			// Sign with private key
+			signature.initSign(key);
+			signature.update(requestBytes);
+			return signature.sign();
+		} catch (
+			InvalidKeyException		 |
+			NoSuchAlgorithmException |
+			SignatureException		 |
+			IOException e) {
+			e.printStackTrace();
+		}
+		return new byte[0];
+	}
+	
+	boolean verifyRequest(Request request, byte[] signature) {
+		try {
+			// Initialize needed structures
+			PublicKey key = request.getPublicKey();
+			Signature verifySignature = Signature.getInstance("SHA256withRSA");
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream out = new ObjectOutputStream(bos);
+			// Convert response to byteArray
+			out.writeObject(request);
+			out.flush();
+			byte[] responseBytes = bos.toByteArray();
+			// Verify signature
+			verifySignature.initVerify(key);
+			verifySignature.update(responseBytes);
+			return verifySignature.verify(signature);
+		} catch (
+			InvalidKeyException 	 |
+			NoSuchAlgorithmException |
+			SignatureException 		 |
+			IOException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+    
+//////////////////////////////////////////
+//										//
+//           Get Alias By Key           //
+//    									//
+//////////////////////////////////////////
 
     public String checkKey(PublicKey publicKey){
         char[] passphrase = "changeit".toCharArray();
@@ -77,33 +127,12 @@ public class CryptoManager {
         return "";
     }
 
-    public boolean checkHash(Envelope envelope){
 
-        MessageDigest md ;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = null;
-        byte[] hash = decipher(envelope.getHash(), envelope.getRequest().getPublicKey());
-
-        try {
-            md = MessageDigest.getInstance("SHA-256");
-            out = new ObjectOutputStream(bos);
-            out.writeObject(envelope.getRequest());
-            out.flush();
-            byte[] requestBytes = bos.toByteArray();
-            return Arrays.equals(md.digest(requestBytes), hash);
-        } catch (
-            NoSuchAlgorithmException | 
-            IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    /////////////////////////////////////////////////////////
-    //										               //
-    //            Nonce Manipulation Methods               //
-    //										               //
-    /////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+//										               //
+//            Nonce Manipulation Methods               //
+//										               //
+/////////////////////////////////////////////////////////
 
     private HashMap<PublicKey, byte[]> getNonces(){
         return nonces;
@@ -127,62 +156,8 @@ public class CryptoManager {
         random.nextBytes(nonce);
         return nonce;
     }
-
-    /////////////////////////////////////////////////////////
-    //										               //
-    //             Cipher and Decipher methods             //
-    //										               //
-    /////////////////////////////////////////////////////////
-
-
-    public byte[] cipher(Response response, PrivateKey key) throws IOException{
-        MessageDigest md;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = null;
-        Cipher cipher;
-        byte[] finalBytes = null;
-        try {
-        	// Hash
-            md = MessageDigest.getInstance("SHA-256");
-            out = new ObjectOutputStream(bos);
-            out.writeObject(response);
-            out.flush();
-            byte[] response_bytes = bos.toByteArray();
-            byte[] response_hash = md.digest(response_bytes);
-            // Cipher
-            cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            finalBytes = cipher.doFinal(response_hash);
-        } catch (
-        	IOException 				|	
-            InvalidKeyException 		| 
-            BadPaddingException 		| 
-            IllegalBlockSizeException	| 
-            NoSuchPaddingException		| 
-            NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return finalBytes;
-    }
-
-    public byte[] decipher(byte[] bytes, PublicKey key){
-        byte[] finalBytes = null;
-        Cipher cipher = null;
-        try {
-            cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            finalBytes = cipher.doFinal(bytes);
-        } catch (
-            NoSuchAlgorithmException  | 
-            NoSuchPaddingException 	  | 
-            BadPaddingException 	  | 
-            IllegalBlockSizeException | 
-            InvalidKeyException e) {
-            e.printStackTrace();
-        }
-        return finalBytes;
-    }
     
+	
 ///////////////////////////////////////////
 //   									 //
 //	 Methods to get Keys from Keystore   //
