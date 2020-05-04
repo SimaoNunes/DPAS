@@ -358,7 +358,7 @@ public class ClientApp {
 
             result += "\nId: " + announcId + "\nDate: " + date + "\nMessage: " + msg + "\n";
 
-            System.out.println(result);
+            System.out.print(result);
             if(!(refs == null)) {
                 System.out.print("References IDs:");
                 for (Object ref : refs) {

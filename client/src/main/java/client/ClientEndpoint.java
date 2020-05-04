@@ -30,12 +30,13 @@ public class ClientEndpoint {
     private String registerErrorMessage = "There was a problem with your request, we cannot infer if you registered. Please try to login.";
     private String errorMessage = "There was a problem with your request. Please try again.";
 
-    /*********** Simulated Attacks Flags ************/
+    /*********** Simulated Attacks Variables ************/
 
+    private ReplayAttacker replayAttacker = null;
     private boolean replayFlag = false;
     private boolean integrityFlag = false;
 
-    /************************************************/
+    /****************************************************/
 
     public ClientEndpoint(String userName, String server, int faults){
     	criptoManager = new CryptoManager();
@@ -62,6 +63,10 @@ public class ClientEndpoint {
     public void setServerAddress(String serverAddress) {
         this.serverAddress = serverAddress;
     }
+    
+    public void instantiateReplayAttacker() {
+    	this.replayAttacker = new ReplayAttacker(this.serverAddress);
+    }
 
     public boolean isReplayFlag() {
         return replayFlag;
@@ -69,6 +74,8 @@ public class ClientEndpoint {
 
     public void setReplayFlag(boolean replayFlag) {
         this.replayFlag = replayFlag;
+        if(replayFlag)
+        	this.instantiateReplayAttacker();
     }
 
     public boolean isIntegrityFlag() {
@@ -146,7 +153,7 @@ public class ClientEndpoint {
         return (Envelope) createInputStream(socket).readObject();
     }
 
-    private void sendReplays(Envelope envelope, int n_replays){
+    private void sendReplays(Envelope envelope, int n_replays) {
         try {
             int i = 0;
             while(i < n_replays){
@@ -182,7 +189,7 @@ public class ClientEndpoint {
         setClientNonce(criptoManager.generateClientNonce());
     }
 
-    private boolean checkNonce(Response response){
+    private boolean checkNonce(Response response) {
         if(Arrays.equals(response.getNonce(), getClientNonce())) {
             setClientNonce(null);
             setServerNonce(null);
@@ -289,7 +296,7 @@ public class ClientEndpoint {
             Envelope envelopeResponse = sendReceive(envelopeRequest);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
-                sendReplays(envelopeRequest, 2);
+                this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /********************************************************************/
             if(!checkNonce(envelopeResponse.getResponse())) {
@@ -337,11 +344,10 @@ public class ClientEndpoint {
         }
         /************************************************************/
         try {
-
             Envelope envelopeResponse = sendReceive(envelopeRequest);
             /***** SIMULATE ATTACKER: replay register *****/
             if(isReplayFlag()){
-                sendReplays(envelopeRequest, 2);
+                this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /**********************************************/
             if(!checkNonce(envelopeResponse.getResponse())){
@@ -395,7 +401,7 @@ public class ClientEndpoint {
             Envelope envelopeResponse = sendReceive(envelopeRequest);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
-                sendReplays(envelopeRequest, 2);
+            	this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /*******************************************************************/
             if (!checkNonce(envelopeResponse.getResponse())) {
@@ -427,7 +433,7 @@ public class ClientEndpoint {
             Envelope envelopeResponse = sendReceive(envelopeRequest);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
-                sendReplays(new Envelope(request, null), 2);
+            	this.replayAttacker.sendReplays(new Envelope(request, null), 2);
             }
             /*******************************************************************/
             if (!checkNonce(envelopeResponse.getResponse())) {

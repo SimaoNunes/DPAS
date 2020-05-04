@@ -38,14 +38,14 @@ public class ReplayRequestAttackTest extends BaseTest {
     public void Should_not_Post_More_Than_One() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException,
     		IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
         clientEndpoint1.post("USER1 ANNOUNC MESSAGE2", null);
-        clientEndpoint1.read("user1", 3); //se o replay for bem sucedido, ha 3 posts no server
+        clientEndpoint1.read("user1", 3); // se o replay for bem sucedido, ha 3 posts no server
     }
 
     @Test(expected = TooMuchAnnouncementsException.class)
     public void Should_not_Post_More_Than_One_General() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException,
     		IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
         clientEndpoint1.postGeneral("USER1 GENERAL MESSAGE2", null);
-        clientEndpoint1.readGeneral(3); //se o replay for bem sucedido, ha 3 posts no server
+        clientEndpoint1.readGeneral(3); // se o replay for bem sucedido, ha 3 posts no server
     }
 
 }
