@@ -18,6 +18,7 @@ public class PostTest extends BaseTest {
 	public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		clientEndpoint1.register();
 		clientEndpoint2.register();
+		System.out.println("aiai");
 	}
 	
 	@Test

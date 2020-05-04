@@ -48,8 +48,8 @@ import java.util.concurrent.ExecutionException;
         setUsername(userName);
         setServerAddress(server);
         setNFaults(faults);
-        serverNonce = new byte[faults*3 + 1][];
-        clientNonce = new byte[faults*3 + 1][];
+        serverNonce = new byte[(faults*3) + 1][];
+        clientNonce = new byte[(faults*3) + 1][];
     }
 
     public int getNFaults() {
@@ -280,8 +280,8 @@ import java.util.concurrent.ExecutionException;
     public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException{
         int i = 0;
         int port = PORT;
-        System.out.println(getnFaults()*3 + 1);
-        while (i < getnFaults()*3 + 1){
+        System.out.println(getNFaults()*3 + 1);
+        while (i < getNFaults()*3 + 1){
             System.out.println(port);
             registerMethod(port++);
             i++;
@@ -386,9 +386,13 @@ import java.util.concurrent.ExecutionException;
         int counter = 0;
         int port = PORT;
 
-        int[] results = new int[(getnFaults() * 3 + 1) / 2 + 1];
+        if(getNFaults() == 0){
+            return postMethod(message, announcs, isGeneral, port);
+        }
 
-        CompletableFuture<Integer>[] tasks = new CompletableFuture[getnFaults() * 3 + 1];
+        int[] results = new int[(getNFaults() * 3 + 1) / 2 + 1];
+
+        CompletableFuture<Integer>[] tasks = new CompletableFuture[getNFaults() * 3 + 1];
 
         for (int i = 0; i < tasks.length; i++) {
 
@@ -415,9 +419,7 @@ import java.util.concurrent.ExecutionException;
             });
             port++;
         }
-        System.out.println((getnFaults() * 3 + 1) / 2);
-        while (responses < (getnFaults() * 3 + 1) / 2) {
-
+        while (responses < getNFaults()*3 + 1 / 2) {
             for (int i = 0; i < tasks.length; i++) {
 
                 if (tasks[i].isDone()) {
@@ -432,15 +434,15 @@ import java.util.concurrent.ExecutionException;
                     } catch (ExecutionException e) {
                         e.printStackTrace();
                     }
-                    if (responses == (getnFaults() * 3 + 1) / 2 + 1)
+                    if (responses == (getNFaults() * 3 + 1) / 2 + 1)
                         break;
                 }
                 if (i == tasks.length - 1)
                     i = 0;
             }
         }
-
-        switch (getQuorum(results)) {
+        int result = getQuorum(results);
+        switch (result) {
 
             case (-1):
                 throw new UserNotRegisteredException("User not Registered");
@@ -458,12 +460,8 @@ import java.util.concurrent.ExecutionException;
                 throw new IntegrityException("Integrity Exception");
 
         }
-
-
-        // gonna use first position but later verify if all equal
-        System.out.println("RESULTS: " + results[0] + '\n' + results[1] + '\n' + results[2]);
-        return results[0];
-
+        System.out.println("RESULT: " + result);
+        return result;
     }
 
     public int getQuorum(int[] results){
