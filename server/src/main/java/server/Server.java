@@ -615,7 +615,7 @@ public class Server implements Runnable {
                     break;
                 // ## TooMuchAnnouncements ## -> Check if user is trying to read mor announcements that Board number of announcements
                 case -10:
-                    if (request.getNumber() > getDirectoryList(request.getPublicKey()).length) {
+                    if ((request.getOperation().equals("READ") && request.getNumber() > getDirectoryList(request.getPublicKey()).length) || (request.getOperation().equals("READGENERAL") && request.getNumber() > getDirectoryList(null).length) ) {
                         send(new Response(false, -10, request.getNonceClient()), outStream);
                         return false;
                     }
