@@ -2,6 +2,7 @@ package server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.stream.IntStream; 
 
 public class App 
 {
@@ -23,14 +24,17 @@ public class App
 
 
 	private static void startNServers(int faults){
-    	int nServers = 0;
-    	int port = PORT;
+		int port 		  = PORT;
 
-        while (nServers <= 3 * faults){  // N > 3f
+		int nServers      = 0;
+		int totalReplicas = 3 * faults + 1;
+		int[] replicas    = IntStream.range(PORT, PORT + totalReplicas).toArray();
+
+        while (nServers < totalReplicas){  // N > 3f
     	    ServerSocket ss = null;
     		try{
     		    ss = new ServerSocket(port++);
-				new Server(ss);
+				new Server(ss, replicas);
 				nServers++;
 
 			} catch (IOException e) {

@@ -20,11 +20,13 @@ import java.security.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream; 
 
 public class Server implements Runnable {
 	
 	
-	private ServerSocket server;
+    private ServerSocket server;
+    private int[] activeReplicas;
     private Map<PublicKey, String> userIdMap = null;
     private AtomicInteger totalAnnouncements;
     private CryptoManager cryptoManager = null;
@@ -50,14 +52,16 @@ public class Server implements Runnable {
     
     /**************************************************/
 
-    protected Server(ServerSocket ss) {
+    protected Server(ServerSocket ss, int[] replicas) {
 
-        server = ss;
+        server            = ss;
+        activeReplicas    = replicas;
         String serverPort = ss.getLocalPort() + "";  //adding "" converts int to string
 
         cryptoManager = new CryptoManager();
-        oldResponse = new Response(cryptoManager.generateRandomNonce());
-        oldEnvelope = new Envelope(oldResponse, null);
+        oldResponse   = new Response(cryptoManager.generateRandomNonce());
+        oldEnvelope   = new Envelope(oldResponse, null);
+        
         // Path variables
         storagePath       		   = "./storage/port_" + serverPort + "/";
         userMapPath       		   = storagePath + "UserIdMap.ser";
@@ -71,7 +75,6 @@ public class Server implements Runnable {
         
         getUserIdMap();
         getTotalAnnouncementsFromFile();
-        
         System.out.println("Port: " + serverPort);
         newListener();
     }
@@ -444,14 +447,12 @@ public class Server implements Runnable {
             e.printStackTrace();
         }
     }
-
     
 /////////////////////////////////////////////
 //										   //
 // Methods to save/get userIdMap from File //
 //										   //
 /////////////////////////////////////////////
-
     
     private void saveUserIdMap() {
         try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(userMapPathCopy))) {
