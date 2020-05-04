@@ -449,7 +449,7 @@ import java.util.concurrent.ExecutionException;
                     i = 0;
             }
         }
-        int result = getQuorum(results);
+        int result = getQuorumInt(results);
         switch (result) {
 
             case (-1):
@@ -472,7 +472,7 @@ import java.util.concurrent.ExecutionException;
         return result;
     }
 
-    public int getQuorum(int[] results){
+    public int getQuorumInt(int[] results){
         int final_result = results[0];
         for(int i = 1; i < results.length; i++){
             if(results[i] == final_result){
@@ -484,6 +484,19 @@ import java.util.concurrent.ExecutionException;
         }
         return final_result;
     }
+
+        public Response getQuorumResponse(Response[] results){
+            Response final_result = results[0];
+            for(int i = 1; i < results.length; i++){
+                if(results[i].equals(final_result)){
+                    continue;
+                }
+                else {
+                    System.out.println("Not quorum n sei o que fazer");
+                }
+            }
+            return final_result;
+        }
 
     public int postMethod(String message, int[] announcs, boolean isGeneral, int port) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(getPublicKey(), port);
@@ -499,13 +512,120 @@ import java.util.concurrent.ExecutionException;
     //				      READ						//
     //////////////////////////////////////////////////
 
-    public JSONObject read(String announcUserName, int number) throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public JSONObject read(String announcUserName, int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+        int responses = 0;
+        int counter = 0;
+        int port = PORT;
 
-        startHandshake(getPublicKey(), PORT);
-        
+        if(getNFaults() == 0){
+            Response response = readMethod(announcUserName, number, port);
+
+            if(response.getSuccess()){
+                return response.getJsonObject();
+            }
+            else{
+                switch (response.getErrorCode()) {
+                    case (-1):
+                        throw new UserNotRegisteredException("User not Registered");
+                    case (-3):
+                        throw new UserNotRegisteredException("The user you're reading from is not registered!");  //OLD EXCEPTION FIX ME
+                    case (-6):
+                        throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+                    case (-10):
+                        throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
+                    case (-11):
+                        throw new NonceTimeoutException("Nonce timeout");
+                    case (-12):
+                        throw new OperationTimeoutException("Operation timeout");
+                    case (-13):
+                        throw new FreshnessException("Freshness Exception");
+                    case (-14):
+                        throw new IntegrityException("Integrity Exception");
+
+                    default:
+                        break;
+                }
+            }
+
+        }
+
+        Response[] results = new Response[(getNFaults() * 3 + 1) / 2 + 1];
+
+        CompletableFuture<Response>[] tasks = new CompletableFuture[getNFaults() * 3 + 1];
+
+        for (int i = 0; i < tasks.length; i++) {
+
+            int finalPort = port;
+
+            tasks[i] = CompletableFuture.supplyAsync(() -> readMethod(announcUserName, number, finalPort));
+            port++;
+        }
+        while (responses < getNFaults()*3 + 1 / 2) {
+            for (int i = 0; i < tasks.length; i++) {
+
+                if (tasks[i].isDone()) {
+                    System.out.println("is done");
+
+                    responses++;
+
+                    try {
+                        results[counter++] = tasks[i].get();
+                        System.out.println(results[counter-1]);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                    if (responses == (getNFaults() * 3 + 1) / 2 + 1)
+                        break;
+                }
+                if (i == tasks.length - 1)
+                    i = 0;
+            }
+        }
+
+        Response result = getQuorumResponse(results);
+        System.out.println("RESULT: " + result.getSuccess() + result.getErrorCode());
+        if(result.getSuccess()){
+            return result.getJsonObject();
+        }
+        else{
+            switch (result.getErrorCode()) {
+                case (-1):
+                    throw new UserNotRegisteredException("User not Registered");
+                case (-3):
+                    throw new UserNotRegisteredException("The user you're reading from is not registered!");  //OLD EXCEPTION FIX ME
+                case (-6):
+                    throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+                case (-10):
+                    throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
+                case (-11):
+                    throw new NonceTimeoutException("Nonce timeout");
+                case (-12):
+                    throw new OperationTimeoutException("Operation timeout");
+                case (-13):
+                    throw new FreshnessException("Freshness Exception");
+                case (-14):
+                    throw new IntegrityException("Integrity Exception");
+
+                default:
+                    break;
+
+            }
+        }
+        return new JSONObject();
+    }
+
+    public Response readMethod(String announcUserName, int number, int port) {
+        try {
+            startHandshake(getPublicKey(), port);
+        } catch (NonceTimeoutException e) {
+            return new Response(false, -11, null);
+        }
+
         PublicKey pubKeyToReadFrom = criptoManager.getPublicKeyFromKs(userName, announcUserName);
 
-    	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(PORT), getClientNonce(PORT));
+    	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(port), getClientNonce(port));
 
         Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
         
@@ -516,57 +636,163 @@ import java.util.concurrent.ExecutionException;
         /**********************************************************************************************************************************************************/
 
         try {
-            Envelope envelopeResponse = sendReceive(envelopeRequest, PORT);
+            Envelope envelopeResponse = sendReceive(envelopeRequest, port);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
             	this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /*******************************************************************/
-            if (!checkNonce(envelopeResponse.getResponse(), PORT)) {
-                throw new FreshnessException(errorMessage);
+            if (!checkNonce(envelopeResponse.getResponse(), port)) {
+                return new Response(false, -13, null);
+                //throw new FreshnessException(errorMessage);
             }
             if (!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)) {
-                throw new IntegrityException(errorMessage);
+                return new Response(false, -14, null);
+                //throw new IntegrityException(errorMessage);
             }
-            checkRead(envelopeResponse.getResponse());
-            return envelopeResponse.getResponse().getJsonObject();
+            //checkRead(envelopeResponse.getResponse());
+            return envelopeResponse.getResponse();   //if it has exceptions they are already inside with the correct error code
             
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
-        	throw new OperationTimeoutException("There was a problem with the connection, please try again!");
+        	return new Response(false, -12, null);
+            //throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         } 
         return null;
     }
 
-    public JSONObject readGeneral(int number) throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, NonceTimeoutException, UserNotRegisteredException, FreshnessException {
+    public JSONObject readGeneral(int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+        int responses = 0;
+        int counter = 0;
+        int port = PORT;
 
-    	startHandshake(getPublicKey(), PORT);
+        if(getNFaults() == 0){
+            Response response = readGeneralMethod(number, port);
 
-    	Request request = new Request("READGENERAL", getPublicKey(), number, getServerNonce(PORT), getClientNonce(PORT));
+            if(response.getSuccess()){
+                return response.getJsonObject();
+            }
+            else{
+                switch (response.getErrorCode()) {
+                    case (-1):
+                        throw new UserNotRegisteredException("User not Registered");
+                    case (-6):
+                        throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+                    case (-10):
+                        throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
+                    case (-11):
+                        throw new NonceTimeoutException("Nonce timeout");
+                    case (-12):
+                        throw new OperationTimeoutException("Operation timeout");
+                    case (-13):
+                        throw new FreshnessException("Freshness Exception");
+                    case (-14):
+                        throw new IntegrityException("Integrity Exception");
+
+                    default:
+                        break;
+                }
+            }
+        }
+
+        Response[] results = new Response[(getNFaults() * 3 + 1) / 2 + 1];
+
+        CompletableFuture<Response>[] tasks = new CompletableFuture[getNFaults() * 3 + 1];
+
+        for (int i = 0; i < tasks.length; i++) {
+
+            int finalPort = port;
+
+            tasks[i] = CompletableFuture.supplyAsync(() -> readGeneralMethod(number, finalPort));
+            port++;
+        }
+        while (responses < getNFaults()*3 + 1 / 2) {
+            for (int i = 0; i < tasks.length; i++) {
+
+                if (tasks[i].isDone()) {
+                    System.out.println("is done");
+
+                    responses++;
+
+                    try {
+                        results[counter++] = tasks[i].get();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                    if (responses == (getNFaults() * 3 + 1) / 2 + 1)
+                        break;
+                }
+                if (i == tasks.length - 1)
+                    i = 0;
+            }
+        }
+        Response result = getQuorumResponse(results);
+        if(result.getSuccess()){
+            return result.getJsonObject();
+        }
+        else{
+            switch (result.getErrorCode()) {
+                case (-1):
+                    throw new UserNotRegisteredException("User not Registered");
+                case (-6):
+                    throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+                case (-10):
+                    throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
+                case (-11):
+                    throw new NonceTimeoutException("Nonce timeout");
+                case (-12):
+                    throw new OperationTimeoutException("Operation timeout");
+                case (-13):
+                    throw new FreshnessException("Freshness Exception");
+                case (-14):
+                    throw new IntegrityException("Integrity Exception");
+
+                default:
+                    break;
+
+            }
+        }
+        return new JSONObject();
+    }
+
+    public Response readGeneralMethod(int number, int port) {
+
+        try {
+            startHandshake(getPublicKey(), port);
+        } catch (NonceTimeoutException e) {
+            return new Response(false, -11, null);
+        }
+
+        Request request = new Request("READGENERAL", getPublicKey(), number, getServerNonce(port), getClientNonce(port));
     	
     	Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
 
         try {
-            Envelope envelopeResponse = sendReceive(envelopeRequest, PORT);
+            Envelope envelopeResponse = sendReceive(envelopeRequest, port);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
             	this.replayAttacker.sendReplays(new Envelope(request, null), 2);
             }
             /*******************************************************************/
-            if (!checkNonce(envelopeResponse.getResponse(), PORT)) {
-                throw new FreshnessException(errorMessage);
+            if (!checkNonce(envelopeResponse.getResponse(), port)) {
+                return new Response(false, -13, null);
+                //throw new FreshnessException(errorMessage);
             }
             if(!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)){
-                throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
+                return new Response(false, -14, null);
+                //throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
-			checkReadGeneral(envelopeResponse.getResponse());
-            return envelopeResponse.getResponse().getJsonObject();
+			//checkReadGeneral(envelopeResponse.getResponse());
+            return envelopeResponse.getResponse();
 
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
-        	throw new OperationTimeoutException("There was a problem with the connection, please try again!");
+            return new Response(false, -12, null);
+        	//throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         }
         return null;
     }    
