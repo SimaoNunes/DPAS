@@ -28,18 +28,18 @@ public class BaseTest {
 	static ClientEndpoint clientEndpointError;
 	static KeyStore keyStore;
 	static char[] passphrase = "changeit".toCharArray();
-	static String server_address = "localhost";
+	static String serverAddress = "localhost";
 
-	static final int faults = 0;
+	static final int faults = 1;
 	static final int PORT = 9000;
 
 	@BeforeClass
 	public static void oneTimeSetup() {
 		// Instantiate class to be tested, in this case the ClientEndpoint that will communicate with the Server
-		clientEndpoint1 = new ClientEndpoint("user1", server_address, faults);
-		clientEndpoint2 = new ClientEndpoint("user2", server_address, faults);
-		clientEndpoint3 = new ClientEndpoint("user3", server_address, faults);
-		clientEndpointError = new ClientEndpoint("usererror", server_address, faults);
+		clientEndpoint1 = new ClientEndpoint("user1", serverAddress, faults);
+		clientEndpoint2 = new ClientEndpoint("user2", serverAddress, faults);
+		clientEndpoint3 = new ClientEndpoint("user3", serverAddress, faults);
+		clientEndpointError = new ClientEndpoint("usererror", serverAddress, faults);
 	}
 
 	@AfterClass
@@ -125,7 +125,7 @@ public class BaseTest {
     public static void shutDown(){
         Socket socket = null;
         try {
-            socket = new Socket(server_address, 9000);
+            socket = new Socket(serverAddress, 9000);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
             outputStream.writeObject(new Request("SHUTDOWN", null));
             outputStream.close();
@@ -146,7 +146,7 @@ public class BaseTest {
             message+="FALSE";
         }
         try {
-            socket = new Socket(server_address, 9000);
+            socket = new Socket(serverAddress, 9000);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
             outputStream.writeObject(new Envelope(new Request(message, null)));
             outputStream.close();
@@ -167,7 +167,7 @@ public class BaseTest {
             message+="FALSE";
         }
         try {
-            socket = new Socket(server_address, 9000);
+            socket = new Socket(serverAddress, 9000);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
             outputStream.writeObject(new Envelope(new Request(message, null)));
             outputStream.close();
@@ -188,7 +188,7 @@ public class BaseTest {
             message+="FALSE";
         }
         try {
-            socket = new Socket(server_address, 9000);
+            socket = new Socket(serverAddress, 9000);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
             outputStream.writeObject(new Envelope(new Request(message, null)));
             outputStream.close();
@@ -209,7 +209,7 @@ public class BaseTest {
             message+="FALSE";
         }
         try {
-            socket = new Socket(server_address, 9000);
+            socket = new Socket(serverAddress, 9000);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
             outputStream.writeObject(new Envelope(new Request(message, null)));
             outputStream.close();
