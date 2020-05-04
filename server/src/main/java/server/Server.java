@@ -40,7 +40,7 @@ public class Server implements Runnable {
 
     /********** Simulated Attacks Variables ***********/
     
-    private boolean testFlag = false;
+    private boolean replayFlag = false;
     private boolean dropNonceFlag = false;
     private boolean dropOperationFlag = false;
     private boolean handshake = false;
@@ -106,7 +106,7 @@ public class Server implements Runnable {
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            cryptoManager.checkHash(envelope) &&
+                            cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-2}))
                             {
@@ -116,7 +116,7 @@ public class Server implements Runnable {
                     case "POST":
                         System.out.println("POST METHOD");
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            cryptoManager.checkHash(envelope) &&
+                        	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5})) 
                             {
@@ -126,7 +126,7 @@ public class Server implements Runnable {
                         break;
                     case "POSTGENERAL":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            cryptoManager.checkHash(envelope) &&
+                        	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5}))
                             {
@@ -135,7 +135,7 @@ public class Server implements Runnable {
                         break;
                     case "READ":
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            cryptoManager.checkHash(envelope) &&
+                        	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
                             {
@@ -144,7 +144,7 @@ public class Server implements Runnable {
                         break;
                     case "READGENERAL":
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
-                        	cryptoManager.checkHash(envelope) &&
+                        	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10}))
                         	{
@@ -167,11 +167,11 @@ public class Server implements Runnable {
                     case "SHUTDOWN":
                         shutDown();
                         break;
-                    case "TEST_FLAG_TRUE":
-                        testFlag = true;
+                    case "REPLAY_FLAG_TRUE":
+                        replayFlag = true;
                         break;
-                    case "TEST_FLAG_FALSE":
-                        testFlag = false;
+                    case "REPLAY_FLAG_FALSE":
+                        replayFlag = false;
                         break;
                     case "INTEGRITY_FLAG_TRUE":
                         integrityFlag = true;
@@ -366,7 +366,7 @@ public class Server implements Runnable {
     private void send(Response response, ObjectOutputStream outputStream){
         try {
         	// Sign response
-            byte[] finalBytes = cryptoManager.cipher(response, cryptoManager.getPrivateKey());
+            byte[] signature = cryptoManager.signResponse(response, cryptoManager.getPrivateKey());
             /***** SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash] *****/
             if(integrityFlag) {
                 response.setSuccess(false);
@@ -374,12 +374,12 @@ public class Server implements Runnable {
             }
             /************************************************************************************************************/
             /***** SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)] *****/
-            if(testFlag && !handshake){
+            if(replayFlag && !handshake){
                 outputStream.writeObject(oldEnvelope);
             }
             /*********************************************************************************************************************/
             else{
-                outputStream.writeObject(new Envelope(response, finalBytes));
+                outputStream.writeObject(new Envelope(response, signature));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -621,7 +621,7 @@ public class Server implements Runnable {
                     break;
                 // ## TooMuchAnnouncements ## -> Check if user is trying to read mor announcements that Board number of announcements
                 case -10:
-                    if (request.getNumber() > getDirectoryList(request.getPublicKey()).length) {
+                    if ((request.getOperation().equals("READ") && request.getNumber() > getDirectoryList(request.getPublicKey()).length) || (request.getOperation().equals("READGENERAL") && request.getNumber() > getDirectoryList(null).length) ) {
                         send(new Response(false, -10, request.getNonceClient()), outStream);
                         return false;
                     }

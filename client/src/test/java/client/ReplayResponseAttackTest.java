@@ -7,7 +7,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class ReplayResponseAttackTest2 extends BaseTest {
+public class ReplayResponseAttackTest extends BaseTest {
 
     /**
      * Replay attacks on responses from the server to the operation
@@ -25,13 +25,13 @@ public class ReplayResponseAttackTest2 extends BaseTest {
     }
     
     @Before
-    public void setTestFlagTrue() {
-    	setTestFlag(true);
+    public void setReplayFlagTrue() {
+    	setReplayFlag(true);
     }
     
     @AfterClass
-    public void setTestFlagFalse() {
-    	setTestFlag(true);
+    public static void setReplayFlagFalse() {
+    	setReplayFlag(true);
     }
 
     @Test(expected = FreshnessException.class)

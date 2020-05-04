@@ -6,20 +6,20 @@ public class Envelope implements Serializable {
 
     private Request request = null;
     private Response response = null;
-    private byte[] hash = null;
+    private byte[] signature = null;
 
-    public Envelope(Request request, byte[] hash){
+    public Envelope(Request request, byte[] signature){
         this.request = request;
-        this.hash = hash;
+        this.signature = signature;
     }
 
     public Envelope(Request request){
         this.request = request;
     }
 
-    public Envelope(Response response, byte[] hash){
+    public Envelope(Response response, byte[] signature){
         this.response = response;
-        this.hash = hash;
+        this.signature = signature;
     }
 
     public Request getRequest() {
@@ -38,11 +38,12 @@ public class Envelope implements Serializable {
         this.response = response;
     }
 
-    public byte[] getHash() {
-        return hash;
+    public byte[] getSignature() {
+        return signature;
     }
 
-    public void setHash(byte[] hash) {
-        this.hash = hash;
+    public void setSignature(byte[] signature) {
+        this.signature = signature;
     }
+    
 }

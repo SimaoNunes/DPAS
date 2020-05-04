@@ -52,7 +52,7 @@ import java.util.concurrent.ExecutionException;
         clientNonce = new byte[faults*3 + 1][];
     }
 
-    public int getnFaults() {
+    public int getNFaults() {
         return nFaults;
     }
 
@@ -295,7 +295,7 @@ import java.util.concurrent.ExecutionException;
 
         Request request = new Request("REGISTER", getPublicKey(), getServerNonce(port), getClientNonce(port));
 
-        Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
+        Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
         
         /***** SIMULATE ATTACKER: changing the userX key to userY pubKey [in this case user3] *****/
         if(isIntegrityFlag()) {
@@ -312,7 +312,7 @@ import java.util.concurrent.ExecutionException;
             if(!checkNonce(envelopeResponse.getResponse(), port)) {
                 throw new FreshnessException(registerErrorMessage);
             }
-            if(!criptoManager.checkHash(envelopeResponse, userName)) {
+            if(!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)) {
                 throw new IntegrityException(registerErrorMessage);
             }
             checkRegister(envelopeResponse.getResponse());
@@ -340,6 +340,7 @@ import java.util.concurrent.ExecutionException;
     public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
+        
         if(isGeneral){
             request = new Request("POSTGENERAL", key, message, announcs, serverNonce, clientNonce);
         }
@@ -347,7 +348,7 @@ import java.util.concurrent.ExecutionException;
             request = new Request("POST", key, message, announcs, serverNonce, clientNonce);
         }
 
-        Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, privateKey));
+        Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, privateKey));
 
         /***** SIMULATE ATTACKER: changing the message (tamper) *****/
         if(isIntegrityFlag()) {
@@ -365,7 +366,7 @@ import java.util.concurrent.ExecutionException;
             if(!checkNonce(envelopeResponse.getResponse(), port)){
                 throw new FreshnessException(errorMessage);
             }
-            if(!criptoManager.checkHash(envelopeResponse, userName)){
+            if(!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)){
                 throw new IntegrityException(errorMessage);
             }
             checkPost(envelopeResponse.getResponse());
@@ -500,7 +501,7 @@ import java.util.concurrent.ExecutionException;
 
     	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(PORT), getClientNonce(PORT));
 
-        Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
+        Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
         
         /***** SIMULATE ATTACKER: changing the user to read from. User might think is going to read from user X but reads from Y [in this case user3] (tamper) *****/
         if(isIntegrityFlag()) {
@@ -518,7 +519,7 @@ import java.util.concurrent.ExecutionException;
             if (!checkNonce(envelopeResponse.getResponse(), PORT)) {
                 throw new FreshnessException(errorMessage);
             }
-            if (!criptoManager.checkHash(envelopeResponse, userName)) {
+            if (!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)) {
                 throw new IntegrityException(errorMessage);
             }
             checkRead(envelopeResponse.getResponse());
@@ -538,7 +539,7 @@ import java.util.concurrent.ExecutionException;
 
     	Request request = new Request("READGENERAL", getPublicKey(), number, getServerNonce(PORT), getClientNonce(PORT));
     	
-    	Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
+    	Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
 
         try {
             Envelope envelopeResponse = sendReceive(envelopeRequest, PORT);
@@ -550,7 +551,7 @@ import java.util.concurrent.ExecutionException;
             if (!checkNonce(envelopeResponse.getResponse(), PORT)) {
                 throw new FreshnessException(errorMessage);
             }
-            if(!criptoManager.checkHash(envelopeResponse, userName)){
+            if(!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)){
                 throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
             }
 			checkReadGeneral(envelopeResponse.getResponse());

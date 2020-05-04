@@ -20,8 +20,8 @@ public class ReplayRequestAttackTest extends BaseTest {
     public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException,
     		FreshnessException, IntegrityException, MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException {
         clientEndpoint1.register();
-        clientEndpoint1.post("USER1 MESSAGE1", null, false);
-        clientEndpoint1.post("USER1 MESSAGE1", null, true);
+        clientEndpoint1.post("USER1 ANNOUNC MESSAGE1", null, false);
+        clientEndpoint1.post("USER1 GENERAL MESSAGE1", null, true);
     }
     
     @Before
@@ -37,13 +37,14 @@ public class ReplayRequestAttackTest extends BaseTest {
     @Test(expected = TooMuchAnnouncementsException.class)
     public void Should_not_Post_More_Than_One() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException,
     		IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
-        clientEndpoint1.post("USER1 MESSAGE2", null, false);
-        clientEndpoint1.read("user1", 3); //se o replay for mal sucedido, ha 3 posts no server
+        clientEndpoint1.post("USER1 ANNOUNC MESSAGE2", null, false);
+        clientEndpoint1.read("user1", 3); //se o replay for bem sucedido, ha 3 posts no server
     }
 
     @Test(expected = TooMuchAnnouncementsException.class)
     public void Should_not_Post_More_Than_One_General() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException,
     		IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
+
         clientEndpoint1.post("this message will not be repeated", null, true);
         clientEndpoint1.readGeneral(4); //se o replay for bem sucedido, ha 3 posts no server
     }
@@ -71,11 +72,5 @@ public class ReplayRequestAttackTest extends BaseTest {
         assertEquals(result1.length, 1);
     }
 
-    @Test
-    public void Should_not_Register_More_Than_One_Time() throws NonceTimeoutException, OperationTimeoutException, IntegrityException, FreshnessException, UnknownPublicKeyException,
-    		AlreadyRegisteredException {
-        clientEndpoint2.setReplayFlag(true);
-        assertEquals(1, clientEndpoint2.register());
-    }
 
 }
