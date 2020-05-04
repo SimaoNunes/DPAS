@@ -7,7 +7,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class ReplayResponseAttackTest2 extends BaseTest {
+public class ReplayResponseAttackTest extends BaseTest {
 
     /**
      * Replay attacks on responses from the server to the operation

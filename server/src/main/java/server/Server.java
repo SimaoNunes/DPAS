@@ -106,7 +106,7 @@ public class Server implements Runnable {
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            cryptoManager.checkHash(envelope) &&
+                            cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-2}))
                             {
@@ -115,7 +115,7 @@ public class Server implements Runnable {
                         break;
                     case "POST":
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            cryptoManager.checkHash(envelope) &&
+                        	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5})) 
                             {
@@ -124,7 +124,7 @@ public class Server implements Runnable {
                         break;
                     case "POSTGENERAL":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            cryptoManager.checkHash(envelope) &&
+                        	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5}))
                             {
@@ -133,7 +133,7 @@ public class Server implements Runnable {
                         break;
                     case "READ":
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            cryptoManager.checkHash(envelope) &&
+                        	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
                             {
@@ -142,7 +142,7 @@ public class Server implements Runnable {
                         break;
                     case "READGENERAL":
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
-                        	cryptoManager.checkHash(envelope) &&
+                        	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10}))
                         	{
@@ -361,7 +361,7 @@ public class Server implements Runnable {
     private void send(Response response, ObjectOutputStream outputStream){
         try {
         	// Sign response
-            byte[] finalBytes = cryptoManager.cipher(response, cryptoManager.getPrivateKey());
+            byte[] signature = cryptoManager.signResponse(response, cryptoManager.getPrivateKey());
             /***** SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash] *****/
             if(integrityFlag) {
                 response.setSuccess(false);
@@ -374,7 +374,7 @@ public class Server implements Runnable {
             }
             /*********************************************************************************************************************/
             else{
-                outputStream.writeObject(new Envelope(response, finalBytes));
+                outputStream.writeObject(new Envelope(response, signature));
             }
         } catch (IOException e) {
             e.printStackTrace();
