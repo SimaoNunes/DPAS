@@ -114,11 +114,13 @@ public class Server implements Runnable {
                         }
                         break;
                     case "POST":
+                        System.out.println("POST METHOD");
                         if (checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
                             cryptoManager.checkHash(envelope) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5})) 
                             {
+                                System.out.println("entrei");
                             post(envelope.getRequest(), false, outStream);
                         }
                         break;
@@ -236,6 +238,7 @@ public class Server implements Runnable {
     
     private void post(Request request, Boolean general, ObjectOutputStream outStream){
         // Get userName from keystore
+        System.out.println("1");
         String username = userIdMap.get(request.getPublicKey());
         String path = announcementBoardsPath + username + "/";        
         // Write to file
@@ -249,6 +252,7 @@ public class Server implements Runnable {
         announcementObject.put("date", ft.format(dNow).toString());
 
         int[] refAnnouncements = request.getAnnouncements();
+        System.out.println("2");
         
         if(refAnnouncements != null){
             JSONArray annoucementsList = new JSONArray();
@@ -261,6 +265,7 @@ public class Server implements Runnable {
         if(general){
             path = generalBoardPath;
         }
+        System.out.println("3");
 
         try {
             saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
@@ -562,6 +567,7 @@ public class Server implements Runnable {
     //////////////////////////////////////////
     @SuppressWarnings("all")
     public boolean checkExceptions(Request request, ObjectOutputStream outStream, int[] codes){
+        System.out.println("entrei exceptions");
         for (int i = 0; i < codes.length; i++) {
             switch(codes[i]) {
                 // ## UserNotRegistered ## -> check if user is registed

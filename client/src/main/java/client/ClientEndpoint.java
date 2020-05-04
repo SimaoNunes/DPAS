@@ -12,11 +12,12 @@ import java.net.Socket;
 import java.security.*;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
     public class ClientEndpoint {
 
-    private byte[] serverNonce = null;
-    private byte[] clientNonce = null;
+    private byte[][] serverNonce = null;
+    private byte[][] clientNonce = null;
 
     private String serverAddress = null;
 
@@ -47,6 +48,8 @@ import java.util.concurrent.CompletableFuture;
         setUsername(userName);
         setServerAddress(server);
         setNFaults(faults);
+        serverNonce = new byte[faults*3 + 1][];
+        clientNonce = new byte[faults*3 + 1][];
     }
 
     public int getnFaults() {
@@ -89,20 +92,20 @@ import java.util.concurrent.CompletableFuture;
         this.userName = userName;
     }
 
-    public byte[] getServerNonce() {
-        return serverNonce;
+    public byte[] getServerNonce(int port) {
+        return serverNonce[port - PORT];
     }
 
-    public void setServerNonce(byte[] serverNonce) {
-        this.serverNonce = serverNonce;
+    public void setServerNonce(int port, byte[] serverNonce) {
+        this.serverNonce[port - PORT] = serverNonce;
     }
 
-    public byte[] getClientNonce() {
-        return clientNonce;
+    public byte[] getClientNonce(int port) {
+        return clientNonce[port - PORT];
     }
 
-    public void setClientNonce(byte[] clientNonce) {
-        this.clientNonce = clientNonce;
+    public void setClientNonce(int port, byte[] clientNonce) {
+        this.clientNonce[port - PORT] = clientNonce;
     }
 
     public PrivateKey getPrivateKey(){
@@ -152,7 +155,7 @@ import java.util.concurrent.CompletableFuture;
         try {
             int i = 0;
             while(i < n_replays){
-                Socket socket = createSocket();
+                Socket socket = createSocket(PORT);
                 createOutputStream(socket).writeObject(envelope);
                 i++;
             }
@@ -174,24 +177,25 @@ import java.util.concurrent.CompletableFuture;
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
+            e.printStackTrace();
             throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
         }
         return new byte[0];
     }
 
-    private void startHandshake(PublicKey publicKey) throws NonceTimeoutException {
-        setServerNonce(askForServerNonce(publicKey));
-        setClientNonce(criptoManager.generateClientNonce());
+    private void startHandshake(PublicKey publicKey, int port) throws NonceTimeoutException {
+        setServerNonce(port, askForServerNonce(publicKey, port));
+        setClientNonce(port, criptoManager.generateClientNonce());
     }
 
-    private boolean checkNonce(Response response){
-        if(Arrays.equals(response.getNonce(), getClientNonce())) {
-            setClientNonce(null);
-            setServerNonce(null);
+    private boolean checkNonce(Response response, int port){
+        if(Arrays.equals(response.getNonce(), getClientNonce(port))) {
+            setClientNonce(port, null);
+            setServerNonce(port, null);
             return true;
         }
-        setClientNonce(null);
-        setServerNonce(null);
+        setClientNonce(port, null);
+        setServerNonce(port, null);
         return false;
     }
 
@@ -273,12 +277,23 @@ import java.util.concurrent.CompletableFuture;
 	//////////////////////////////////////////////////
 	//				     REGISTER  					//
 	//////////////////////////////////////////////////
+    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException{
+        int i = 0;
+        int port = PORT;
+        System.out.println(getnFaults()*3 + 1);
+        while (i < getnFaults()*3 + 1){
+            System.out.println(port);
+            registerMethod(port++);
+            i++;
+        }
+        return 1;
+    }
 
-    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int registerMethod(int port) throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
-        startHandshake(getPublicKey());
+        startHandshake(getPublicKey(), port);
 
-        Request request = new Request("REGISTER", getPublicKey(), getServerNonce(), getClientNonce());
+        Request request = new Request("REGISTER", getPublicKey(), getServerNonce(port), getClientNonce(port));
 
         Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
         
@@ -288,13 +303,13 @@ import java.util.concurrent.CompletableFuture;
         }
         /******************************************************************************************/
         try {
-            Envelope envelopeResponse = sendReceive(envelopeRequest);
+            Envelope envelopeResponse = sendReceive(envelopeRequest, port);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
                 sendReplays(envelopeRequest, 2);
             }
             /********************************************************************/
-            if(!checkNonce(envelopeResponse.getResponse())) {
+            if(!checkNonce(envelopeResponse.getResponse(), port)) {
                 throw new FreshnessException(registerErrorMessage);
             }
             if(!criptoManager.checkHash(envelopeResponse, userName)) {
@@ -347,7 +362,7 @@ import java.util.concurrent.CompletableFuture;
                 sendReplays(envelopeRequest, 2);
             }
             /**********************************************/
-            if(!checkNonce(envelopeResponse.getResponse())){
+            if(!checkNonce(envelopeResponse.getResponse(), port)){
                 throw new FreshnessException(errorMessage);
             }
             if(!criptoManager.checkHash(envelopeResponse, userName)){
@@ -359,19 +374,20 @@ import java.util.concurrent.CompletableFuture;
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
+            e.printStackTrace();
             throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
         }
         return 0;
     }
 
-    public int post(String message, int[] announcs, boolean isGeneral) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException  {
+    public int post(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         int responses = 0;
         int counter = 0;
         int port = PORT;
 
-        int[] results = new int[(getnFaults()*3 + 1)/2 + 1];
+        int[] results = new int[(getnFaults() * 3 + 1) / 2 + 1];
 
-        CompletableFuture<Integer>[] tasks = new CompletableFuture[getnFaults()*3 + 1];
+        CompletableFuture<Integer>[] tasks = new CompletableFuture[getnFaults() * 3 + 1];
 
         for (int i = 0; i < tasks.length; i++) {
 
@@ -398,25 +414,73 @@ import java.util.concurrent.CompletableFuture;
             });
             port++;
         }
+        System.out.println((getnFaults() * 3 + 1) / 2);
+        while (responses < (getnFaults() * 3 + 1) / 2) {
 
-        while(responses < (getnFaults()*3 + 1)/2){
-            for(int i = 0; i < tasks.length; i ++){
-                if(tasks[i].isDone()){
-                    results[counter++] = tasks[i].get().intValue();
+            for (int i = 0; i < tasks.length; i++) {
+
+                if (tasks[i].isDone()) {
+                    System.out.println("is done");
+
                     responses++;
+
+                    try {
+                        results[counter++] = tasks[i].get().intValue();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                    if (responses == (getnFaults() * 3 + 1) / 2 + 1)
+                        break;
                 }
-                if(i == tasks.length -1)
+                if (i == tasks.length - 1)
                     i = 0;
             }
         }
+
+        switch (getQuorum(results)) {
+
+            case (-1):
+                throw new UserNotRegisteredException("User not Registered");
+            case (-4):
+                throw new MessageTooBigException("Message Too Big");
+            case (-5):
+                throw new InvalidAnnouncementException("Invalid announcement");
+            case (-11):
+                throw new NonceTimeoutException("Nonce timeout");
+            case (-12):
+                throw new OperationTimeoutException("Operation timeout");
+            case (-13):
+                throw new FreshnessException("Freshness Exception");
+            case (-14):
+                throw new IntegrityException("Integrity Exception");
+
+        }
+
+
         // gonna use first position but later verify if all equal
-        System.out.println(results[0]);
+        System.out.println("RESULTS: " + results[0] + '\n' + results[1] + '\n' + results[2]);
         return results[0];
+
+    }
+
+    public int getQuorum(int[] results){
+        int final_result = results[0];
+        for(int i = 1; i < results.length; i++){
+            if(results[i] == final_result){
+                continue;
+            }
+            else {
+                System.out.println("Not quorum n sei o que fazer");
+            }
+        }
+        return final_result;
     }
 
     public int postMethod(String message, int[] announcs, boolean isGeneral, int port) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-        startHandshake(getPublicKey());
-        return postAux(getPublicKey(), message, announcs, isGeneral, getServerNonce(), getClientNonce(), getPrivateKey(), port);
+        startHandshake(getPublicKey(), port);
+        return postAux(getPublicKey(), message, announcs, isGeneral, getServerNonce(port), getClientNonce(port), getPrivateKey(), port);
     }
     
     /*public int postGeneral(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
@@ -428,13 +492,13 @@ import java.util.concurrent.CompletableFuture;
     //				      READ						//
     //////////////////////////////////////////////////
 
-    public JSONObject read(String announcUserName, int number, int port) throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public JSONObject read(String announcUserName, int number) throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
-        startHandshake(getPublicKey());
+        startHandshake(getPublicKey(), PORT);
         
         PublicKey pubKeyToReadFrom = criptoManager.getPublicKeyFromKs(userName, announcUserName);
 
-    	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(), getClientNonce());
+    	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(PORT), getClientNonce(PORT));
 
         Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
         
@@ -445,13 +509,13 @@ import java.util.concurrent.CompletableFuture;
         /**********************************************************************************************************************************************************/
 
         try {
-            Envelope envelopeResponse = sendReceive(envelopeRequest, port);
+            Envelope envelopeResponse = sendReceive(envelopeRequest, PORT);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
                 sendReplays(envelopeRequest, 2);
             }
             /*******************************************************************/
-            if (!checkNonce(envelopeResponse.getResponse())) {
+            if (!checkNonce(envelopeResponse.getResponse(), PORT)) {
                 throw new FreshnessException(errorMessage);
             }
             if (!criptoManager.checkHash(envelopeResponse, userName)) {
@@ -468,22 +532,22 @@ import java.util.concurrent.CompletableFuture;
         return null;
     }
 
-    public JSONObject readGeneral(int number, int port) throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, NonceTimeoutException, UserNotRegisteredException, FreshnessException {
+    public JSONObject readGeneral(int number) throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, NonceTimeoutException, UserNotRegisteredException, FreshnessException {
 
-    	startHandshake(getPublicKey());
+    	startHandshake(getPublicKey(), PORT);
 
-    	Request request = new Request("READGENERAL", getPublicKey(), number, getServerNonce(), getClientNonce());
+    	Request request = new Request("READGENERAL", getPublicKey(), number, getServerNonce(PORT), getClientNonce(PORT));
     	
     	Envelope envelopeRequest = new Envelope(request, criptoManager.cipherRequest(request, getPrivateKey()));
 
         try {
-            Envelope envelopeResponse = sendReceive(envelopeRequest, port);
+            Envelope envelopeResponse = sendReceive(envelopeRequest, PORT);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
                 sendReplays(new Envelope(request, null), 2);
             }
             /*******************************************************************/
-            if (!checkNonce(envelopeResponse.getResponse())) {
+            if (!checkNonce(envelopeResponse.getResponse(), PORT)) {
                 throw new FreshnessException(errorMessage);
             }
             if(!criptoManager.checkHash(envelopeResponse, userName)){

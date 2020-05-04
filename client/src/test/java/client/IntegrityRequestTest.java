@@ -28,8 +28,8 @@ public class IntegrityRequestTest extends BaseTest {
 			FreshnessException, IntegrityException, MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException {
 		clientEndpoint1.register();
 		clientEndpoint2.register();
-		clientEndpoint1.post("message from user1", null);
-		clientEndpoint2.post("message from user2", null);
+		clientEndpoint1.post("message from user1", null, false);
+		clientEndpoint2.post("message from user2", null, false);
 	}
 	
 	@After
@@ -42,7 +42,7 @@ public class IntegrityRequestTest extends BaseTest {
 			OperationTimeoutException, FreshnessException, IntegrityException {
 		// Flag will make endpoint send the message "Olá, eu odeio-te" but with the old hash. Server must detect this
 		clientEndpoint1.setIntegrityFlag(true);
-		clientEndpoint1.post("Olá, gosto muito de ti", null);
+		clientEndpoint1.post("Olá, gosto muito de ti", null, false);
 	}
 	
 	@Test(expected = OperationTimeoutException.class)
@@ -50,7 +50,7 @@ public class IntegrityRequestTest extends BaseTest {
 			OperationTimeoutException, FreshnessException, IntegrityException {
 		// Flag will make endpoint send the message "Olá, eu odeio-te" but with the old hash. Server must detect this
 		clientEndpoint1.setIntegrityFlag(true);
-		clientEndpoint1.postGeneral("Olá, gosto muito de ti", null);
+		clientEndpoint1.post("Olá, gosto muito de ti", null, true);
 	}
 
 	@Test(expected = OperationTimeoutException.class)

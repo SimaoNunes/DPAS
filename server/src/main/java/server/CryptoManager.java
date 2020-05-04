@@ -78,7 +78,7 @@ public class CryptoManager {
     }
 
     public boolean checkHash(Envelope envelope){
-
+        System.out.println("ENTREI AQUI");
         MessageDigest md ;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream out = null;
@@ -110,6 +110,7 @@ public class CryptoManager {
     }
 
     public boolean checkNonce(PublicKey key, byte[] nonce){
+        System.out.println("ENTREI NO NONCE");
         return getNonces().containsKey(key) && Arrays.equals(getNonces().get(key), nonce);
     }    
 

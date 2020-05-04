@@ -26,12 +26,12 @@ public class PersistenceTest extends BaseTest {
     public void PersistencePostTest() throws MessageTooBigException, UserNotRegisteredException,
                                                      InvalidAnnouncementException, InterruptedException, InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, FreshnessException, NonceTimeoutException {
 
-        clientEndpoint1.post("message1 user1", null);
+        clientEndpoint1.post("message1 user1", null, false);
 
         System.out.println("\nYou have 7 seconds to reboot the server");
         Thread.sleep(7000);
 
-        clientEndpoint1.post("message2 user1", null);
+        clientEndpoint1.post("message2 user1", null, false);
 
         String[] result = getMessagesFromJSON(clientEndpoint1.read("user1", 2));
 
@@ -43,16 +43,16 @@ public class PersistenceTest extends BaseTest {
     public void PersistencePostGeneralTest() throws MessageTooBigException, UserNotRegisteredException,
                                                             InvalidAnnouncementException, InterruptedException, InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, FreshnessException, NonceTimeoutException, UnknownPublicKeyException, AlreadyRegisteredException {
 
-        clientEndpoint1.postGeneral("general1 user2", null);
+        clientEndpoint1.post("general1 user2", null, true);
         clientEndpoint2.register();
 
-        clientEndpoint2.postGeneral("general2 user2", null);
+        clientEndpoint2.post("general2 user2", null, true);
 
         System.out.println("\nYou have 7 seconds to reboot the server");
         Thread.sleep(7000);
 
         clientEndpoint3.register();
-        clientEndpoint3.postGeneral("general3 user3", null);
+        clientEndpoint3.post("general3 user3", null, true);
 
         String[] result = getMessagesFromJSON(clientEndpoint3.readGeneral(2));
 

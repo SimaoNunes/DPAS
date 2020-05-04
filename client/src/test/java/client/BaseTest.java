@@ -30,7 +30,8 @@ public class BaseTest {
 	static char[] passphrase = "changeit".toCharArray();
 	static String server_address = "localhost";
 
-	static final int faults = 3;
+	static final int faults = 1;
+	static final int PORT = 9000;
 
 	@BeforeClass
 	public static void oneTimeSetup() {
@@ -67,16 +68,18 @@ public class BaseTest {
     }
 
     public static void deleteUsers(){
-        Socket socket = null;
-        try {
-            socket = new Socket("localhost", 9000);
-            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            outputStream.writeObject(new Envelope(new Request("DELETEALL", null)));
-            outputStream.close();
-            socket.close();
+        int port = PORT;
+        int i = 0;
+        while( i < (faults*3) + 1){
+            try(Socket socket = new Socket("localhost", port++)) {
+                ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                outputStream.writeObject(new Envelope(new Request("DELETEALL", null)));
+                outputStream.close();
+                i++;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
