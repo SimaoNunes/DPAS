@@ -30,7 +30,7 @@ public class BaseTest {
 	static char[] passphrase = "changeit".toCharArray();
 	static String server_address = "localhost";
 
-	static final int faults = 0;
+	static final int faults = 1;
 	static final int PORT = 9000;
 
 	@BeforeClass

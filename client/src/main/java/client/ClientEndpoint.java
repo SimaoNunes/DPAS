@@ -480,7 +480,6 @@ import java.util.concurrent.ExecutionException;
                     System.out.println("Not quorum n sei o que fazer");
                 }
             }
-            System.out.println(final_result.getJsonObject().toJSONString());
             return final_result;
         }
 
