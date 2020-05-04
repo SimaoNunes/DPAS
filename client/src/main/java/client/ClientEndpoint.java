@@ -115,7 +115,7 @@ import java.util.concurrent.ExecutionException;
         this.clientNonce[port - PORT] = clientNonce;
     }
 
-    public PrivateKey getPrivateKey(){
+    public PrivateKey getPrivateKey() {
         return this.privateKey;
     }
 
@@ -171,8 +171,6 @@ import java.util.concurrent.ExecutionException;
         	return sendReceive(new Envelope(new Request("NONCE", key)), port).getResponse().getNonce();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        } catch (EOFException e) {
-            throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
         } catch (IOException e) {
             throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
         }
@@ -273,6 +271,7 @@ import java.util.concurrent.ExecutionException;
 	//////////////////////////////////////////////////
 	//				     REGISTER  					//
 	//////////////////////////////////////////////////
+    
     public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException{
         int i = 0;
         int port = PORT;
