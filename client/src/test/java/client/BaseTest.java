@@ -133,9 +133,9 @@ public class BaseTest {
         }
     }
 
-    public static void setTestFlag(boolean flag){
+    public static void setReplayFlag(boolean flag){
         Socket socket = null;
-        String message = "TEST_FLAG_";
+        String message = "REPLAY_FLAG_";
         if(flag){
             message+="TRUE";
         }

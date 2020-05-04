@@ -40,7 +40,7 @@ public class Server implements Runnable {
 
     /********** Simulated Attacks Variables ***********/
     
-    private boolean testFlag = false;
+    private boolean replayFlag = false;
     private boolean dropNonceFlag = false;
     private boolean dropOperationFlag = false;
     private boolean handshake = false;
@@ -165,11 +165,11 @@ public class Server implements Runnable {
                     case "SHUTDOWN":
                         shutDown();
                         break;
-                    case "TEST_FLAG_TRUE":
-                        testFlag = true;
+                    case "REPLAY_FLAG_TRUE":
+                        replayFlag = true;
                         break;
-                    case "TEST_FLAG_FALSE":
-                        testFlag = false;
+                    case "REPLAY_FLAG_FALSE":
+                        replayFlag = false;
                         break;
                     case "INTEGRITY_FLAG_TRUE":
                         integrityFlag = true;
@@ -369,7 +369,7 @@ public class Server implements Runnable {
             }
             /************************************************************************************************************/
             /***** SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)] *****/
-            if(testFlag && !handshake){
+            if(replayFlag && !handshake){
                 outputStream.writeObject(oldEnvelope);
             }
             /*********************************************************************************************************************/

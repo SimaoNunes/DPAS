@@ -25,13 +25,13 @@ public class ReplayResponseAttackTest extends BaseTest {
     }
     
     @Before
-    public void setTestFlagTrue() {
-    	setTestFlag(true);
+    public void setReplayFlagTrue() {
+    	setReplayFlag(true);
     }
     
     @AfterClass
-    public void setTestFlagFalse() {
-    	setTestFlag(true);
+    public static void setReplayFlagFalse() {
+    	setReplayFlag(true);
     }
 
     @Test(expected = FreshnessException.class)
