@@ -472,15 +472,18 @@ import java.util.concurrent.ExecutionException;
     }
 
         public Response getQuorumResponse(Response[] results){
+            System.out.println(results[0].getSuccess() + "\n" + results[0].getErrorCode());
             Response final_result = results[0];
             for(int i = 1; i < results.length; i++){
-                if(results[i].equals(final_result)){
+                System.out.println(results[i].getSuccess() + "\n" + results[i].getErrorCode());
+                if(results[i].getSuccess() == final_result.getSuccess() && results[i].getErrorCode() == final_result.getErrorCode()){
                     continue;
                 }
                 else {
                     System.out.println("Not quorum n sei o que fazer");
                 }
             }
+            System.out.println(final_result.getJsonObject().toJSONString());
             return final_result;
         }
 
