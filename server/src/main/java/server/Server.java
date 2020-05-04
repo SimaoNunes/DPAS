@@ -26,6 +26,7 @@ public class Server implements Runnable {
 	
 	
     private ServerSocket server;
+    private String serverPort;
     private int[] activeReplicas;
     private Map<PublicKey, String> userIdMap = null;
     private AtomicInteger totalAnnouncements;
@@ -56,7 +57,7 @@ public class Server implements Runnable {
 
         server            = ss;
         activeReplicas    = replicas;
-        String serverPort = ss.getLocalPort() + "";  //adding "" converts int to string
+        serverPort		  = ss.getLocalPort() + "";  //adding "" converts int to string
 
         cryptoManager = new CryptoManager();
         oldResponse   = new Response(cryptoManager.generateRandomNonce());
@@ -73,9 +74,9 @@ public class Server implements Runnable {
         File file = new File(generalBoardPath);
         file.mkdirs();
         
+        System.out.println("Server running on port: " + serverPort);
         getUserIdMap();
         getTotalAnnouncementsFromFile();
-        System.out.println("Port: " + serverPort);
         newListener();
     }
     
@@ -103,7 +104,7 @@ public class Server implements Runnable {
             inStream = new ObjectInputStream(socket.getInputStream());
             outStream = new ObjectOutputStream(socket.getOutputStream());
             try {
-                System.out.println("User connected.");
+                System.out.println("SERVER ON PORT " + this.serverPort + ": User connected.");
                 Envelope envelope = (Envelope) inStream.readObject();
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
@@ -116,13 +117,11 @@ public class Server implements Runnable {
                         }
                         break;
                     case "POST":
-                        System.out.println("POST METHOD");
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5})) 
                             {
-                                System.out.println("entrei");
                             post(envelope.getRequest(), false, outStream);
                         }
                         break;
@@ -219,13 +218,13 @@ public class Server implements Runnable {
 
         synchronized (userIdMap) {
             String username = cryptoManager.checkKey(request.getPublicKey());
-            System.out.println("REGISTER Method. Registering user: " + username);
+            System.out.println("SERVER ON PORT " + this.serverPort + ": REGISTER Method -> Registering user: " + username);
             String path = announcementBoardsPath + username;
             File file = new File(path);
             file.mkdirs();
             userIdMap.put(request.getPublicKey(), username);
             saveUserIdMap();
-            System.out.println("User " + username + " successfully registered!");
+            System.out.println("SERVER ON PORT " + this.serverPort + ": User " + username + " successfully registered!");
             if(!dropOperationFlag) {
             	send(new Response(true, request.getNonceClient()), outStream);
             } else {
@@ -238,9 +237,8 @@ public class Server implements Runnable {
     //				      POST						//
     //////////////////////////////////////////////////
     
-    private void post(Request request, Boolean general, ObjectOutputStream outStream){
+    private void post(Request request, Boolean general, ObjectOutputStream outStream) {
         // Get userName from keystore
-        System.out.println("1");
         String username = userIdMap.get(request.getPublicKey());
         String path = announcementBoardsPath + username + "/";        
         // Write to file
@@ -254,7 +252,6 @@ public class Server implements Runnable {
         announcementObject.put("date", ft.format(dNow).toString());
 
         int[] refAnnouncements = request.getAnnouncements();
-        System.out.println("2");
         
         if(refAnnouncements != null){
             JSONArray annoucementsList = new JSONArray();
@@ -265,9 +262,11 @@ public class Server implements Runnable {
         }
 
         if(general){
+        	System.out.println("SERVER ON PORT " + this.serverPort + ": POSTGENERAL METHOD");
             path = generalBoardPath;
+        } else {
+        	System.out.println("SERVER ON PORT " + this.serverPort + ": POST METHOD");
         }
-        System.out.println("3");
 
         try {
             saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
@@ -296,11 +295,11 @@ public class Server implements Runnable {
 
         String path = "";
         if(!isGeneral) {
-            System.out.println("READ method");
+            System.out.println("SERVER ON PORT " + this.serverPort + ": READ method");
             String username = userIdMap.get(request.getPublicKeyToReadFrom());
             path = announcementBoardsPath + username + "/";
         } else {
-            System.out.println("READGENERAL method");
+            System.out.println("SERVER ON PORT " + this.serverPort + ": READGENERAL method");
             path = generalBoardPath;
         }
 
@@ -331,8 +330,7 @@ public class Server implements Runnable {
             } else {
             	System.out.println("DROPPED READ");
             }
-        } catch(Exception e){
-            e.printStackTrace();
+        } catch(Exception e) {
             send(new Response(false, -8, request.getNonceClient()), outStream);
         }
     }
@@ -399,8 +397,6 @@ public class Server implements Runnable {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-
-
     }
     
     private void newListener() {
@@ -415,7 +411,7 @@ public class Server implements Runnable {
 
     public void deleteUsers() throws IOException {
 
-        System.out.println("DELETE operation");
+        System.out.println("SERVER ON PORT " + this.serverPort + ": DELETE OPERATION");
 
         userIdMap.clear();
         saveUserIdMap();
@@ -437,7 +433,7 @@ public class Server implements Runnable {
     }
 
     private void shutDown(){
-        System.out.println("Shut down operation");
+    	System.out.println("SERVER ON PORT " + this.serverPort + ": SHUTDOWN OPERATION");
         String name = ManagementFactory.getRuntimeMXBean().getName();
         System.out.println(name.split("@")[0]);
 
@@ -457,7 +453,7 @@ public class Server implements Runnable {
     private void saveUserIdMap() {
         try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(userMapPathCopy))) {
             out.writeObject(userIdMap);
-            System.out.println("Created updated copy of the userIdMap");
+            System.out.println("SERVER ON PORT " + this.serverPort + ": Created updated copy of the userIdMap");
 
             File original = new File(userMapPath);
             File copy = new File(userMapPathCopy);
@@ -475,7 +471,7 @@ public class Server implements Runnable {
         try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(userMapPath))) {
            userIdMap = (Map<PublicKey, String>) in.readObject();
         } catch (ClassNotFoundException c) {
-           System.out.println("Map<PublicKey, String> class not found");
+           System.out.println("SERVER ON PORT " + this.serverPort + ": Map<PublicKey, String> class not found");
            c.printStackTrace();
            return;
         }
@@ -521,7 +517,7 @@ public class Server implements Runnable {
     private void saveTotalAnnouncements(){
         try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(totalAnnouncementsPathCopy))) {
             out.writeObject(totalAnnouncements.get());
-            System.out.println("Serialized data saved in copy");
+            System.out.println("SERVER ON PORT " + this.serverPort + ": Serialized data saved in copy");
 
             File original = new File(totalAnnouncementsPath);
             File copy = new File(totalAnnouncementsPathCopy);
@@ -538,7 +534,6 @@ public class Server implements Runnable {
     private void getTotalAnnouncementsFromFile() {
         try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(totalAnnouncementsPath))) {
            int a = (int) in.readObject();
-           System.out.println(a);
            totalAnnouncements = new AtomicInteger(a);
         }
         catch(FileNotFoundException e){
@@ -549,7 +544,7 @@ public class Server implements Runnable {
             ClassNotFoundException e) {
             e.printStackTrace();
         }
-        System.out.println("Total announcements-> " + totalAnnouncements);
+        System.out.println("SERVER ON PORT " + this.serverPort + ": Total announcements-> " + totalAnnouncements);
     }
 
     private void createOriginalAnnouncs(){
@@ -568,7 +563,6 @@ public class Server implements Runnable {
     //////////////////////////////////////////
     @SuppressWarnings("all")
     public boolean checkExceptions(Request request, ObjectOutputStream outStream, int[] codes){
-        System.out.println("entrei exceptions");
         for (int i = 0; i < codes.length; i++) {
             switch(codes[i]) {
                 // ## UserNotRegistered ## -> check if user is registed

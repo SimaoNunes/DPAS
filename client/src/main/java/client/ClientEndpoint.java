@@ -275,9 +275,7 @@ import java.util.concurrent.ExecutionException;
     public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException{
         int i = 0;
         int port = PORT;
-        System.out.println(getNFaults()*3 + 1);
         while (i < getNFaults()*3 + 1){
-            System.out.println(port);
             registerMethod(port++);
             i++;
         }
