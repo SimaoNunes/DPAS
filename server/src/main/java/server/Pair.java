@@ -1,20 +1,22 @@
 package server;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class Pair {
 
-    private int timestamp;
+    private AtomicInteger timestamp;
     private AnnouncementBoard announcementBoard;
 
     protected Pair(int timestamp, AnnouncementBoard announcementBoard){
-        this.timestamp = timestamp;
+        this.timestamp = new AtomicInteger(timestamp);
         this.announcementBoard = announcementBoard;
     }
 
     public void setTimestamp(int timestamp) {
-        this.timestamp = timestamp;
+        this.timestamp = new AtomicInteger(timestamp);
     }
 
-    public int getTimestamp() {
+    public AtomicInteger getTimestamp() {
         return timestamp;
     }
 

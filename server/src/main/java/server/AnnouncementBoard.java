@@ -8,16 +8,16 @@ public class AnnouncementBoard implements Serializable{
     private String user;
     private JSONArray annoucements;
 
-    protected AnnouncementBoard(JSONArray list, String user){
-        this.annoucements = list;
+    protected AnnouncementBoard(String user, JSONArray annoucements){
+        this.annoucements = annoucements;
         this.user = user;
     }
 
-    public void setAnnouncementBoard(JSONArray list) {
-        this.annoucements = list;
+    public void setAnnoucements(JSONArray annoucements) {
+        this.annoucements = annoucements;
     }
 
-    public JSONArray getAnnouncementBoard() {
+    public JSONArray getAnnoucements() {
         return annoucements;
     }
 

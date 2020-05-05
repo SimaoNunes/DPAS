@@ -79,6 +79,9 @@ public class Server implements Runnable {
         System.out.println("SERVER ON PORT " + this.serverPort + ": Up and running.");
         getUserIdMap();
         getTotalAnnouncementsFromFile();
+       
+        initUsersBoard();
+
         newListener();
     }
     
@@ -438,6 +441,41 @@ public class Server implements Runnable {
             Runtime.getRuntime().exec("kill -SIGINT " + name.split("@")[0]);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+/////////////////////////////////////////////
+//										   //
+//     Method to initialize user pairs     //
+//										   //
+/////////////////////////////////////////////
+
+    private void initUsersBoard(){
+
+        userPairs = new HashMap<String, Pair>();
+
+        String[] users = new File(announcementBoardsPath).list();
+        
+        for(String user : users){
+            String path = announcementBoardsPath + '/' + user;
+            String[] postsFromUser = new File(path).list();
+            try{
+
+                JSONParser parser = new JSONParser();
+                JSONArray annoucementsList = new JSONArray();
+
+                for (String file : postsFromUser) {
+                    annoucementsList.add((JSONObject) parser.parse(new FileReader(path + '/' + file)));
+                }
+
+                int timestamp = postsFromUser.length;
+                AnnouncementBoard ab = new AnnouncementBoard(user, annoucementsList);
+                Pair pair = new Pair(timestamp, ab);
+                userPairs.put(user, pair);
+
+            } catch(Exception e) {
+                System.out.println("Olha deu merda");     
+            }
         }
     }
     
