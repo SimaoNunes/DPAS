@@ -33,8 +33,8 @@ public class App
         while (nServers < totalReplicas){  // N > 3f
     	    ServerSocket ss = null;
     		try{
-    		    ss = new ServerSocket(port++);
-				new Server(ss, replicas);
+    		    ss = new ServerSocket(port);
+				new Server(ss, replicas, port++);
 				nServers++;
 
 			} catch (IOException e) {

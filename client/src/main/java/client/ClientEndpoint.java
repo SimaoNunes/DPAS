@@ -1,4 +1,4 @@
-	package client;
+package client;
 
 import exceptions.*;
 import library.Envelope;
@@ -276,6 +276,7 @@ import java.util.concurrent.ExecutionException;
         int i = 0;
         int port = PORT;
         while (i < getNFaults()*3 + 1){
+            System.out.println("SENT TO THIS PORT: " + port);
             registerMethod(port++);
             i++;
         }
@@ -410,31 +411,25 @@ import java.util.concurrent.ExecutionException;
             });
             port++;
         }
-        while (responses < getNFaults()*3 + 1 / 2) {
-            for (int i = 0; i < tasks.length; i++) {
-
-                if (tasks[i].isDone()) {
-                    System.out.println("is done");
-
-                    responses++;
-
-                    try {
-                        results[counter++] = tasks[i].get().intValue();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
-                    }
-                    if (responses == (getNFaults() * 3 + 1) / 2 + 1)
-                        break;
+        
+        for (int i = 0; i < tasks.length; i++) {
+            if (tasks[i].isDone()) {
+                try {
+                    results[responses++] = tasks[i].get().intValue();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
                 }
-                if (i == tasks.length - 1)
-                    i = 0;
+                if (responses == (getNFaults() * 3 + 1) / 2 + 1)
+                    break;
             }
+            if (i == tasks.length - 1)
+                i = 0;
         }
+        
         int result = getQuorumInt(results);
         switch (result) {
-
             case (-1):
                 throw new UserNotRegisteredException("User not Registered");
             case (-4):
@@ -449,15 +444,13 @@ import java.util.concurrent.ExecutionException;
                 throw new FreshnessException("Freshness Exception");
             case (-14):
                 throw new IntegrityException("Integrity Exception");
-
         }
-        System.out.println("RESULT: " + result);
         return result;
     }
 
-    public int getQuorumInt(int[] results){
+    public int getQuorumInt(int[] results) {
         int final_result = results[0];
-        for(int i = 1; i < results.length; i++){
+        for(int i = 1; i < results.length; i++) {
             if(results[i] == final_result){
                 continue;
             }
@@ -468,20 +461,19 @@ import java.util.concurrent.ExecutionException;
         return final_result;
     }
 
-        public Response getQuorumResponse(Response[] results){
-            System.out.println(results[0].getSuccess() + "\n" + results[0].getErrorCode());
-            Response final_result = results[0];
-            for(int i = 1; i < results.length; i++){
-                System.out.println(results[i].getSuccess() + "\n" + results[i].getErrorCode());
-                if(results[i].getSuccess() == final_result.getSuccess() && results[i].getErrorCode() == final_result.getErrorCode()){
-                    continue;
-                }
-                else {
-                    System.out.println("Not quorum n sei o que fazer");
-                }
+    public Response getQuorumResponse(Response[] results){
+        System.out.println(results[0].getSuccess() + "\n" + results[0].getErrorCode());
+        Response final_result = results[0];
+        for(int i = 1; i < results.length; i++) {
+            System.out.println(results[i].getSuccess() + "\n" + results[i].getErrorCode());
+            if (results[i].getSuccess() == final_result.getSuccess() && results[i].getErrorCode() == final_result.getErrorCode()) {
+                continue;
+            } else {
+                System.out.println("Not quorum n sei o que fazer");
             }
-            return final_result;
         }
+        return final_result;
+    }
 
     public int postMethod(String message, int[] announcs, boolean isGeneral, int port) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(getPublicKey(), port);
@@ -502,7 +494,7 @@ import java.util.concurrent.ExecutionException;
         int counter = 0;
         int port = PORT;
 
-        if(getNFaults() == 0){
+        if(getNFaults() == 0) {
             Response response = readMethod(announcUserName, number, port);
 
             if(response.getSuccess()){
@@ -513,7 +505,7 @@ import java.util.concurrent.ExecutionException;
                     case (-1):
                         throw new UserNotRegisteredException("User not Registered");
                     case (-3):
-                        throw new UserNotRegisteredException("The user you're reading from is not registered!");  //OLD EXCEPTION FIX ME
+                        throw new UserNotRegisteredException("The user you're reading from is not registered!");
                     case (-6):
                         throw new InvalidPostsNumberException("Invalid announcements number to be read!");
                     case (-10):
@@ -526,7 +518,6 @@ import java.util.concurrent.ExecutionException;
                         throw new FreshnessException("Freshness Exception");
                     case (-14):
                         throw new IntegrityException("Integrity Exception");
-
                     default:
                         break;
                 }
@@ -545,17 +536,12 @@ import java.util.concurrent.ExecutionException;
             tasks[i] = CompletableFuture.supplyAsync(() -> readMethod(announcUserName, number, finalPort));
             port++;
         }
-        while (responses < getNFaults()*3 + 1 / 2) {
             for (int i = 0; i < tasks.length; i++) {
 
                 if (tasks[i].isDone()) {
-                    System.out.println("is done");
-
-                    responses++;
-
                     try {
-                        results[counter++] = tasks[i].get();
-                        System.out.println(results[counter-1]);
+                        results[responses++] = tasks[i].get();
+                        System.out.println(results[responses-1]);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     } catch (ExecutionException e) {
@@ -567,7 +553,6 @@ import java.util.concurrent.ExecutionException;
                 if (i == tasks.length - 1)
                     i = 0;
             }
-        }
 
         Response result = getQuorumResponse(results);
         System.out.println("RESULT: " + result.getSuccess() + result.getErrorCode());

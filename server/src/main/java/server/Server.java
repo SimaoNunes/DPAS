@@ -33,13 +33,13 @@ public class Server implements Runnable {
     private CryptoManager cryptoManager = null;
 
     // File path strings
-    private static String storagePath = "";
-    private static String userMapPath = "";
-    private static String userMapPathCopy = "";
-    private static String totalAnnouncementsPath = "";
-    private static String totalAnnouncementsPathCopy = "";
-    private static String announcementBoardsPath = "";
-    private static String generalBoardPath = "";
+    private String storagePath = "";
+    private String userMapPath = "";
+    private String userMapPathCopy = "";
+    private String totalAnnouncementsPath = "";
+    private String totalAnnouncementsPathCopy = "";
+    private String announcementBoardsPath = "";
+    private String generalBoardPath = "";
 
     /********** Simulated Attacks Variables ***********/
     
@@ -53,11 +53,12 @@ public class Server implements Runnable {
     
     /**************************************************/
 
-    protected Server(ServerSocket ss, int[] replicas) {
+    protected Server(ServerSocket ss, int[] replicas, int port) {
 
         server            = ss;
         activeReplicas    = replicas;
-        serverPort		  = ss.getLocalPort() + "";  //adding "" converts int to string
+        serverPort		  = port + "";  //adding "" converts int to string
+        System.out.println(serverPort);
 
         cryptoManager = new CryptoManager();
         oldResponse   = new Response(cryptoManager.generateRandomNonce());
@@ -65,14 +66,17 @@ public class Server implements Runnable {
         
         // Path variables
         storagePath       		   = "./storage/port_" + serverPort + "/";
+        System.out.println("STORAGEPATH: " + storagePath);
         userMapPath       		   = storagePath + "UserIdMap.ser";
         userMapPathCopy			   = storagePath + "UserIdMap_copy.ser";
         totalAnnouncementsPath	   = storagePath + "TotalAnnouncements.ser";
         totalAnnouncementsPathCopy = storagePath + "TotalAnnouncements_copy.ser";
         announcementBoardsPath	   = storagePath + "announcementboards/";
         generalBoardPath		   = storagePath + "generalboard/";
-        File file = new File(generalBoardPath);
-        file.mkdirs();
+        File gb = new File(generalBoardPath);
+        File ab = new File(announcementBoardsPath);
+        gb.mkdirs();
+        ab.mkdirs();
         
         System.out.println("Server running on port: " + serverPort);
         getUserIdMap();
@@ -217,6 +221,7 @@ public class Server implements Runnable {
     public void register(Request request, ObjectOutputStream outStream) {
 
         synchronized (userIdMap) {
+            System.out.println("SERVER ON PORT " + this.serverPort + announcementBoardsPath);
             String username = cryptoManager.checkKey(request.getPublicKey());
             System.out.println("SERVER ON PORT " + this.serverPort + ": REGISTER Method -> Registering user: " + username);
             String path = announcementBoardsPath + username;
@@ -224,6 +229,7 @@ public class Server implements Runnable {
             file.mkdirs();
             userIdMap.put(request.getPublicKey(), username);
             saveUserIdMap();
+            System.out.println("SERVER ON PORT " + this.serverPort + announcementBoardsPath);
             System.out.println("SERVER ON PORT " + this.serverPort + ": User " + username + " successfully registered!");
             if(!dropOperationFlag) {
             	send(new Response(true, request.getNonceClient()), outStream);
