@@ -626,6 +626,7 @@ import java.util.concurrent.ExecutionException;
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
+            e.printStackTrace();
         	return new Response(false, -12, null);
             //throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         } 
