@@ -21,6 +21,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+
+import java.util.HashMap;
+
 public class Server implements Runnable {
 	
 	
@@ -29,6 +32,8 @@ public class Server implements Runnable {
     private Map<PublicKey, String> userIdMap = null;
     private AtomicInteger totalAnnouncements;
     private CryptoManager cryptoManager = null;
+
+    private HashMap<String, Pair> userPairs = null;
 
     // File path strings
     private String storagePath = "";
