@@ -20,7 +20,6 @@ import java.security.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream; 
 
 public class Server implements Runnable {
 	
@@ -58,7 +57,6 @@ public class Server implements Runnable {
         server            = ss;
         activeReplicas    = replicas;
         serverPort		  = port + "";  //adding "" converts int to string
-        System.out.println(serverPort);
 
         cryptoManager = new CryptoManager();
         oldResponse   = new Response(cryptoManager.generateRandomNonce());
@@ -66,7 +64,6 @@ public class Server implements Runnable {
         
         // Path variables
         storagePath       		   = "./storage/port_" + serverPort + "/";
-        System.out.println("STORAGEPATH: " + storagePath);
         userMapPath       		   = storagePath + "UserIdMap.ser";
         userMapPathCopy			   = storagePath + "UserIdMap_copy.ser";
         totalAnnouncementsPath	   = storagePath + "TotalAnnouncements.ser";
@@ -74,9 +71,7 @@ public class Server implements Runnable {
         announcementBoardsPath	   = storagePath + "announcementboards/";
         generalBoardPath		   = storagePath + "generalboard/";
         File gb = new File(generalBoardPath);
-        File ab = new File(announcementBoardsPath);
         gb.mkdirs();
-        ab.mkdirs();
         
         System.out.println("Server running on port: " + serverPort);
         getUserIdMap();
@@ -221,16 +216,12 @@ public class Server implements Runnable {
     public void register(Request request, ObjectOutputStream outStream) {
 
         synchronized (userIdMap) {
-            System.out.println("SERVER ON PORT " + this.serverPort + announcementBoardsPath);
             String username = cryptoManager.checkKey(request.getPublicKey());
-            System.out.println("SERVER ON PORT " + this.serverPort + ": REGISTER Method -> Registering user: " + username);
             String path = announcementBoardsPath + username;
             File file = new File(path);
             file.mkdirs();
             userIdMap.put(request.getPublicKey(), username);
             saveUserIdMap();
-            System.out.println("SERVER ON PORT " + this.serverPort + announcementBoardsPath);
-            System.out.println("SERVER ON PORT " + this.serverPort + ": User " + username + " successfully registered!");
             if(!dropOperationFlag) {
             	send(new Response(true, request.getNonceClient()), outStream);
             } else {
@@ -268,10 +259,7 @@ public class Server implements Runnable {
         }
 
         if(general){
-        	System.out.println("SERVER ON PORT " + this.serverPort + ": POSTGENERAL METHOD");
             path = generalBoardPath;
-        } else {
-        	System.out.println("SERVER ON PORT " + this.serverPort + ": POST METHOD");
         }
 
         try {
