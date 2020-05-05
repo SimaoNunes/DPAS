@@ -421,7 +421,7 @@ import java.util.concurrent.ExecutionException;
                 } catch (ExecutionException e) {
                     e.printStackTrace();
                 }
-                if (responses == (getNFaults() * 3 + 1) / 2 + 1)
+                if (responses > (getNFaults() * 2) + (1/2))
                     break;
             }
             if (i == tasks.length - 1)
@@ -547,7 +547,7 @@ import java.util.concurrent.ExecutionException;
                     } catch (ExecutionException e) {
                         e.printStackTrace();
                     }
-                    if (responses == (getNFaults() * 3 + 1) / 2 + 1)
+                    if (responses > (getNFaults() * 2) + (1/2))
                         break;
                 }
                 if (i == tasks.length - 1)

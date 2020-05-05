@@ -76,7 +76,7 @@ public class Server implements Runnable {
         File gb = new File(generalBoardPath);
         gb.mkdirs();
         
-        System.out.println("Server running on port: " + serverPort);
+        System.out.println("SERVER ON PORT " + this.serverPort + ": Up and running.");
         getUserIdMap();
         getTotalAnnouncementsFromFile();
         newListener();
