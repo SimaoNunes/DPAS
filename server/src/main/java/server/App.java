@@ -23,11 +23,10 @@ public class App
 		int port 		  = PORT;
 		int nServers      = 0;
 		int totalReplicas = 3 * faults + 1;
-		int[] replicas    = IntStream.range(PORT, PORT + totalReplicas).toArray();
 
         while (nServers < totalReplicas){  // N > 3f
     		try{
-				new Server(new ServerSocket(port), replicas, port);
+				new Server(new ServerSocket(port), port);
 				port++;
 				nServers++;
 			} catch (IOException e) {

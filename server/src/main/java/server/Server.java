@@ -26,7 +26,6 @@ public class Server implements Runnable {
 	
     private ServerSocket server;
     private String serverPort;
-    private int[] activeReplicas;
     private Map<PublicKey, String> userIdMap = null;
     private AtomicInteger totalAnnouncements;
     private CryptoManager cryptoManager = null;
@@ -52,10 +51,9 @@ public class Server implements Runnable {
     
     /**************************************************/
 
-    protected Server(ServerSocket ss, int[] replicas, int port) {
+    protected Server(ServerSocket ss, int port) {
 
         server            = ss;
-        activeReplicas    = replicas;
         serverPort		  = port + "";  //adding "" converts int to string
 
         cryptoManager = new CryptoManager();
