@@ -449,7 +449,7 @@ public class ClientEndpoint {
                 } catch (ExecutionException e) {
                     e.printStackTrace();
                 }
-                if (responses == (getNFaults() * 3 + 1) / 2 + 1)
+                if (responses > (getNFaults() * 2) + (1/2))
                     break;
             }
             if (i == tasks.length - 1)
@@ -575,7 +575,7 @@ public class ClientEndpoint {
                     } catch (ExecutionException e) {
                         e.printStackTrace();
                     }
-                    if (responses == (getNFaults() * 3 + 1) / 2 + 1)
+                    if (responses > (getNFaults() * 2) + (1/2))
                         break;
                 }
                 if (i == tasks.length - 1)
