@@ -53,7 +53,7 @@ public class Server implements Runnable {
 
     /***************** Atomic Register variables ******************/
     AtomicInteger ts;
-    HashMap<Integer, String> mapTsVal = new HashMap();
+    HashMap<Integer, Pair<AtomicInteger, AnnouncementBoard>> aBoards = new HashMap();
 
 
     protected Server(ServerSocket ss, int port) {
@@ -241,7 +241,7 @@ public class Server implements Runnable {
         // Get userName from keystore
 
         if(request.getTs() > mapTsVal.size()){
-            
+
         }
 
         String username = userIdMap.get(request.getPublicKey());
