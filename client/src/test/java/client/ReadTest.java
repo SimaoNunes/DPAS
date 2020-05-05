@@ -23,18 +23,18 @@ public class ReadTest extends BaseTest{
 		clientEndpoint1.register();
 		clientEndpoint2.register();
 
-		clientEndpoint1.post("message1 user1", null, false); // id = 0
-		clientEndpoint1.post("message2 user1", null, false); // id = 1
-		clientEndpoint1.post("message3 user1", null, false); // id = 2
+		clientEndpoint1.write("message1 user1", null, false); // id = 0
+		clientEndpoint1.write("message2 user1", null, false); // id = 1
+		clientEndpoint1.write("message3 user1", null, false); // id = 2
 
-		clientEndpoint2.post("message1 user2", null, false); // id = 3
-		clientEndpoint2.post("message2 user2", null, false); // id = 4
-		clientEndpoint2.post("message3 user2", null, false); // id = 5
+		clientEndpoint2.write("message1 user2", null, false); // id = 3
+		clientEndpoint2.write("message2 user2", null, false); // id = 4
+		clientEndpoint2.write("message3 user2", null, false); // id = 5
 		
 		int[] announcs  = {0,3};
-		clientEndpoint1.post("message with references from user1", announcs, false); // id = 6
+		clientEndpoint1.write("message with references from user1", announcs, false); // id = 6
 		int[] announcs2 = {1,4};
-		clientEndpoint2.post("message with references from user2", announcs2, false); // id = 7
+		clientEndpoint2.write("message with references from user2", announcs2, false); // id = 7
 	}
 
 	@Test

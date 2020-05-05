@@ -373,13 +373,13 @@ import java.util.concurrent.ExecutionException;
         return 0;
     }
 
-    public int post(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int write(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         int responses = 0;
         int counter = 0;
         int port = PORT;
 
         if(getNFaults() == 0){
-            return postMethod(message, announcs, isGeneral, port);
+            return writeMethod(message, announcs, isGeneral, port);
         }
 
         int[] results = new int[(getNFaults() * 3 + 1) / 2 + 1];
@@ -392,7 +392,7 @@ import java.util.concurrent.ExecutionException;
 
             tasks[i] = CompletableFuture.supplyAsync(() -> {
                 try {
-                    return postMethod(message, announcs, isGeneral, finalPort);
+                    return writeMethod(message, announcs, isGeneral, finalPort);
                 } catch (MessageTooBigException e) {
                     return -4;
                 } catch (UserNotRegisteredException e) {
@@ -475,7 +475,7 @@ import java.util.concurrent.ExecutionException;
         return final_result;
     }
 
-    public int postMethod(String message, int[] announcs, boolean isGeneral, int port) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int writeMethod(String message, int[] announcs, boolean isGeneral, int port) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(getPublicKey(), port);
         return postAux(getPublicKey(), message, announcs, isGeneral, getServerNonce(port), getClientNonce(port), getPrivateKey(), port);
     }
