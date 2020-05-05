@@ -13,6 +13,7 @@ public class Request implements Serializable {
     private String message = null;
     private int number = -1;
     private int[] announcements = null;
+    private int ts;
     
     ////////////////////////////////////////////////////////////////
     //				                                         	  //
@@ -24,13 +25,14 @@ public class Request implements Serializable {
         this.operation = operation;
     }
 
-    public Request(String operation, PublicKey key, String message,  int[] announcs, byte[] nonceServer, byte[] nonceClient){
+    public Request(String operation, PublicKey key, String message,  int[] announcs, byte[] nonceServer, byte[] nonceClient, int ts){
         this.operation = operation;
         this.publicKey = key;
         this.message = message;
         this.announcements = announcs;
         this.nonceServer = nonceServer;
         this.nonceClient = nonceClient;
+        this.ts = ts;
     }
 
     // Register
@@ -46,14 +48,7 @@ public class Request implements Serializable {
     	this.operation = operation;
         this.publicKey = key;
     }
-    
-    // Post
-    public Request(String operation, PublicKey key, String message, int[] announcs) {
-    	this.operation = operation;
-    	this.publicKey = key;
-        this.message = message;
-        this.announcements = announcs;
-    }
+
     
     // Read
     public Request(String operation, PublicKey key, PublicKey publicKeyToReadFrom, int number, byte[] nonceServer, byte[] nonceClient) {
@@ -72,6 +67,14 @@ public class Request implements Serializable {
         this.number = number;
         this.nonceServer = nonceServer;
         this.nonceClient = nonceClient;
+    }
+
+    public int getTs() {
+        return ts;
+    }
+
+    public void setTs(int ts) {
+        this.ts = ts;
     }
 
     public String getOperation() {

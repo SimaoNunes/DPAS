@@ -13,8 +13,9 @@ import java.security.*;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
-    public class ClientEndpoint {
+public class ClientEndpoint {
 
     private byte[][] serverNonce = null;
     private byte[][] clientNonce = null;
@@ -27,8 +28,17 @@ import java.util.concurrent.ExecutionException;
     private String userName = null;
     private CryptoManager criptoManager = null;
 
+    /**********Atomic Register Variables ************/
+    int wts = 0;
+    int rid = 0;
+
+
+
+
+    /************ Replication variables *************/
     private int nFaults;
     private static final int PORT = 9000;
+    /************************************************/
 
     private String registerErrorMessage = "There was a problem with your request, we cannot infer if you registered. Please try to login.";
     private String errorMessage = "There was a problem with your request. Please try again.";
@@ -51,6 +61,22 @@ import java.util.concurrent.ExecutionException;
         setNFaults(faults);
         serverNonce = new byte[(faults*3) + 1][];
         clientNonce = new byte[(faults*3) + 1][];
+    }
+
+    public int getWts() {
+        return wts;
+    }
+
+    public void setWts(int wts) {
+        this.wts = wts;
+    }
+
+    public int getRid() {
+        return rid;
+    }
+
+    public void setRid(int rid) {
+        this.rid = rid;
     }
 
     public int getNFaults() {
@@ -329,15 +355,15 @@ import java.util.concurrent.ExecutionException;
     //					   POST  					//
     //////////////////////////////////////////////////
 
-    public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port) throws InvalidAnnouncementException,
+    public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port, int ts) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
         
         if(isGeneral){
-            request = new Request("POSTGENERAL", key, message, announcs, serverNonce, clientNonce);
+            request = new Request("POSTGENERAL", key, message, announcs, serverNonce, clientNonce, ts);
         }
         else{
-            request = new Request("POST", key, message, announcs, serverNonce, clientNonce);
+            request = new Request("POST", key, message, announcs, serverNonce, clientNonce, ts);
         }
 
         Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, privateKey));
@@ -378,8 +404,10 @@ import java.util.concurrent.ExecutionException;
         int counter = 0;
         int port = PORT;
 
+        int newWts = getWts() + 1;
+
         if(getNFaults() == 0){
-            return writeMethod(message, announcs, isGeneral, port);
+            return writeMethod(message, announcs, isGeneral, port, newWts);
         }
 
         int[] results = new int[(getNFaults() * 3 + 1) / 2 + 1];
@@ -392,7 +420,7 @@ import java.util.concurrent.ExecutionException;
 
             tasks[i] = CompletableFuture.supplyAsync(() -> {
                 try {
-                    return writeMethod(message, announcs, isGeneral, finalPort);
+                    return writeMethod(message, announcs, isGeneral, finalPort, newWts);
                 } catch (MessageTooBigException e) {
                     return -4;
                 } catch (UserNotRegisteredException e) {
@@ -475,9 +503,9 @@ import java.util.concurrent.ExecutionException;
         return final_result;
     }
 
-    public int writeMethod(String message, int[] announcs, boolean isGeneral, int port) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int writeMethod(String message, int[] announcs, boolean isGeneral, int port, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(getPublicKey(), port);
-        return postAux(getPublicKey(), message, announcs, isGeneral, getServerNonce(port), getClientNonce(port), getPrivateKey(), port);
+        return postAux(getPublicKey(), message, announcs, isGeneral, getServerNonce(port), getClientNonce(port), getPrivateKey(), port, ts);
     }
     
     /*public int postGeneral(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {

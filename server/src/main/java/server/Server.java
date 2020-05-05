@@ -51,6 +51,11 @@ public class Server implements Runnable {
     
     /**************************************************/
 
+    /***************** Atomic Register variables ******************/
+    AtomicInteger ts;
+    HashMap<Integer, String> mapTsVal = new HashMap();
+
+
     protected Server(ServerSocket ss, int port) {
 
         server            = ss;
@@ -119,7 +124,7 @@ public class Server implements Runnable {
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5})) 
                             {
-                            post(envelope.getRequest(), false, outStream);
+                            write(envelope.getRequest(), outStream);
                         }
                         break;
                     case "POSTGENERAL":
@@ -128,7 +133,7 @@ public class Server implements Runnable {
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5}))
                             {
-                            post(envelope.getRequest(), true, outStream);
+                            writeGeneral(envelope.getRequest(), outStream);
                         }
                         break;
                     case "READ":
@@ -232,8 +237,13 @@ public class Server implements Runnable {
     //				      POST						//
     //////////////////////////////////////////////////
     
-    private void post(Request request, Boolean general, ObjectOutputStream outStream) {
+    private void write(Request request, ObjectOutputStream outStream) {
         // Get userName from keystore
+
+        if(request.getTs() > mapTsVal.size()){
+            
+        }
+
         String username = userIdMap.get(request.getPublicKey());
         String path = announcementBoardsPath + username + "/";        
         // Write to file
@@ -256,9 +266,6 @@ public class Server implements Runnable {
             announcementObject.put("ref_announcements", annoucementsList);
         }
 
-        if(general){
-            path = generalBoardPath;
-        }
 
         try {
             saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
@@ -273,6 +280,52 @@ public class Server implements Runnable {
         	send(new Response(true, request.getNonceClient()), outStream);
         } else {
         	System.out.println("DROPPED POST");
+        }
+    }
+
+    //////////////////////////////////////////////////
+    //				   POST GENERAL		            //
+    //////////////////////////////////////////////////
+
+    private void writeGeneral(Request request, ObjectOutputStream outStream) {
+        // Get userName from keystore
+        String username = userIdMap.get(request.getPublicKey());
+        String path = announcementBoardsPath + username + "/";
+        // Write to file
+        JSONObject announcementObject =  new JSONObject();
+        announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
+        announcementObject.put("user", username);
+        announcementObject.put("message", request.getMessage());
+
+        Date dNow = new Date();
+        SimpleDateFormat ft = new SimpleDateFormat ("dd-MM-yyyy 'at' HH:mm");
+        announcementObject.put("date", ft.format(dNow).toString());
+
+        int[] refAnnouncements = request.getAnnouncements();
+
+        if(refAnnouncements != null){
+            JSONArray annoucementsList = new JSONArray();
+            for(int i = 0; i < refAnnouncements.length; i++){
+                annoucementsList.add(Integer.toString(refAnnouncements[i]));
+            }
+            announcementObject.put("ref_announcements", annoucementsList);
+        }
+
+        path = generalBoardPath;
+
+        try {
+            saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
+        } catch (IOException e) {
+            send(new Response(false, -9, request.getNonceClient()), outStream);
+        }
+
+        incrementTotalAnnouncs();
+        saveTotalAnnouncements();
+        if(!dropOperationFlag) {
+
+            send(new Response(true, request.getNonceClient()), outStream);
+        } else {
+            System.out.println("DROPPED POST");
         }
     }
     
