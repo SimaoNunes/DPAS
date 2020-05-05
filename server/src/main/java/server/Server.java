@@ -240,7 +240,7 @@ public class Server implements Runnable {
     private void write(Request request, ObjectOutputStream outStream) {
         // Get userName from keystore
 
-        if(request.getTs() > mapTsVal.size()){
+        if(request.getTs() > aBoards.get(userIdMap.get(request.getPublicKey()))){
 
         }
 
