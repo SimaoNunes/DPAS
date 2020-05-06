@@ -176,6 +176,15 @@ public class Server implements Runnable {
                         }
                         handshake = false;
                         break;
+                    case "WTS":
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
+                        	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                            checkExceptions(envelope.getRequest(), outStream, new int[] {-1}))
+                        	{
+                            wtsRequest(envelope.getRequest(), outStream);
+                        }
+                    	break;
                     case "DELETEALL":
                         deleteUsers();
                         break;
@@ -303,14 +312,12 @@ public class Server implements Runnable {
         }
 
 
-
-
-
     }
 
     //////////////////////////////////////////////////
     //				   POST GENERAL		            //
     //////////////////////////////////////////////////
+    
     private void writeGeneral(Request request, ObjectOutputStream outStream) {
         // Get userName from keystore
         String username = userIdMap.get(request.getPublicKey());
@@ -407,11 +414,10 @@ public class Server implements Runnable {
     }
 
     //////////////////////////////////////////////////
-    //				   READ General				    //
+    //				   READ GENERAL				    //
     //////////////////////////////////////////////////
 
     private void readGeneral(Request request, ObjectOutputStream outStream) {
-
 
         String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
         int directorySize = directoryList.length;
@@ -451,6 +457,16 @@ public class Server implements Runnable {
             send(new Response(false, -8, request.getNonceClient()), outStream);
         }
     }
+    
+    //////////////////////////////////////////////
+    //				   SEND WTS				    //
+    //////////////////////////////////////////////
+    
+    private void wtsRequest(Request request, ObjectOutputStream outStream) {
+    	int wts = this.ts.get();
+    	send(new Response(true, request.getNonceClient(), wts), outStream);
+    }
+    
     
 //////////////////////////////////////////
 //										//
@@ -520,6 +536,7 @@ public class Server implements Runnable {
         (new Thread(this)).start();
     }
     
+    
 ////////////////////////////////////////////////////////////////////////////////
 //   									                                      //
 //  Method used to delete Tests' populate && Shut down Server && Start server //
@@ -561,6 +578,7 @@ public class Server implements Runnable {
         }
     }
 
+    
 /////////////////////////////////////////////
 //										   //
 //     Method to initialize user pairs     //
@@ -596,6 +614,7 @@ public class Server implements Runnable {
             }
         }
     }
+    
     
 /////////////////////////////////////////////
 //										   //
@@ -648,6 +667,7 @@ public class Server implements Runnable {
 
     }
 
+    
 /////////////////////////////////////////////////////////
 //										               //
 // Methods to get/update total announcements from File //
@@ -732,7 +752,7 @@ public class Server implements Runnable {
                         return false;
                     }
                     break;
-                // ## UserNotRegistered ## -> check if user to read from is registed
+                // ## UserNotRegistered ## -> [READ] check if user TO READ FROM is registered
                 case -3:
                     if(!userIdMap.containsKey(request.getPublicKeyToReadFrom())) {
                         send(new Response(false, -3, request.getNonceClient()), outStream);
@@ -767,7 +787,7 @@ public class Server implements Runnable {
                         return false;
                     }
                     break;
-                // ## TooMuchAnnouncements ## -> Check if user is trying to read mor announcements that Board number of announcements
+                // ## TooMuchAnnouncements ## -> Check if user is trying to read more announcements that Board number of announcements
                 case -10:
                     if ((request.getOperation().equals("READ") && request.getNumber() > getDirectoryList(request.getPublicKey()).length) || (request.getOperation().equals("READGENERAL") && request.getNumber() > getDirectoryList(null).length) ) {
                         send(new Response(false, -10, request.getNonceClient()), outStream);

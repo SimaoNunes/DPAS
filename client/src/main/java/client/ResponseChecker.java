@@ -77,5 +77,14 @@ public class ResponseChecker {
             }
 		}
 	}
+    
+    public static void checkAskWts(Response response) throws UserNotRegisteredException {
+        if(!response.getSuccess()){
+            int error = response.getErrorCode();
+            if(error == -1) {
+                throw new UserNotRegisteredException("This user is not registered!");
+            }
+		}
+	}
 
 }
