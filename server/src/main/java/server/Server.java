@@ -19,6 +19,7 @@ import java.net.Socket;
 import java.security.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -57,7 +58,7 @@ public class Server implements Runnable {
     /***************** Atomic Register variables ******************/
     AtomicInteger ts;
     private HashMap<String, Pair> usersBoards = null;
-    private HashMap<String, Integer> listening = null;
+    private ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> listening = null;
 
     /**************************************************************/
 
@@ -82,7 +83,7 @@ public class Server implements Runnable {
         File gb = new File(generalBoardPath);
         gb.mkdirs();
 
-        listening = new HashMap<>();
+        listening = new ConcurrentHashMap<>();
         
         System.out.println("SERVER ON PORT " + this.serverPort + ": Up and running.");
         getUserIdMap();
@@ -154,7 +155,7 @@ public class Server implements Runnable {
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
                             {
-                            read(envelope.getRequest(), false, outStream);
+                            read(envelope.getRequest(), outStream);
                         }
                         break;
                     case "READGENERAL":
@@ -166,6 +167,9 @@ public class Server implements Runnable {
                             readGeneral(envelope.getRequest(), outStream);
                         }
                         break;
+                    case "READCOMPLETE":
+                        //checkar o nonce
+                        readComplete(envelope.getRequest());
                     case "NONCE":
                         handshake = true;
                         byte[] randomNonce = cryptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
@@ -299,6 +303,8 @@ public class Server implements Runnable {
 
         }
 
+        //for(ConcurrentHashMap.KeySetView<String, Integer> entry : listening.get(request.getPublicKey()).keySet()
+
         //forall q ∈ Π such that listening [q] ̸ = ⊥ do
             //trigger ⟨ al, Send | q , [ VALUE , listening [q], ts, val] ⟩ ;
 
@@ -364,22 +370,21 @@ public class Server implements Runnable {
     //				      READ						//
     //////////////////////////////////////////////////
     
-    private void read(Request request, boolean isGeneral, ObjectOutputStream outStream) {
+    private void read(Request request, ObjectOutputStream outStream) {
+        if(listening.contains(userIdMap.get(request.getPublicKeyToReadFrom()))){  //someone is already reading that board
+            listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).put(userIdMap.get(request.getPublicKey()), request.getRid());  //listening [p] := r ;
+        }
+        else{
+            listening.put(userIdMap.get(request.getPublicKeyToReadFrom()), new ConcurrentHashMap<>()); //listening [p] := r ;
+        }
 
-        listening.put(userIdMap.get(request.getPublicKey()), request.getRid()); //listening [p] := r ;
 
         String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
         int directorySize = directoryList.length;
 
-        String path = "";
-        if(!isGeneral) {
-            System.out.println("SERVER ON PORT " + this.serverPort + ": READ method");
-            String username = userIdMap.get(request.getPublicKeyToReadFrom());
-            path = announcementBoardsPath + username + "/";
-        } else {
-            System.out.println("SERVER ON PORT " + this.serverPort + ": READGENERAL method");
-            path = generalBoardPath;
-        }
+        System.out.println("SERVER ON PORT " + this.serverPort + ": READ method");
+        String username = userIdMap.get(request.getPublicKeyToReadFrom());
+        String path = announcementBoardsPath + username + "/";
 
         int total;
         if(request.getNumber() == 0) { //all posts
@@ -403,12 +408,15 @@ public class Server implements Runnable {
             }
             JSONObject announcementsToSend =  new JSONObject();
             announcementsToSend.put("announcementList", annoucementsList);
+
             if(!dropOperationFlag) {
-                send(new Response(true, announcementsToSend, request.getNonceClient(), request.getRid()), outStream);
+                // -----> Handshake one way
+                //send(new Response(true, announcementsToSend, request.getNonceClient(), request.getRid()), outStream);
             } else {
             	System.out.println("DROPPED READ");
             }
         } catch(Exception e) {
+            // ------> Handshake one way
             send(new Response(false, -8, request.getNonceClient()), outStream);
         }
     }
@@ -455,6 +463,13 @@ public class Server implements Runnable {
             }
         } catch(Exception e) {
             send(new Response(false, -8, request.getNonceClient()), outStream);
+        }
+    }
+
+
+    private void readComplete(Request request){
+        if(request.getRid() == listening.get(request.getPublicKeyToReadFrom()).get(request.getPublicKey())){
+            listening.get(request.getPublicKeyToReadFrom()).remove(request.getPublicKey());
         }
     }
     
