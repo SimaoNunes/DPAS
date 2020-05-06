@@ -12,6 +12,7 @@ public class Response implements Serializable {
 
     private int errorCode;
     private int ts;
+    private int rid;
 
 
 
@@ -37,10 +38,19 @@ public class Response implements Serializable {
         this.nonce = nonce;
     }
 
-    public Response(boolean success, JSONObject object, byte[] nonce){
+    public Response(boolean success, JSONObject object, byte[] nonce, int rid){
         this.success = success;
         this.jsonObject = object;
         this.nonce = nonce;
+        this.rid = rid;
+    }
+
+    public int getRid() {
+        return rid;
+    }
+
+    public void setRid(int rid) {
+        this.rid = rid;
     }
 
     public int getTs() {

@@ -190,6 +190,14 @@ public class ClientEndpoint {
         return responseEnvelope;
     }
 
+    private void send(Envelope envelope, int port) throws IOException, ClassNotFoundException {
+        Socket socket = createSocket(port);
+        socket.setSoTimeout(4000);
+        ObjectOutputStream out = createOutputStream(socket);
+        out.writeObject(envelope);
+        out.close();
+    }
+
 
 //////////////////////////
 //						//
@@ -480,35 +488,6 @@ public class ClientEndpoint {
         return result;
     }
 
-    public int getQuorumInt(int[] results) {
-        HashMap<Integer, Integer> map = new HashMap<>();
-        for(int i = 0; i < results.length; i++) {
-            if (!map.containsKey(results[i])) {
-                map.put(results[i], 1);
-            } else {
-                map.put(results[i], map.get(results[i]++));
-                if (map.get(results[i]) > ((nServers) + getNFaults()) / 2) {
-                    return results[i];
-                }
-            }
-        }
-        //NOT QUORUM
-        return 0;
-    }
-
-    public Response getQuorumResponse(Response[] results){
-        System.out.println(results[0].getSuccess() + "\n" + results[0].getErrorCode());
-        Response final_result = results[0];
-        for(int i = 1; i < results.length; i++) {
-            System.out.println(results[i].getSuccess() + "\n" + results[i].getErrorCode());
-            if (results[i].getSuccess() == final_result.getSuccess() && results[i].getErrorCode() == final_result.getErrorCode()) {
-                continue;
-            } else {
-                System.out.println("Not quorum n sei o que fazer");
-            }
-        }
-        return final_result;
-    }
 
     public int writeMethod(String message, int[] announcs, boolean isGeneral, int port, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(getPublicKey(), port);
@@ -644,7 +623,9 @@ public class ClientEndpoint {
         /**********************************************************************************************************************************************************/
 
         try {
-            Envelope envelopeResponse = sendReceive(envelopeRequest, port);
+            //Envelope envelopeResponse = sendReceive(envelopeRequest, port); // SO SEND E ABRE UM PORT A ESPERA DE MENSAGENS VALUE
+
+            send(envelopeRequest, port);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
             	this.replayAttacker.sendReplays(envelopeRequest, 2);
@@ -804,5 +785,40 @@ public class ClientEndpoint {
         	//throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         }
         return null;
-    }    
+    }
+
+
+    /************** Quorum Checker *******************/
+
+    public int getQuorumInt(int[] results) {
+        HashMap<Integer, Integer> map = new HashMap<>();
+        for(int i = 0; i < results.length; i++) {
+            if (!map.containsKey(results[i])) {
+                map.put(results[i], 1);
+            } else {
+                map.put(results[i], map.get(results[i]++));
+                if (map.get(results[i]) > ((nServers) + getNFaults()) / 2) {
+                    return results[i];
+                }
+            }
+        }
+        //NOT QUORUM
+        return 0;
+    }
+
+    public Response getQuorumResponse(Response[] results){
+        System.out.println(results[0].getSuccess() + "\n" + results[0].getErrorCode());
+        Response final_result = results[0];
+        for(int i = 1; i < results.length; i++) {
+            System.out.println(results[i].getSuccess() + "\n" + results[i].getErrorCode());
+            if (results[i].getSuccess() == final_result.getSuccess() && results[i].getErrorCode() == final_result.getErrorCode()) {
+                continue;
+            } else {
+                System.out.println("Not quorum n sei o que fazer");
+            }
+        }
+        return final_result;
+    }
+
+    /************************************************/
 }
