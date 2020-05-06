@@ -50,13 +50,13 @@ public class ClientEndpoint {
 
     /****************************************************/
 
-    public ClientEndpoint(String userName, String server, int faults){
+    public ClientEndpoint(String userName, int faults){
     	criptoManager = new CryptoManager();
         setPrivateKey(criptoManager.getPrivateKeyFromKs(userName));
         setPublicKey(criptoManager.getPublicKeyFromKs(userName, userName));
         setServerPublicKey(criptoManager.getPublicKeyFromKs(userName, "server"));
         setUsername(userName);
-        setServerAddress(server);
+        setServerAddress(getServerAddressFromFile());
         setNFaults(faults);
         nServers = faults * 3 + 1;
         nQuorum = (nServers + faults)/2;
@@ -957,4 +957,24 @@ public class ClientEndpoint {
         }
         return 0;
     }
+    
+    private static String getServerAddressFromFile(){
+    	File file = new File("server_address.txt");
+
+		String address = null;
+
+		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
+
+			address = br.readLine();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(address == null){
+			return "localhost";
+		}
+		else{
+			return address;
+		}
+	}
 }

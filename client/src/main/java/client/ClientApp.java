@@ -33,7 +33,6 @@ public class ClientApp {
     	}
     	// Check if user name is provided. Otherwise register a new user
     	int faults = Integer.parseInt(args[0]);
-    	String server = getServerAddress();
 		if(args.length == 2) {
     		userName = args[1]; 																						//FIXME not sanitizing user input
     		// Try to load user's keystore and if this user is the owner of the account
@@ -41,7 +40,7 @@ public class ClientApp {
 		    	// Try to load user's keystore
 	        	keyStore = KeyStore.getInstance("JKS");
 				keyStore.load(fis, "changeit".toCharArray());
-				clientEndpoint = new ClientEndpoint(userName, server, faults);
+				clientEndpoint = new ClientEndpoint(userName, faults);
 				runApp();
 			} catch (KeyStoreException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded). You sure you typed your name right?");
@@ -53,7 +52,7 @@ public class ClientApp {
 			}
     	} 
     	else {
-			if(registerUser(server, faults)) {
+			if(registerUser(faults)) {
 				runApp();
 			}
     	}
@@ -113,7 +112,7 @@ public class ClientApp {
 //					//
 //////////////////////
 	
-	private static Boolean registerUser(String server, int faults) {
+	private static Boolean registerUser(int faults) {
 		System.out.println("\nPlease register yourself in the DPAS.");
 		String inputUserName = null;
 		// Check if username is trusted (aka if username alias is in keyStore)
@@ -124,7 +123,7 @@ public class ClientApp {
 	    	keyStore = KeyStore.getInstance("JKS");
 			keyStore.load(fis, "changeit".toCharArray());
 			userName = inputUserName;
-			clientEndpoint = new ClientEndpoint(userName, server, faults);
+			clientEndpoint = new ClientEndpoint(userName, faults);
 			clientEndpoint.register();
 		} catch (
 			KeyStoreException		 | 
@@ -329,7 +328,6 @@ public class ClientApp {
         return numberOfPosts;
     }
 	
-	
 	private static void printAnnouncements(JSONObject jsonAnnouncs, Boolean isGeneral) {
 		// Get array of announcements in JSON format, iterate over them and print them
         JSONArray array = (JSONArray) jsonAnnouncs.get("announcementList");
@@ -366,7 +364,6 @@ public class ClientApp {
         }
 	}
 	
-	
 	private static int[] toIntArray(List<Integer> list){
 		if(list.size() == 0) {
 			return new int[0];
@@ -378,26 +375,6 @@ public class ClientApp {
 		}
 	}
 	
-	
-    private static String getServerAddress(){
-    	File file = new File("server_address.txt");
-
-		String address = null;
-
-		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
-
-			address = br.readLine();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if(address == null){
-			return "localhost";
-		}
-		else{
-			return address;
-		}
-	}
 
 }
 
