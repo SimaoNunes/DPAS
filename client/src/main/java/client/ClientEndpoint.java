@@ -513,6 +513,7 @@ public class ClientEndpoint {
             int finalPort = port;
 
             CompletableFuture.runAsync(() -> readMethod(announcUserName, number, finalPort, rid));
+            
             port++;
         }
 
@@ -568,8 +569,8 @@ public class ClientEndpoint {
         } catch (ClassNotFoundException |
                 NonceTimeoutException   |
                 IOException e) {
-                e.printStackTrace(); //FIXME -> não sei bem como tratar estas exceptions
-        } 
+                throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
+            } 
     }
 
 	//////////////////////////////////////////////////
