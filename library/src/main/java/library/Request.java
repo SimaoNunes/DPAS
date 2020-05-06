@@ -51,14 +51,13 @@ public class Request implements Serializable {
     }
 
     
-    // Read
-    public Request(String operation, PublicKey key, PublicKey publicKeyToReadFrom, int number, byte[] nonceServer, byte[] nonceClient, int rid) {
+    // Read - now we don't need the server nounce
+    public Request(String operation, PublicKey key, PublicKey publicKeyToReadFrom, int number, byte[] nonceServer, int rid) {
     	this.operation = operation;
         this.publicKey = key;
         this.publicKeyToReadFrom = publicKeyToReadFrom;
         this.number = number;
         this.nonceServer = nonceServer;
-        this.nonceClient = nonceClient;
         this.rid = rid;
     }
 
