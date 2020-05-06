@@ -61,6 +61,7 @@ public class Request implements Serializable {
         this.nonceClient = nonceClient;
         this.rid = rid;
     }
+
     
     // ReadGeneral
     public Request(String operation, PublicKey key, int number, byte[] nonceServer, byte[] nonceClient) {

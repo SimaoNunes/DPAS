@@ -8,6 +8,7 @@ import library.Response;
 import org.json.simple.JSONObject;
 
 import java.io.*;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
 import java.util.Arrays;
@@ -541,37 +542,28 @@ public class ClientEndpoint {
             }
 
         }
+        Listener listener = null;
+        try {
+            listener = new Listener(new ServerSocket(getClientPort()), nQuorum);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        Response[] results = new Response[(getNFaults() * 3 + 1) / 2 + 1];
 
-        CompletableFuture<Response>[] tasks = new CompletableFuture[getNFaults() * 3 + 1];
-
-        for (int i = 0; i < tasks.length; i++) {
+        for (int i = 0; i < nServers; i++) {
 
             int finalPort = port;
 
-            tasks[i] = CompletableFuture.supplyAsync(() -> readMethod(announcUserName, number, finalPort, rid));
+            CompletableFuture.supplyAsync(() -> readMethod(announcUserName, number, finalPort, rid));
             port++;
         }
-            for (int i = 0; i < tasks.length; i++) {
 
-                if (tasks[i].isDone()) {
-                    try {
-                        results[responses++] = tasks[i].get();
-                        System.out.println(results[responses-1]);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
-                    }
-                    if (responses > (getNFaults() * 2) + (1/2))
-                        break;
-                }
-                if (i == tasks.length - 1)
-                    i = 0;
-            }
+        while(listener.getResult() == null){
+            //wait for quorum
+        }
 
-        Response result = getQuorumResponse(results);
+
+        Response result = listener.getResult();
         System.out.println("RESULT: " + result.getSuccess() + result.getErrorCode());
         if(result.getSuccess()){
             return result.getJsonObject();
@@ -604,6 +596,9 @@ public class ClientEndpoint {
     }
 
     public Response readMethod(String announcUserName, int number, int port, int rid) {
+
+        //Handshake one way
+        //send read operation to server
         try {
             startHandshake(getPublicKey(), port);
         } catch (NonceTimeoutException e) {
@@ -623,6 +618,12 @@ public class ClientEndpoint {
         /**********************************************************************************************************************************************************/
 
         try {
+            Listener listener = new Listener(new ServerSocket(getClientPort()), nQuorum);
+            while(listener.getResult() == null){
+
+            }
+            JSONObject result = listener.getResult();
+
             //Envelope envelopeResponse = sendReceive(envelopeRequest, port); // SO SEND E ABRE UM PORT A ESPERA DE MENSAGENS VALUE
 
             send(envelopeRequest, port);
@@ -821,4 +822,22 @@ public class ClientEndpoint {
     }
 
     /************************************************/
+
+
+    private int getClientPort(){
+        try(BufferedReader reader = new BufferedReader(new FileReader("../clients_addresses.txt"))){
+            String line;
+            while((line = reader.readLine()) != null){
+                String[] splitted = line.split(":");
+                if(splitted[0].equals(userName)){
+                    return Integer.parseInt(splitted[2]);
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 }
