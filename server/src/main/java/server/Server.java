@@ -57,6 +57,7 @@ public class Server implements Runnable {
     /***************** Atomic Register variables ******************/
     AtomicInteger ts;
     private HashMap<String, Pair> usersBoards = null;
+    private HashMap<String, Integer> listening = null;
 
     /**************************************************************/
 
@@ -80,10 +81,15 @@ public class Server implements Runnable {
         generalBoardPath		   = storagePath + "generalboard/";
         File gb = new File(generalBoardPath);
         gb.mkdirs();
+
+        listening = new HashMap<>();
         
         System.out.println("SERVER ON PORT " + this.serverPort + ": Up and running.");
         getUserIdMap();
         getTotalAnnouncementsFromFile();
+       
+        initUsersBoard();
+
         newListener();
     }
     
@@ -101,6 +107,7 @@ public class Server implements Runnable {
 
         try{
             socket = server.accept();
+            System.out.println(socket.getRemoteSocketAddress());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -156,7 +163,7 @@ public class Server implements Runnable {
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10}))
                         	{
-                            read(envelope.getRequest(), true, outStream);
+                            readGeneral(envelope.getRequest(), outStream);
                         }
                         break;
                     case "NONCE":
@@ -352,6 +359,8 @@ public class Server implements Runnable {
     
     private void read(Request request, boolean isGeneral, ObjectOutputStream outStream) {
 
+        listening.put(userIdMap.get(request.getPublicKey()), request.getRid()); //listening [p] := r ;
+
         String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
         int directorySize = directoryList.length;
 
@@ -391,6 +400,52 @@ public class Server implements Runnable {
                 send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
             } else {
             	System.out.println("DROPPED READ");
+            }
+        } catch(Exception e) {
+            send(new Response(false, -8, request.getNonceClient()), outStream);
+        }
+    }
+
+    //////////////////////////////////////////////////
+    //				   READ General				    //
+    //////////////////////////////////////////////////
+
+    private void readGeneral(Request request, ObjectOutputStream outStream) {
+
+
+        String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
+        int directorySize = directoryList.length;
+
+        String path = "";
+        System.out.println("SERVER ON PORT " + this.serverPort + ": READGENERAL method");
+        path = generalBoardPath;
+
+        int total;
+        if(request.getNumber() == 0) { //all posts
+            total = directorySize;
+        } else {
+            total = request.getNumber();
+        }
+
+        Arrays.sort(directoryList);
+        JSONParser parser = new JSONParser();
+        try{
+            JSONArray annoucementsList = new JSONArray();
+            JSONObject announcement;
+
+            String fileToRead;
+            for (int i=0; i<total; i++) {
+                fileToRead = directoryList[directorySize-1];
+                announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
+                directorySize--;
+                annoucementsList.add(announcement);
+            }
+            JSONObject announcementsToSend =  new JSONObject();
+            announcementsToSend.put("announcementList", annoucementsList);
+            if(!dropOperationFlag) {
+                send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
+            } else {
+                System.out.println("DROPPED READ GENERAL");
             }
         } catch(Exception e) {
             send(new Response(false, -8, request.getNonceClient()), outStream);
@@ -503,6 +558,42 @@ public class Server implements Runnable {
             Runtime.getRuntime().exec("kill -SIGINT " + name.split("@")[0]);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+/////////////////////////////////////////////
+//										   //
+//     Method to initialize user pairs     //
+//										   //
+/////////////////////////////////////////////
+
+    private void initUsersBoard(){
+
+        usersBoards = new HashMap();
+
+        String[] users = new File(announcementBoardsPath).list();
+        if(users != null){
+            for(String user : users){
+                String path = announcementBoardsPath + '/' + user;
+                String[] postsFromUser = new File(path).list();
+                try{
+
+                    JSONParser parser = new JSONParser();
+                    JSONArray annoucementsList = new JSONArray();
+
+                    for (String file : postsFromUser) {
+                        annoucementsList.add((JSONObject) parser.parse(new FileReader(path + '/' + file)));
+                    }
+
+                    int timestamp = postsFromUser.length;
+                    AnnouncementBoard ab = new AnnouncementBoard(user, annoucementsList);
+                    Pair pair = new Pair(timestamp, ab);
+                    usersBoards.put(user, pair);
+
+                } catch(Exception e) {
+                    System.out.println("Olha deu merda");
+                }
+            }
         }
     }
     

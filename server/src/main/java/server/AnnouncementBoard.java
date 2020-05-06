@@ -13,11 +13,11 @@ public class AnnouncementBoard implements Serializable{
         this.user = user;
     }
 
-    public void setAnnouncementBoard(JSONArray list) {
-        this.annoucements = list;
+    public void setAnnoucements(JSONArray annoucements) {
+        this.annoucements = annoucements;
     }
 
-    public JSONArray getAnnouncementBoard() {
+    public JSONArray getAnnoucements() {
         return annoucements;
     }
 

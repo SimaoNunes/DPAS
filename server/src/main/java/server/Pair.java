@@ -21,6 +21,7 @@ public class Pair implements Serializable {
         return timestamp.get();
     }
 
+
     public void setAnnouncementBoard(AnnouncementBoard announcementBoard) {
         this.announcementBoard = announcementBoard;
     }

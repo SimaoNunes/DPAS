@@ -14,6 +14,7 @@ public class Request implements Serializable {
     private int number = -1;
     private int[] announcements = null;
     private int ts;
+    private int rid;
     
     ////////////////////////////////////////////////////////////////
     //				                                         	  //
@@ -51,13 +52,14 @@ public class Request implements Serializable {
 
     
     // Read
-    public Request(String operation, PublicKey key, PublicKey publicKeyToReadFrom, int number, byte[] nonceServer, byte[] nonceClient) {
+    public Request(String operation, PublicKey key, PublicKey publicKeyToReadFrom, int number, byte[] nonceServer, byte[] nonceClient, int rid) {
     	this.operation = operation;
         this.publicKey = key;
         this.publicKeyToReadFrom = publicKeyToReadFrom;
         this.number = number;
         this.nonceServer = nonceServer;
         this.nonceClient = nonceClient;
+        this.rid = rid;
     }
     
     // ReadGeneral
@@ -67,6 +69,14 @@ public class Request implements Serializable {
         this.number = number;
         this.nonceServer = nonceServer;
         this.nonceClient = nonceClient;
+    }
+
+    public int getRid() {
+        return rid;
+    }
+
+    public void setRid(int rid) {
+        this.rid = rid;
     }
 
     public int getTs() {

@@ -526,11 +526,14 @@ public class ClientEndpoint {
 
     public JSONObject read(String announcUserName, int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         int responses = 0;
-        int counter = 0;
         int port = PORT;
 
+        rid += 1;
+
+        //forall t > 0 do answers [t] := [⊥] N ;
+
         if(getNFaults() == 0) {
-            Response response = readMethod(announcUserName, number, port);
+            Response response = readMethod(announcUserName, number, port, rid);
 
             if(response.getSuccess()){
                 return response.getJsonObject();
@@ -568,7 +571,7 @@ public class ClientEndpoint {
 
             int finalPort = port;
 
-            tasks[i] = CompletableFuture.supplyAsync(() -> readMethod(announcUserName, number, finalPort));
+            tasks[i] = CompletableFuture.supplyAsync(() -> readMethod(announcUserName, number, finalPort, rid));
             port++;
         }
             for (int i = 0; i < tasks.length; i++) {
@@ -621,7 +624,7 @@ public class ClientEndpoint {
         return new JSONObject();
     }
 
-    public Response readMethod(String announcUserName, int number, int port) {
+    public Response readMethod(String announcUserName, int number, int port, int rid) {
         try {
             startHandshake(getPublicKey(), port);
         } catch (NonceTimeoutException e) {
@@ -630,7 +633,7 @@ public class ClientEndpoint {
 
         PublicKey pubKeyToReadFrom = criptoManager.getPublicKeyFromKs(userName, announcUserName);
 
-    	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(port), getClientNonce(port));
+    	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(port), getClientNonce(port), rid);
 
         Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
         
