@@ -11,11 +11,9 @@ import java.io.*;
 import java.net.Socket;
 import java.security.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientEndpoint {
 
@@ -306,8 +304,7 @@ public class ClientEndpoint {
     public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException{
         int i = 0;
         int port = PORT;
-        while (i < getNFaults()*3 + 1){
-            System.out.println("SENT TO THIS PORT: " + port);
+        while (i < getNFaults()*3 + 1) {
             registerMethod(port++);
             i++;
         }
