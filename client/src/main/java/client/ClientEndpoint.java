@@ -526,9 +526,15 @@ public class ClientEndpoint {
 
     public Response readMethod(String announcUserName, int number, int port, int rid) {
 
-        //Handshake one way
-        //send read operation to server
-        try {
+        //  -----> Handshake one way
+
+        //  -----> send read operation to server
+        //Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(port), getClientNonce(port), rid);
+        //Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
+        // send(envelopeRequest, port);
+
+
+        /*try {
             startHandshake(getPublicKey(), port);
         } catch (NonceTimeoutException e) {
             return new Response(false, -11, null);
@@ -539,13 +545,14 @@ public class ClientEndpoint {
     	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(port), getClientNonce(port), rid);
 
         Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
-        
+        */
         /***** SIMULATE ATTACKER: changing the user to read from. User might think is going to read from user X but reads from Y [in this case user3] (tamper) *****/
+        /*
         if(isIntegrityFlag()) {
         	envelopeRequest.getRequest().setPublicKeyToReadFrom(criptoManager.getPublicKeyFromKs(userName, "user3"));
         }
         /**********************************************************************************************************************************************************/
-
+        /*
         try {
             Listener listener = new Listener(new ServerSocket(getClientPort()), nQuorum);
             while(listener.getResult() == null){
@@ -557,11 +564,13 @@ public class ClientEndpoint {
 
             send(envelopeRequest, port);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
-            if(isReplayFlag()){
+        /*
+        if(isReplayFlag()){
             	this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /*******************************************************************/
-            if (!checkNonce(envelopeResponse.getResponse(), port)) {
+        /*
+        if (!checkNonce(envelopeResponse.getResponse(), port)) {
                 return new Response(false, -13, null);
                 //throw new FreshnessException(errorMessage);
             }
@@ -579,7 +588,7 @@ public class ClientEndpoint {
         	return new Response(false, -12, null);
             //throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         } 
-        return null;
+        return null;*/
     }
 
     public JSONObject readGeneral(int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
