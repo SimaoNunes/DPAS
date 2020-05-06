@@ -58,6 +58,30 @@ public class CryptoManager {
 		}
 		return new byte[0];
 	}
+
+	byte[] signResponse(Response response, PrivateKey key) {
+		try {
+			// Initialize needed structures
+			Signature signature = Signature.getInstance("SHA256withRSA");
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream out = new ObjectOutputStream(bos);
+			// Convert response to byteArray
+			out.writeObject(response);
+			out.flush();
+			byte[] responseBytes = bos.toByteArray();
+			// Sign with private key
+			signature.initSign(key);
+			signature.update(responseBytes);
+			return signature.sign();
+		} catch (
+			InvalidKeyException		 |
+			NoSuchAlgorithmException |
+			SignatureException		 |
+			IOException e) {
+			e.printStackTrace();
+		}
+		return new byte[0];
+	}
 	
 	boolean verifyResponse(Response response, byte[] signature, String username) {
 		try {
