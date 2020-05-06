@@ -397,7 +397,7 @@ public class Server implements Runnable {
             JSONObject announcementsToSend =  new JSONObject();
             announcementsToSend.put("announcementList", annoucementsList);
             if(!dropOperationFlag) {
-                send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
+                send(new Response(true, announcementsToSend, request.getNonceClient(), request.getRid()), outStream);
             } else {
             	System.out.println("DROPPED READ");
             }
