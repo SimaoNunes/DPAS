@@ -11,9 +11,18 @@ public class Response implements Serializable {
     private byte[] nonce = null;
 
     private int errorCode;
+    private int ts;
+
+
 
     public Response(byte[] nonce){
         this.nonce = nonce;
+    }
+
+    public Response(boolean success, byte[] nonce, int ts){
+        this.success = success;
+        this.nonce = nonce;
+        this.ts = ts;
     }
 
     public Response(boolean success, byte[] nonce){
@@ -32,6 +41,14 @@ public class Response implements Serializable {
         this.success = success;
         this.jsonObject = object;
         this.nonce = nonce;
+    }
+
+    public int getTs() {
+        return ts;
+    }
+
+    public void setTs(int ts) {
+        this.ts = ts;
     }
 
     public JSONObject getJsonObject() {

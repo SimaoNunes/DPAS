@@ -11,6 +11,8 @@ import java.io.*;
 import java.net.Socket;
 import java.security.*;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,11 +35,11 @@ public class ClientEndpoint {
     int rid = 0;
 
 
-
-
     /************ Replication variables *************/
     private int nFaults;
     private static final int PORT = 9000;
+    private int nServers;
+    private int nQuorum;
     /************************************************/
 
     private String registerErrorMessage = "There was a problem with your request, we cannot infer if you registered. Please try to login.";
@@ -59,8 +61,11 @@ public class ClientEndpoint {
         setUsername(userName);
         setServerAddress(server);
         setNFaults(faults);
-        serverNonce = new byte[(faults*3) + 1][];
-        clientNonce = new byte[(faults*3) + 1][];
+        nServers = faults * 3 + 1;
+        nQuorum = (nServers + faults)/2;
+
+        serverNonce = new byte[nServers][];
+        clientNonce = new byte[nServers][];
     }
 
     public int getWts() {
@@ -401,7 +406,6 @@ public class ClientEndpoint {
 
     public int write(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         int responses = 0;
-        int counter = 0;
         int port = PORT;
 
         int newWts = getWts() + 1;
@@ -410,9 +414,9 @@ public class ClientEndpoint {
             return writeMethod(message, announcs, isGeneral, port, newWts);
         }
 
-        int[] results = new int[(getNFaults() * 3 + 1) / 2 + 1];
+        int[] results = new int[(nServers)];
 
-        CompletableFuture<Integer>[] tasks = new CompletableFuture[getNFaults() * 3 + 1];
+        CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
 
         for (int i = 0; i < tasks.length; i++) {
 
@@ -449,7 +453,7 @@ public class ClientEndpoint {
                 } catch (ExecutionException e) {
                     e.printStackTrace();
                 }
-                if (responses > (getNFaults() * 2) + (1/2))
+                if (responses > nQuorum)
                     break;
             }
             if (i == tasks.length - 1)
@@ -477,16 +481,19 @@ public class ClientEndpoint {
     }
 
     public int getQuorumInt(int[] results) {
-        int final_result = results[0];
-        for(int i = 1; i < results.length; i++) {
-            if(results[i] == final_result){
-                continue;
-            }
-            else {
-                System.out.println("Not quorum n sei o que fazer");
+        HashMap<Integer, Integer> map = new HashMap<>();
+        for(int i = 0; i < results.length; i++) {
+            if (!map.containsKey(results[i])) {
+                map.put(results[i], 1);
+            } else {
+                map.put(results[i], map.get(results[i]++));
+                if (map.get(results[i]) > ((nServers) + getNFaults()) / 2) {
+                    return results[i];
+                }
             }
         }
-        return final_result;
+        //NOT QUORUM
+        return 0;
     }
 
     public Response getQuorumResponse(Response[] results){

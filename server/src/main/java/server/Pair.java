@@ -1,21 +1,24 @@
 package server;
 
-public class Pair {
+import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicInteger;
 
-    private int timestamp;
+public class Pair implements Serializable {
+
+    private AtomicInteger timestamp;
     private AnnouncementBoard announcementBoard;
 
     protected Pair(int timestamp, AnnouncementBoard announcementBoard){
-        this.timestamp = timestamp;
+        this.timestamp = new AtomicInteger(timestamp);
         this.announcementBoard = announcementBoard;
     }
 
     public void setTimestamp(int timestamp) {
-        this.timestamp = timestamp;
+        this.timestamp.set(timestamp);
     }
 
     public int getTimestamp() {
-        return timestamp;
+        return timestamp.get();
     }
 
     public void setAnnouncementBoard(AnnouncementBoard announcementBoard) {

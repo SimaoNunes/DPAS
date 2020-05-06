@@ -33,8 +33,6 @@ public class Server implements Runnable {
     private AtomicInteger totalAnnouncements;
     private CryptoManager cryptoManager = null;
 
-    private HashMap<String, Pair> userPairs = null;
-
     // File path strings
     private String storagePath = "";
     private String userMapPath = "";
@@ -58,7 +56,9 @@ public class Server implements Runnable {
 
     /***************** Atomic Register variables ******************/
     AtomicInteger ts;
-    HashMap<Integer, Pair<AtomicInteger, AnnouncementBoard>> aBoards = new HashMap();
+    private HashMap<String, Pair> usersBoards = null;
+
+    /**************************************************************/
 
 
     protected Server(ServerSocket ss, int port) {
@@ -245,53 +245,65 @@ public class Server implements Runnable {
     private void write(Request request, ObjectOutputStream outStream) {
         // Get userName from keystore
 
-        if(request.getTs() > aBoards.get(userIdMap.get(request.getPublicKey()))){
+        if(request.getTs() > usersBoards.get(userIdMap.get(request.getPublicKey())).getTimestamp()){  // if ts' > ts then (ts, val) := (ts', v')
 
-        }
+            usersBoards.get(userIdMap.get(request.getPublicKey())).setTimestamp(request.getTs());  // ts = ts'
 
-        String username = userIdMap.get(request.getPublicKey());
-        String path = announcementBoardsPath + username + "/";        
-        // Write to file
-        JSONObject announcementObject =  new JSONObject();
-        announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
-        announcementObject.put("user", username);
-        announcementObject.put("message", request.getMessage());
-        
-        Date dNow = new Date();
-        SimpleDateFormat ft = new SimpleDateFormat ("dd-MM-yyyy 'at' HH:mm");
-        announcementObject.put("date", ft.format(dNow).toString());
+            String username = userIdMap.get(request.getPublicKey());                    //val = v'
+            String path = announcementBoardsPath + username + "/";
+            // Write to file
+            JSONObject announcementObject =  new JSONObject();
+            announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
+            announcementObject.put("user", username);
+            announcementObject.put("message", request.getMessage());
 
-        int[] refAnnouncements = request.getAnnouncements();
-        
-        if(refAnnouncements != null){
-            JSONArray annoucementsList = new JSONArray();
-            for(int i = 0; i < refAnnouncements.length; i++){
-                annoucementsList.add(Integer.toString(refAnnouncements[i]));
+            Date dNow = new Date();
+            SimpleDateFormat ft = new SimpleDateFormat ("dd-MM-yyyy 'at' HH:mm");
+            announcementObject.put("date", ft.format(dNow).toString());
+
+            int[] refAnnouncements = request.getAnnouncements();
+
+            if(refAnnouncements != null){
+                JSONArray annoucementsList = new JSONArray();
+                for(int i = 0; i < refAnnouncements.length; i++){
+                    annoucementsList.add(Integer.toString(refAnnouncements[i]));
+                }
+                announcementObject.put("ref_announcements", annoucementsList);
             }
-            announcementObject.put("ref_announcements", annoucementsList);
+
+
+            try {
+                saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
+            } catch (IOException e) {
+                send(new Response(false, -9, request.getNonceClient()), outStream);
+            }
+
+            incrementTotalAnnouncs();
+            saveTotalAnnouncements();
+
         }
 
+        //forall q ∈ Π such that listening [q] ̸ = ⊥ do
+            //trigger ⟨ al, Send | q , [ VALUE , listening [q], ts, val] ⟩ ;
 
-        try {
-            saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
-        } catch (IOException e) {
-            send(new Response(false, -9, request.getNonceClient()), outStream);
-        }
+        //trigger ⟨ al, Send | p , [ A CK , ts] ⟩ ;
 
-        incrementTotalAnnouncs();
-        saveTotalAnnouncements();
         if(!dropOperationFlag) {
-        	
-        	send(new Response(true, request.getNonceClient()), outStream);
+
+            send(new Response(true, request.getNonceClient(), usersBoards.get(userIdMap.get(request.getPublicKey())).getTimestamp()), outStream);
         } else {
-        	System.out.println("DROPPED POST");
+            System.out.println("DROPPED POST");
         }
+
+
+
+
+
     }
 
     //////////////////////////////////////////////////
     //				   POST GENERAL		            //
     //////////////////////////////////////////////////
-
     private void writeGeneral(Request request, ObjectOutputStream outStream) {
         // Get userName from keystore
         String username = userIdMap.get(request.getPublicKey());

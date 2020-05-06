@@ -8,7 +8,7 @@ public class AnnouncementBoard implements Serializable{
     private String user;
     private JSONArray annoucements;
 
-    protected AnnouncementBoard(JSONArray list, String user){
+    protected AnnouncementBoard(String user, JSONArray list){
         this.annoucements = list;
         this.user = user;
     }
