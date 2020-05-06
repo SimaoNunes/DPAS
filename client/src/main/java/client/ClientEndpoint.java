@@ -240,14 +240,74 @@ public class ClientEndpoint {
 	//				     REGISTER  					//
 	//////////////////////////////////////////////////
     
-    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException{
-        int i = 0;
+    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+        // Port of first server
         int port = PORT;
-        while (i < getNFaults()*3 + 1) {
-            registerMethod(port++);
-            i++;
+        // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
+        if(getNFaults() == 0) {
+        	return registerMethod(port);
         }
-        return 1;
+        // Variables to store responses and their results
+        int responses = 0;
+        int[] results = new int[nServers];
+        // Threads that will make the requests to the server
+        CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
+        // Ask for wts to all Servers get results
+        for (int i = 0; i < tasks.length; i++) {
+
+            int finalPort = port;
+
+            tasks[i] = CompletableFuture.supplyAsync(() -> {
+				try {
+					return registerMethod(finalPort);
+				} catch (AlreadyRegisteredException e) {
+					return -2;
+				} catch (UnknownPublicKeyException e) {
+					return -7;
+				} catch (FreshnessException e) {
+					return -13;
+            	} catch (NonceTimeoutException e) {
+					return -11;
+				} catch (IntegrityException e) {
+					return -14;
+				} catch (OperationTimeoutException e) {
+					return -12;
+				}
+            });
+            port++;
+        }
+        // Store results when they arrive
+        for (int i = 0; i < tasks.length; i++) {
+            if (tasks[i].isDone()) {
+                try {
+                    results[responses++] = tasks[i].get().intValue();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+                if (responses > nQuorum) // OBA
+                    break;
+            }
+            if (i == tasks.length - 1)
+                i = 0;
+        }
+        // Get Quorum from the result to make a decision regarding the responses
+        int result = getMajorityOfQuorumInt(results);
+        switch (result) {
+            case (-2):
+                throw new AlreadyRegisteredException("This user is already registered!");
+            case (-11):
+                throw new NonceTimeoutException("Nonce timeout");
+            case (-12):
+                throw new OperationTimeoutException("Operation timeout");
+            case (-13):
+                throw new FreshnessException("Freshness Exception");
+            case (-14):
+                throw new IntegrityException("Integrity Exception");
+            default:
+            	return result;
+        }
     }
 
     public int registerMethod(int port) throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
