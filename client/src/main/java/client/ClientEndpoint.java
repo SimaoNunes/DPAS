@@ -30,21 +30,19 @@ public class ClientEndpoint {
     private CryptoManager criptoManager = null;
 
     /**********Atomic Register Variables ************/
-    int wts = 0;
+    int wts = -1; // -1 means we must ask server for the current wts
     int rid = 0;
-
 
     /************ Replication variables *************/
     private int nFaults;
     private static final int PORT = 9000;
     private int nServers;
     private int nQuorum;
-    /************************************************/
+ 
 
     private String registerErrorMessage = "There was a problem with your request, we cannot infer if you registered. Please try to login.";
     private String errorMessage = "There was a problem with your request. Please try again.";
 
-    /*********** Simulated Attacks Variables ************/
 
     private ReplayAttacker replayAttacker = null;
     private boolean replayFlag = false;
@@ -52,13 +50,13 @@ public class ClientEndpoint {
 
     /****************************************************/
 
-    public ClientEndpoint(String userName, String server, int faults){
+    public ClientEndpoint(String userName, int faults){
     	criptoManager = new CryptoManager();
         setPrivateKey(criptoManager.getPrivateKeyFromKs(userName));
         setPublicKey(criptoManager.getPublicKeyFromKs(userName, userName));
         setServerPublicKey(criptoManager.getPublicKeyFromKs(userName, "server"));
         setUsername(userName);
-        setServerAddress(server);
+        setServerAddress(getServerAddressFromFile());
         setNFaults(faults);
         nServers = faults * 3 + 1;
         nQuorum = (nServers + faults)/2;
@@ -215,8 +213,8 @@ public class ClientEndpoint {
         return new byte[0];
     }
 
-    private void startHandshake(PublicKey publicKey, int port) throws NonceTimeoutException {
-        setServerNonce(port, askForServerNonce(publicKey, port));
+    private void startHandshake(int port) throws NonceTimeoutException {
+        setServerNonce(port, askForServerNonce(getPublicKey(), port));
         setClientNonce(port, criptoManager.generateClientNonce());
     }
 
@@ -236,29 +234,89 @@ public class ClientEndpoint {
     }    
 
     
- ///////////////////////
- //					  //
- //   API Functions   //
- //	  	     		  //
- ///////////////////////
+///////////////////////
+//					 //
+//   API Functions   //
+//	  	     		 //
+///////////////////////
     
 	//////////////////////////////////////////////////
 	//				     REGISTER  					//
 	//////////////////////////////////////////////////
     
-    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException{
-        int i = 0;
+    public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+        // Port of first server
         int port = PORT;
-        while (i < getNFaults()*3 + 1) {
-            registerMethod(port++);
-            i++;
+        // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
+        if(getNFaults() == 0) {
+        	return registerMethod(port);
         }
-        return 1;
+        // Variables to store responses and their results
+        int responses = 0;
+        int[] results = new int[nServers];
+        // Threads that will make the requests to the server
+        CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
+        // Ask for wts to all Servers get results
+        for (int i = 0; i < tasks.length; i++) {
+
+            int finalPort = port;
+
+            tasks[i] = CompletableFuture.supplyAsync(() -> {
+				try {
+					return registerMethod(finalPort);
+				} catch (AlreadyRegisteredException e) {
+					return -2;
+				} catch (UnknownPublicKeyException e) {
+					return -7;
+				} catch (FreshnessException e) {
+					return -13;
+            	} catch (NonceTimeoutException e) {
+					return -11;
+				} catch (IntegrityException e) {
+					return -14;
+				} catch (OperationTimeoutException e) {
+					return -12;
+				}
+            });
+            port++;
+        }
+        // Store results when they arrive
+        for (int i = 0; i < tasks.length; i++) {
+            if (tasks[i].isDone()) {
+                try {
+                    results[responses++] = tasks[i].get().intValue();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+                if (responses > nQuorum) // OBA
+                    break;
+            }
+            if (i == tasks.length - 1)
+                i = 0;
+        }
+        // Get Quorum from the result to make a decision regarding the responses
+        int result = getMajorityOfQuorumInt(results);
+        switch (result) {
+            case (-2):
+                throw new AlreadyRegisteredException("This user is already registered!");
+            case (-11):
+                throw new NonceTimeoutException("Nonce timeout");
+            case (-12):
+                throw new OperationTimeoutException("Operation timeout");
+            case (-13):
+                throw new FreshnessException("Freshness Exception");
+            case (-14):
+                throw new IntegrityException("Integrity Exception");
+            default:
+            	return result;
+        }
     }
 
     public int registerMethod(int port) throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
-        startHandshake(getPublicKey(), port);
+        startHandshake(port);
 
         Request request = new Request("REGISTER", getPublicKey(), getServerNonce(port), getClientNonce(port));
 
@@ -298,11 +356,96 @@ public class ClientEndpoint {
         }
     }
 
+    
     //////////////////////////////////////////////////
     //					   POST  					//
     //////////////////////////////////////////////////
+    
+    public int post(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+        // Port of first server
+        int port = PORT;
+        // Ask Servers for actual wts in case we don't have it in memory
+        if(wts == -1) {
+        	askForWts();
+        }
+        // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
+        if(getNFaults() == 0) {
+            return postMethod(message, announcs, isGeneral, port, wts);
+        }
+        // Variables to store responses and their results
+        int responses = 0;
+        int[] results = new int[nServers];
+        // Threads that will make the requests to the server
+        CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
+        // Make a post (write) to all Server and get results
+        for (int i = 0; i < tasks.length; i++) {
 
-    public int postAux(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port, int ts) throws InvalidAnnouncementException,
+            int finalPort = port;
+
+            tasks[i] = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return postMethod(message, announcs, isGeneral, finalPort, wts);
+                } catch (MessageTooBigException e) {
+                    return -4;
+                } catch (UserNotRegisteredException e) {
+                    return -1;
+                } catch (InvalidAnnouncementException e) {
+                    return -5;
+                } catch (NonceTimeoutException e) {
+                    return -11;
+                } catch (OperationTimeoutException e) {
+                    return -12;
+                } catch (FreshnessException e) {
+                    return -13;
+                } catch (IntegrityException e) {
+                    return -14;
+                }
+            });
+            port++;
+        }
+        // Store results when they arrive
+        for (int i = 0; i < tasks.length; i++) {
+            if (tasks[i].isDone()) {
+                try {
+                    results[responses++] = tasks[i].get().intValue();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+                if (responses > nQuorum)
+                    break;
+            }
+            if (i == tasks.length - 1)
+                i = 0;
+        }
+        // Get Quorum from the result to make a decision regarding the responses
+        int result = getQuorumInt(results);
+        switch (result) {
+            case (-1):
+                throw new UserNotRegisteredException("User not Registered");
+            case (-4):
+                throw new MessageTooBigException("Message Too Big");
+            case (-5):
+                throw new InvalidAnnouncementException("Invalid announcement");
+            case (-11):
+                throw new NonceTimeoutException("Nonce timeout");
+            case (-12):
+                throw new OperationTimeoutException("Operation timeout");
+            case (-13):
+                throw new FreshnessException("Freshness Exception");
+            case (-14):
+                throw new IntegrityException("Integrity Exception");
+        }
+        return result;
+    }
+    
+    public int postMethod(String message, int[] announcs, boolean isGeneral, int port, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+        startHandshake(port);
+        return write(getPublicKey(), message, announcs, isGeneral, getServerNonce(port), getClientNonce(port), getPrivateKey(), port, ts);
+    }
+
+	public int write(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port, int ts) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
         
@@ -346,92 +489,6 @@ public class ClientEndpoint {
         return 0;
     }
 
-    public int post(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-        int responses = 0;
-        int port = PORT;
-
-        int newWts = getWts() + 1;
-
-        if(getNFaults() == 0){
-            return postMethod(message, announcs, isGeneral, port, newWts);
-        }
-
-        int[] results = new int[(nServers)];
-
-        CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
-
-        for (int i = 0; i < tasks.length; i++) {
-
-            int finalPort = port;
-
-            tasks[i] = CompletableFuture.supplyAsync(() -> {
-                try {
-                    return postMethod(message, announcs, isGeneral, finalPort, newWts);
-                } catch (MessageTooBigException e) {
-                    return -4;
-                } catch (UserNotRegisteredException e) {
-                    return -1;
-                } catch (InvalidAnnouncementException e) {
-                    return -5;
-                } catch (NonceTimeoutException e) {
-                    return -11;
-                } catch (OperationTimeoutException e) {
-                    return -12;
-                } catch (FreshnessException e) {
-                    return -13;
-                } catch (IntegrityException e) {
-                    return -14;
-                }
-            });
-            port++;
-        }
-        
-        for (int i = 0; i < tasks.length; i++) {
-            if (tasks[i].isDone()) {
-                try {
-                    results[responses++] = tasks[i].get().intValue();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-                if (responses > nQuorum)
-                    break;
-            }
-            if (i == tasks.length - 1)
-                i = 0;
-        }
-        
-        int result = getQuorumInt(results);
-        switch (result) {
-            case (-1):
-                throw new UserNotRegisteredException("User not Registered");
-            case (-4):
-                throw new MessageTooBigException("Message Too Big");
-            case (-5):
-                throw new InvalidAnnouncementException("Invalid announcement");
-            case (-11):
-                throw new NonceTimeoutException("Nonce timeout");
-            case (-12):
-                throw new OperationTimeoutException("Operation timeout");
-            case (-13):
-                throw new FreshnessException("Freshness Exception");
-            case (-14):
-                throw new IntegrityException("Integrity Exception");
-        }
-        return result;
-    }
-
-
-    public int postMethod(String message, int[] announcs, boolean isGeneral, int port, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-        startHandshake(getPublicKey(), port);
-        return postAux(getPublicKey(), message, announcs, isGeneral, getServerNonce(port), getClientNonce(port), getPrivateKey(), port, ts);
-    }
-    
-    /*public int postGeneral(String message, int[] announcs) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-        startHandshake(getPublicKey());
-        return postAux(getPublicKey(), message, announcs, true, getServerNonce(), getClientNonce(), getPrivateKey());
-    }*/
 
     //////////////////////////////////////////////////
     //				      READ						//
@@ -441,6 +498,9 @@ public class ClientEndpoint {
         int port = PORT;
         rid += 1;
 
+        //forall t > 0 do answers [t] := [⊥] N ;
+        // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
+        
         Listener listener = null;
         try {
             listener = new Listener(new ServerSocket(getClientPort()), nQuorum);
@@ -512,11 +572,15 @@ public class ClientEndpoint {
         } 
     }
 
+	//////////////////////////////////////////////////
+	//				   READ GENERAL					//
+	//////////////////////////////////////////////////
+    
     public JSONObject readGeneral(int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         int responses = 0;
         int counter = 0;
         int port = PORT;
-
+        // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
         if(getNFaults() == 0){
             Response response = readGeneralMethod(number, port);
 
@@ -572,7 +636,7 @@ public class ClientEndpoint {
                     } catch (ExecutionException e) {
                         e.printStackTrace();
                     }
-                    if (responses == (getNFaults() * 3 + 1) / 2 + 1)
+                    if (responses > nQuorum)
                         break;
                 }
                 if (i == tasks.length - 1)
@@ -611,7 +675,7 @@ public class ClientEndpoint {
     public Response readGeneralMethod(int number, int port) {
 
         try {
-            startHandshake(getPublicKey(), port);
+            startHandshake(port);
         } catch (NonceTimeoutException e) {
             return new Response(false, -11, null);
         }
@@ -646,18 +710,123 @@ public class ClientEndpoint {
         }
         return null;
     }
+    
+	//////////////////////////////////////////////////
+	//				   ASK FOR WTS					//
+	//////////////////////////////////////////////////
+    
+    private int askForWts() throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
+        // Port of first server
+        int port = PORT;
+        // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
+        if(getNFaults() == 0) {
+        	return askForSingleWts(port);
+        }
+        // Variables to store responses and their results
+        int responses = 0;
+        int[] results = new int[nServers];
+        // Threads that will make the requests to the server
+        CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
+        // Ask for wts to all Servers get results
+        for (int i = 0; i < tasks.length; i++) {
+
+            int finalPort = port;
+
+            tasks[i] = CompletableFuture.supplyAsync(() -> {
+				try {
+					return askForSingleWts(finalPort);
+				} catch (UserNotRegisteredException e) {
+					return -1;
+            	} catch (FreshnessException e) {
+					return -13;
+            	} catch (NonceTimeoutException e) {
+					return -11;
+				} catch (IntegrityException e) {
+					return -14;
+				} catch (OperationTimeoutException e) {
+					return -12;
+				}
+            });
+            port++;
+        }
+        // Store results when they arrive
+        for (int i = 0; i < tasks.length; i++) {
+            if (tasks[i].isDone()) {
+                try {
+                    results[responses++] = tasks[i].get().intValue();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+                if (responses > nQuorum) // OBA
+                    break;
+            }
+            if (i == tasks.length - 1)
+                i = 0;
+        }
+        // Get Quorum from the result to make a decision regarding the responses
+        int result = getMajorityOfQuorumInt(results);
+        switch (result) {
+            case (-1):
+                throw new UserNotRegisteredException("User not Registered");
+            case (-11):
+                throw new NonceTimeoutException("Nonce timeout");
+            case (-12):
+                throw new OperationTimeoutException("Operation timeout");
+            case (-13):
+                throw new FreshnessException("Freshness Exception");
+            case (-14):
+                throw new IntegrityException("Integrity Exception");
+            default:
+            	return result;
+        }
+	}
+
+    
+	private int askForSingleWts(int port) throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
+		// Make handshake with server
+		startHandshake(port);
+        // Make wts Request sign it and send inside envelope
+        Request request = new Request("WTS", getPublicKey(), getServerNonce(port), getClientNonce(port));
+    	Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
+    	// Get wts inside a Response
+    	int singleWts = -666;
+		try {
+			Envelope envelopeResponse = sendReceive(envelopeRequest, port);
+			// Verify Response's Freshness
+            if(!checkNonce(envelopeResponse.getResponse(), port)){
+                throw new FreshnessException(errorMessage);
+            }
+	    	// Verify Response's Integrity
+	        if(!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)) {
+	            throw new IntegrityException("EPA NAO SEI AINDA O QUE ESCREVER AQUI MAS UM ATACANTE ALTEROU A RESP DO WTS");
+	        } else {
+	        	singleWts = envelopeResponse.getRequest().getTs();
+	        }
+	        ResponseChecker.checkAskWts(envelopeResponse.getResponse());
+	        return singleWts;
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			throw new OperationTimeoutException("Operation timeout");
+		}
+        return singleWts;
+	}
 
 
-    /************** Quorum Checker *******************/
+//////////////////////////////////////////////////
+//				 Auxiliary Methods				//
+//////////////////////////////////////////////////
 
-    public int getQuorumInt(int[] results) {
+    private int getQuorumInt(int[] results) {
         HashMap<Integer, Integer> map = new HashMap<>();
         for(int i = 0; i < results.length; i++) {
             if (!map.containsKey(results[i])) {
                 map.put(results[i], 1);
             } else {
                 map.put(results[i], map.get(results[i]++));
-                if (map.get(results[i]) > ((nServers) + getNFaults()) / 2) {
+                if (map.get(results[i]) > nQuorum) {
                     return results[i];
                 }
             }
@@ -666,23 +835,36 @@ public class ClientEndpoint {
         return 0;
     }
 
-    public Response getQuorumResponse(Response[] results){
+    private Response getQuorumResponse(Response[] results) {
         System.out.println(results[0].getSuccess() + "\n" + results[0].getErrorCode());
-        Response final_result = results[0];
+        Response finalResult = results[0];
         for(int i = 1; i < results.length; i++) {
             System.out.println(results[i].getSuccess() + "\n" + results[i].getErrorCode());
-            if (results[i].getSuccess() == final_result.getSuccess() && results[i].getErrorCode() == final_result.getErrorCode()) {
+            if (results[i].getSuccess() == finalResult.getSuccess() && results[i].getErrorCode() == finalResult.getErrorCode()) {
                 continue;
             } else {
                 System.out.println("Not quorum n sei o que fazer");
             }
         }
-        return final_result;
+        return finalResult;
     }
-
-    /************************************************/
-
-
+    
+    private int getMajorityOfQuorumInt(int[] results) {
+        HashMap<Integer, Integer> map = new HashMap<>();
+        for(int i = 0; i < results.length; i++) {
+            if (!map.containsKey(results[i])) {
+                map.put(results[i], 1);
+            } else {
+                map.put(results[i], map.get(results[i]) + 1);
+                if (map.get(results[i]) > (results.length)/2) {
+                    return results[i];
+                }
+            }
+        }
+        // REPLICAS HAVE MORE THAN F FAULTS
+        return -666;
+    }
+    
     private int getClientPort(){
         try(BufferedReader reader = new BufferedReader(new FileReader("../clients_addresses.txt"))){
             String line;
@@ -699,4 +881,24 @@ public class ClientEndpoint {
         }
         return 0;
     }
+    
+    private static String getServerAddressFromFile(){
+    	File file = new File("server_address.txt");
+
+		String address = null;
+
+		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
+
+			address = br.readLine();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(address == null){
+			return "localhost";
+		}
+		else{
+			return address;
+		}
+	}
 }

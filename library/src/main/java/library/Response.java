@@ -16,35 +16,36 @@ public class Response implements Serializable {
     private int port = 0;
 
 
-
-    public Response(byte[] nonce){
+    public Response(byte[] nonce) {
         this.nonce = nonce;
     }
 
-    public Response(boolean success, byte[] nonce, int ts){
+    public Response(boolean success, byte[] nonce, int ts) {
         this.success = success;
         this.nonce = nonce;
         this.ts = ts;
     }
 
-    public Response(boolean success, byte[] nonce){
+    public Response(boolean success, byte[] nonce) {
         this.success = success;
         this.nonce = nonce;
     }
 
-    public Response(boolean success, int errorCode, byte[] nonce){
+    public Response(boolean success, int errorCode, byte[] nonce) {
 
         this.success = success;
         this.errorCode = errorCode;
         this.nonce = nonce;
     }
 
-    public Response(boolean success, JSONObject object, byte[] nonce, int rid){
+    public Response(boolean success, JSONObject object, byte[] nonce, int rid) {
         this.success = success;
         this.jsonObject = object;
         this.nonce = nonce;
         this.rid = rid;
     }
+    
+    
 
 
     //VALUE
