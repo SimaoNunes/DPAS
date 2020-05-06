@@ -156,7 +156,7 @@ public class Server implements Runnable {
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
                             {
-                            read(envelope.getRequest(), outStream);
+                            read(envelope.getRequest(), outStream, inStream);
                         }
                         break;
                     case "READGENERAL":
@@ -372,14 +372,14 @@ public class Server implements Runnable {
     //				      READ						//
     //////////////////////////////////////////////////
     
-    private void read(Request request, ObjectOutputStream outStream) {
+    private void read(Request request, ObjectOutputStream outStream, ObjectInputStream inStream) {
+
         if(listening.contains(userIdMap.get(request.getPublicKeyToReadFrom()))){  //someone is already reading that board
             listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).put(userIdMap.get(request.getPublicKey()), request.getRid());  //listening [p] := r ;
         }
         else{
             listening.put(userIdMap.get(request.getPublicKeyToReadFrom()), new ConcurrentHashMap<>()); //listening [p] := r ;
         }
-
 
         String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
         int directorySize = directoryList.length;
@@ -411,14 +411,20 @@ public class Server implements Runnable {
             JSONObject announcementsToSend =  new JSONObject();
             announcementsToSend.put("announcementList", annoucementsList);
 
-            if(!dropOperationFlag) {
-                // -----> Handshake one way
-                //send(new Response(true, announcementsToSend, request.getNonceClient(), request.getRid()), outStream);
-            } else {
-            	System.out.println("DROPPED READ");
-            }
-        } catch(Exception e) {
+            // if(!dropOperationFlag) {
+            //     // -----> Handshake one way
+            //     //send(new Response(true, announcementsToSend, request.getNonceClient(), request.getRid()), outStream);
+            // } else {
+            // 	System.out.println("DROPPED READ");
+            // } 
+
+            // Send response to client
             // ------> Handshake one way
+            Envelope envelope = sendReceive(new Request("NONCE"), outStream, inStream);
+            Response clientResponse = envelope.getResponse();
+            send(new Response(true, announcementsToSend, clientResponse.getNonce(), request.getRid()), outStream);
+
+        } catch(Exception e) {
             send(new Response(false, -8, request.getNonceClient()), outStream);
         }
     }
@@ -460,7 +466,7 @@ public class Server implements Runnable {
             JSONObject announcementsToSend =  new JSONObject();
             announcementsToSend.put("announcementList", annoucementsList);
             if(!dropOperationFlag) {
-                send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);
+                // send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);   FIXME-> enviar o rid?
             } else {
                 System.out.println("DROPPED READ GENERAL");
             }
@@ -538,6 +544,22 @@ public class Server implements Runnable {
             e.printStackTrace();
         } 
     }
+
+    private Envelope sendReceive(Request serverRequest, ObjectOutputStream outputStream, ObjectInputStream inputStream) {
+        Envelope envelope = null;
+        try {
+        	// Sign request
+            byte[] signature = cryptoManager.signRequest(serverRequest, cryptoManager.getPrivateKey());
+            outputStream.writeObject(new Envelope(serverRequest, signature));
+            // exceptions de timeout e o crl (nonce timeout)   FIXME -> falta adicionar as exceptions
+            return (Envelope) inputStream.readObject();
+        } catch (IOException | 
+                ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return envelope; 
+    }
+
 
     private void saveFile(String completePath, String announcement) throws IOException {
         byte[] bytesToStore = announcement.getBytes();
