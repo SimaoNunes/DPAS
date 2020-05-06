@@ -8,6 +8,7 @@ import library.Response;
 import org.json.simple.JSONObject;
 
 import java.io.*;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
 import java.util.Arrays;
@@ -468,37 +469,27 @@ public class ClientEndpoint {
             }
 
         }
+        Listener listener = null;
+        try {
+            listener = new Listener(new ServerSocket(getClientPort()), nQuorum);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        Response[] results = new Response[(getNFaults() * 3 + 1) / 2 + 1];
 
-        CompletableFuture<Response>[] tasks = new CompletableFuture[getNFaults() * 3 + 1];
-
-        for (int i = 0; i < tasks.length; i++) {
+        for (int i = 0; i < nServers; i++) {
 
             int finalPort = port;
 
-            tasks[i] = CompletableFuture.supplyAsync(() -> readMethod(announcUserName, number, finalPort, rid));
+            CompletableFuture.supplyAsync(() -> readMethod(announcUserName, number, finalPort, rid));
             port++;
         }
-            for (int i = 0; i < tasks.length; i++) {
 
-                if (tasks[i].isDone()) {
-                    try {
-                        results[responses++] = tasks[i].get();
-                        System.out.println(results[responses-1]);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
-                    }
-                    if (responses > nQuorum)
-                        break;
-                }
-                if (i == tasks.length - 1)
-                    i = 0;
-            }
+        while(listener.getResult() == null){
+            //wait for quorum
+        }
 
-        Response result = getQuorumResponse(results);
+        Response result = listener.getResult();
         System.out.println("RESULT: " + result.getSuccess() + result.getErrorCode());
         if(result.getSuccess()){
             return result.getJsonObject();
@@ -531,8 +522,17 @@ public class ClientEndpoint {
     }
 
     public Response readMethod(String announcUserName, int number, int port, int rid) {
-        try {
-            startHandshake(port);
+    	
+        //  -----> Handshake one way
+
+        //  -----> send read operation to server
+        //Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(port), getClientNonce(port), rid);
+        //Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
+        // send(envelopeRequest, port);
+
+
+        /*try {
+            startHandshake(getPublicKey(), port);
         } catch (NonceTimeoutException e) {
             return new Response(false, -11, null);
         }
@@ -542,23 +542,32 @@ public class ClientEndpoint {
     	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(port), getClientNonce(port), rid);
 
         Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
-        
+        */
         /***** SIMULATE ATTACKER: changing the user to read from. User might think is going to read from user X but reads from Y [in this case user3] (tamper) *****/
+        /*
         if(isIntegrityFlag()) {
         	envelopeRequest.getRequest().setPublicKeyToReadFrom(criptoManager.getPublicKeyFromKs(userName, "user3"));
         }
         /**********************************************************************************************************************************************************/
-
+        /*
         try {
+            Listener listener = new Listener(new ServerSocket(getClientPort()), nQuorum);
+            while(listener.getResult() == null){
+
+            }
+            JSONObject result = listener.getResult();
+
             //Envelope envelopeResponse = sendReceive(envelopeRequest, port); // SO SEND E ABRE UM PORT A ESPERA DE MENSAGENS VALUE
 
             send(envelopeRequest, port);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
-            if(isReplayFlag()){
+        /*
+        if(isReplayFlag()){
             	this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /*******************************************************************/
-            if (!checkNonce(envelopeResponse.getResponse(), port)) {
+        /*
+        if (!checkNonce(envelopeResponse.getResponse(), port)) {
                 return new Response(false, -13, null);
                 //throw new FreshnessException(errorMessage);
             }
@@ -576,7 +585,7 @@ public class ClientEndpoint {
         	return new Response(false, -12, null);
             //throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         } 
-        return null;
+        return null;*/
     }
 
 	//////////////////////////////////////////////////
@@ -872,5 +881,20 @@ public class ClientEndpoint {
         return -666;
     }
     
-    
+    private int getClientPort(){
+        try(BufferedReader reader = new BufferedReader(new FileReader("../clients_addresses.txt"))){
+            String line;
+            while((line = reader.readLine()) != null){
+                String[] splitted = line.split(":");
+                if(splitted[0].equals(userName)){
+                    return Integer.parseInt(splitted[2]);
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 }

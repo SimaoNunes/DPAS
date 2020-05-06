@@ -10,9 +10,10 @@ public class Response implements Serializable {
     private JSONObject jsonObject;
     private byte[] nonce = null;
 
-    private int errorCode;
-    private int ts;
-    private int rid;
+    private int errorCode = 0;
+    private int ts = 0;
+    private int rid = 0;
+    private int port = 0;
 
 
     public Response(byte[] nonce) {
@@ -45,6 +46,26 @@ public class Response implements Serializable {
     }
     
     
+
+
+    //VALUE
+
+    public Response(boolean success, int rid, int ts, byte[] nonce, JSONObject object, int port){
+        this.success = success;
+        this.jsonObject = object;
+        this.nonce = nonce;
+        this.rid = rid;
+        this.ts = ts;
+        this.port = port;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
 
     public int getRid() {
         return rid;
@@ -96,5 +117,31 @@ public class Response implements Serializable {
 
     public void setNonce(byte[] nonce) {
         this.nonce = nonce;
+    }
+
+    @Override
+    public String toString(){
+        String s ="";
+        s += this.success + " ";
+
+        if(this.jsonObject != null){
+            s += this.jsonObject.toJSONString() + " ";
+        }
+
+        if(this.errorCode != 0){
+            s += this.errorCode + " ";
+        }
+
+        if(this.ts != 0){
+            s += this.ts + " ";
+        }
+
+        if(this.rid != 0){
+            s += this.rid + " ";
+        }
+
+        s += '\n';
+
+        return s;
     }
 }
