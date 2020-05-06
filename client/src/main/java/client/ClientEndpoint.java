@@ -12,11 +12,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientEndpoint {
 
@@ -231,75 +229,7 @@ public class ClientEndpoint {
         setClientNonce(port, null);
         setServerNonce(port, null);
         return false;
-    }
-
-    
- //////////////////////////////////////////////////////////////
- //															 //
- //   Methods that check if Responses must throw exceptions  //
- //															 //
- //////////////////////////////////////////////////////////////
-    
-    public void checkRegister(Response response) throws AlreadyRegisteredException, UnknownPublicKeyException {
-        if(!response.getSuccess()){
-            int error = response.getErrorCode();
-            if(error == -7) {
-                throw new UnknownPublicKeyException("Such key doesn't exist in the server side!");
-            }
-            else if(error == -2) {
-                throw new AlreadyRegisteredException("User with that public key already registered in the DPAS!");
-            }
-        }
-    }
-
-    public void checkPost(Response response) throws UserNotRegisteredException,
-            MessageTooBigException, InvalidAnnouncementException {
-        if(!response.getSuccess()){
-            int error = response.getErrorCode();
-            if(error == -1) {
-                throw new UserNotRegisteredException("This user is not registered!");
-            }
-            else if(error == -4) {
-                throw new MessageTooBigException("Message cannot exceed 255 characters!");
-            }
-            else if(error == -5) {
-                throw new InvalidAnnouncementException("Announcements referenced do not exist!");
-            }
-        }
-    }
-
-    public void checkRead(Response response) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException {
-        if(!response.getSuccess()){
-            int error = response.getErrorCode();
-            if(error == -1) {
-                throw new UserNotRegisteredException("This user is not registered!");
-            }
-            else if(error == -3) {
-                throw new UserNotRegisteredException("The user you're reading from is not registered!");
-            }
-            else if(error == -6) {
-                throw new InvalidPostsNumberException("Invalid announcements number to be read!");
-            }
-            else if(error == -10) {
-                throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
-            }
-        }
-    }
-    
-    public void checkReadGeneral(Response response) throws InvalidPostsNumberException, TooMuchAnnouncementsException, UserNotRegisteredException {
-        if(!response.getSuccess()){
-            int error = response.getErrorCode();
-            if(error == -1) {
-                throw new UserNotRegisteredException("This user is not registered!");
-            }
-            else if(error == -6) {
-                throw new InvalidPostsNumberException("Invalid announcements number to be read!");
-            }
-            else if(error == -10) {
-                throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
-            }
-		}
-	}
+    }    
 
     
  ///////////////////////
@@ -315,8 +245,7 @@ public class ClientEndpoint {
     public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException{
         int i = 0;
         int port = PORT;
-        while (i < getNFaults()*3 + 1){
-            System.out.println("SENT TO THIS PORT: " + port);
+        while (i < getNFaults()*3 + 1) {
             registerMethod(port++);
             i++;
         }
@@ -349,7 +278,7 @@ public class ClientEndpoint {
             if(!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)) {
                 throw new IntegrityException(registerErrorMessage);
             }
-            checkRegister(envelopeResponse.getResponse());
+            ResponseChecker.checkRegister(envelopeResponse.getResponse());
             if(envelopeResponse.getResponse().getSuccess()){
                 // On success, return 1
                 return 1;
@@ -402,7 +331,7 @@ public class ClientEndpoint {
             if(!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)){
                 throw new IntegrityException(errorMessage);
             }
-            checkPost(envelopeResponse.getResponse());
+            ResponseChecker.checkPost(envelopeResponse.getResponse());
             // On success, return 1
             return 1;
         } catch (ClassNotFoundException e) {
@@ -413,14 +342,14 @@ public class ClientEndpoint {
         return 0;
     }
 
-    public int write(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int post(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         int responses = 0;
         int port = PORT;
 
         int newWts = getWts() + 1;
 
         if(getNFaults() == 0){
-            return writeMethod(message, announcs, isGeneral, port, newWts);
+            return postMethod(message, announcs, isGeneral, port, newWts);
         }
 
         int[] results = new int[(nServers)];
@@ -433,7 +362,7 @@ public class ClientEndpoint {
 
             tasks[i] = CompletableFuture.supplyAsync(() -> {
                 try {
-                    return writeMethod(message, announcs, isGeneral, finalPort, newWts);
+                    return postMethod(message, announcs, isGeneral, finalPort, newWts);
                 } catch (MessageTooBigException e) {
                     return -4;
                 } catch (UserNotRegisteredException e) {
@@ -490,7 +419,7 @@ public class ClientEndpoint {
     }
 
 
-    public int writeMethod(String message, int[] announcs, boolean isGeneral, int port, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int postMethod(String message, int[] announcs, boolean isGeneral, int port, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(getPublicKey(), port);
         return postAux(getPublicKey(), message, announcs, isGeneral, getServerNonce(port), getClientNonce(port), getPrivateKey(), port, ts);
     }
