@@ -56,7 +56,7 @@ public class Server implements Runnable {
     /**************************************************/
 
     /***************** Atomic Register variables ******************/
-    AtomicInteger ts;
+    
     private HashMap<String, Pair> usersBoards = null;
     private ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> listening = null;
 
@@ -93,6 +93,7 @@ public class Server implements Runnable {
 
         newListener();
     }
+    
     
 //////////////////////////////////////////
 //  								    //
@@ -231,6 +232,7 @@ public class Server implements Runnable {
         }
     }
 
+    
 //////////////////////////////////////////
 //  									//
 //             API Methods              //
@@ -258,14 +260,14 @@ public class Server implements Runnable {
         }
     }
 
+    
     //////////////////////////////////////////////////
     //				      POST						//
     //////////////////////////////////////////////////
     
     private void write(Request request, ObjectOutputStream outStream) {
         // Get userName from keystore
-
-        if(request.getTs() > usersBoards.get(userIdMap.get(request.getPublicKey())).getTimestamp()){  // if ts' > ts then (ts, val) := (ts', v')
+        if(request.getTs() > usersBoards.get(userIdMap.get(request.getPublicKey())).getTimestamp()) {  // if ts' > ts then (ts, val) := (ts', v')
 
             usersBoards.get(userIdMap.get(request.getPublicKey())).setTimestamp(request.getTs());  // ts = ts'
 
@@ -311,15 +313,14 @@ public class Server implements Runnable {
         //trigger ⟨ al, Send | p , [ A CK , ts] ⟩ ;
 
         if(!dropOperationFlag) {
-
             send(new Response(true, request.getNonceClient(), usersBoards.get(userIdMap.get(request.getPublicKey())).getTimestamp()), outStream);
         } else {
             System.out.println("DROPPED POST");
         }
 
-
     }
 
+    
     //////////////////////////////////////////////////
     //				   POST GENERAL		            //
     //////////////////////////////////////////////////
@@ -365,6 +366,7 @@ public class Server implements Runnable {
             System.out.println("DROPPED POST");
         }
     }
+    
     
     //////////////////////////////////////////////////
     //				      READ						//
@@ -420,6 +422,7 @@ public class Server implements Runnable {
             send(new Response(false, -8, request.getNonceClient()), outStream);
         }
     }
+    
 
     //////////////////////////////////////////////////
     //				   READ GENERAL				    //
@@ -473,12 +476,13 @@ public class Server implements Runnable {
         }
     }
     
+    
     //////////////////////////////////////////////
     //				   SEND WTS				    //
     //////////////////////////////////////////////
     
     private void wtsRequest(Request request, ObjectOutputStream outStream) {
-    	int wts = this.ts.get();
+    	int wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getTimestamp();
     	send(new Response(true, request.getNonceClient(), wts), outStream);
     }
     
