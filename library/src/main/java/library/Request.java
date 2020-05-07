@@ -8,8 +8,8 @@ import java.security.PublicKey;
 public class Request implements Serializable {
 	
     private String operation;
-    private byte[] nonceServer = null;   //server generated the nonce
-    private byte[] nonceClient = null;   //client generated the nonce
+    private byte[] serverNonce = null;   //server generated the nonce
+    private byte[] clientNonce = null;   //client generated the nonce
     private PublicKey publicKey = null;
     private PublicKey publicKeyToReadFrom = null;
     private String message = null;
@@ -30,22 +30,22 @@ public class Request implements Serializable {
         this.operation = operation;
     }
 
-    public Request(String operation, PublicKey key, String message,  int[] announcs, byte[] nonceServer, byte[] nonceClient, int ts){
+    public Request(String operation, PublicKey key, String message, int[] announcs, byte[] serverNonce, byte[] clientNonce, int ts) {
         this.operation = operation;
         this.publicKey = key;
         this.message = message;
         this.announcements = announcs;
-        this.nonceServer = nonceServer;
-        this.nonceClient = nonceClient;
+        this.serverNonce = serverNonce;
+        this.clientNonce = clientNonce;
         this.ts = ts;
     }
 
     // Register
-    public Request(String operation, PublicKey key, byte[] nonceServer, byte[] nonceClient){
+    public Request(String operation, PublicKey key, byte[] serverNonce, byte[] clientNonce){
     	this.operation = operation;
         this.publicKey = key;
-        this.nonceServer = nonceServer;
-        this.nonceClient = nonceClient;
+        this.serverNonce = serverNonce;
+        this.clientNonce = clientNonce;
     }
     
     // Register (DELETEALL) (ASK FOR NONCE)
@@ -56,29 +56,29 @@ public class Request implements Serializable {
 
     
     // When the CLIENT requests for a read operation - now we don't need the client's nounce
-    public Request(String operation, PublicKey key, PublicKey publicKeyToReadFrom, int number, byte[] nonceServer, int rid) {
+    public Request(String operation, PublicKey key, PublicKey publicKeyToReadFrom, int number, byte[] serverNonce, int rid) {
     	this.operation = operation;
         this.publicKey = key;
         this.publicKeyToReadFrom = publicKeyToReadFrom;
         this.number = number;
-        this.nonceServer = nonceServer;
+        this.serverNonce = serverNonce;
         this.rid = rid;
     }
 
     // ReadGeneral
-    public Request(String operation, PublicKey key, int number, byte[] nonceServer, byte[] nonceClient) {
+    public Request(String operation, PublicKey key, int number, byte[] serverNonce, byte[] clientNonce) {
     	this.operation = operation;
         this.publicKey = key;
         this.number = number;
-        this.nonceServer = nonceServer;
-        this.nonceClient = nonceClient;
+        this.serverNonce = serverNonce;
+        this.clientNonce = clientNonce;
     }
 
     //VALUE
     public Request(String operation, int rid, int ts, byte[] nonce, JSONObject object, int port){
         this.operation = operation;
         this.jsonObject = object;
-        this.nonceClient = nonce;
+        this.clientNonce = nonce;
         this.rid = rid;
         this.ts = ts;
         this.port = port;
@@ -141,20 +141,20 @@ public class Request implements Serializable {
         this.announcements = announcements;
     }
 
-    public byte[] getNonceServer() {
-        return nonceServer;
+    public byte[] getServerNonce() {
+        return serverNonce;
     }
 
-    public void setNonceServer(byte[] nonceServer) {
-        this.nonceServer = nonceServer;
+    public void setServerNonce(byte[] nonceServer) {
+        this.serverNonce = nonceServer;
     }
 
-    public byte[] getNonceClient() {
-        return nonceClient;
+    public byte[] getClientNonce() {
+        return clientNonce;
     }
 
-    public void setNonceClient(byte[] nonceClient) {
-        this.nonceClient = nonceClient;
+    public void setClientNonce(byte[] clientNonce) {
+        this.clientNonce = clientNonce;
     }
 
 	public PublicKey getPublicKeyToReadFrom() {

@@ -127,20 +127,20 @@ public class ClientEndpoint {
         this.userName = userName;
     }
 
-    public byte[] getServerNonce(int port) {
-        return serverNonce[port - PORT];
+    public byte[] getServerNonce(PublicKey serverKey) {
+        return serversNonces.get(serverKey);
     }
 
-    public void setServerNonce(int port, byte[] serverNonce, PublicKey serverKey) {
-        this.serverNonce[port - PORT] = serverNonce;
+    public void setServerNonce(PublicKey serverKey, byte[] serverNonce) {
+        this.serversNonces.put(serverKey, serverNonce);
     }
 
-    public byte[] getClientNonce(int port) {
-        return clientNonce[port - PORT];
+    public byte[] getClientNonce(PublicKey serverKey) {
+        return clientNonces.get(serverKey);
     }
 
-    public void setClientNonce(int port, byte[] clientNonce) {
-        this.clientNonce[port - PORT] = clientNonce;
+    public void setClientNonce(PublicKey serverKey, byte[] clientNonce) {
+    	this.clientNonces.put(serverKey, clientNonce);
     }
 
     public PrivateKey getPrivateKey() {
@@ -159,13 +159,6 @@ public class ClientEndpoint {
         this.publicKey = publicKey;
     }
     
-    public PublicKey getServerPublicKey() {
-        return serverPublicKey;
-    }
-
-    public void setServerPublicKey(PublicKey serverPublicKey) {
-        this.serverPublicKey = serverPublicKey;
-    }
 
     private Socket createSocket(int port) throws IOException {
         return new Socket(getServerAddress(), port);
@@ -213,18 +206,23 @@ public class ClientEndpoint {
         return null;
     }
 
-    private void startHandshake(int port) throws NonceTimeoutException {
+    private void startHandshake(int port) throws NonceTimeoutException, IntegrityException {
     	Envelope nonceEnvelope = askForServerNonce(getPublicKey(), port);
     	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), userName)) {
     		setServerNonce(nonceEnvelope.getResponse().getServerKey(), nonceEnvelope.getResponse().getNonce());
-            setClientNonce(port, cryptoManager.generateClientNonce());
+            setClientNonce(nonceEnvelope.getResponse().getServerKey(), cryptoManager.generateClientNonce());
     	} else {
     		throw new IntegrityException("Integrity Exception");
     	}
     }
 
-    private void startOneWayHandshake(int port) throws NonceTimeoutException {
-        setServerNonce(port, askForServerNonce(getPublicKey(), port));
+    private void startOneWayHandshake(int port) throws NonceTimeoutException, IntegrityException {
+    	Envelope nonceEnvelope = askForServerNonce(getPublicKey(), port);
+    	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), userName)) {
+    		setServerNonce(nonceEnvelope.getResponse().getServerKey(), nonceEnvelope.getResponse().getNonce());
+    	} else {
+    		throw new IntegrityException("Integrity Exception");
+    	}
     }
 
     private boolean checkNonce(Response response, int port){
