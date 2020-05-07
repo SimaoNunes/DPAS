@@ -68,7 +68,7 @@ public class Server implements Runnable {
         server            = ss;
         serverPort		  = port + "";  //adding "" converts int to string
 
-        cryptoManager = new CryptoManager();
+        cryptoManager = new CryptoManager(port);
         oldResponse   = new Response(cryptoManager.generateRandomNonce());
         oldEnvelope   = new Envelope(oldResponse, null);
         

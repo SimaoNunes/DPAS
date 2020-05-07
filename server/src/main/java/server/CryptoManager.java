@@ -30,9 +30,11 @@ import library.Response;
 public class CryptoManager {
 
     private HashMap<PublicKey, byte[]> nonces = null;
+    private int port = 0;
 
-    protected CryptoManager(){
-        nonces = new HashMap<>();
+    protected CryptoManager(int port){
+        this.nonces = new HashMap<>();
+        this.port = port;
     }
     
     
@@ -198,7 +200,7 @@ public class CryptoManager {
 
         try {
             ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("keystores/keystore"), passphrase);
+            ks.load(new FileInputStream("keystores/port_" + port + "/keystore"), passphrase);
             key = (PrivateKey) ks.getKey("server", passphrase);
         } catch (
             NoSuchAlgorithmException	| 

@@ -36,10 +36,10 @@ public class BaseTest {
 	@BeforeClass
 	public static void oneTimeSetup() {
 		// Instantiate class to be tested, in this case the ClientEndpoint that will communicate with the Server
-		clientEndpoint1 = new ClientEndpoint("user1", faults);
-		clientEndpoint2 = new ClientEndpoint("user2", faults);
-		clientEndpoint3 = new ClientEndpoint("user3", faults);
-		clientEndpointError = new ClientEndpoint("usererror", faults);
+		clientEndpoint1 = new ClientEndpoint("user1");
+		clientEndpoint2 = new ClientEndpoint("user2");
+		clientEndpoint3 = new ClientEndpoint("user3");
+		clientEndpointError = new ClientEndpoint("usererror");
 	}
 
 	@AfterClass
