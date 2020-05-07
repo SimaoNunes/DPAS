@@ -80,7 +80,7 @@ public class Listener implements Runnable{
             }
             // when Envelope has a response (read value)
             else if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("VALUE")) {
-                if(checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceClient())){
+                if(checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getClientNonce())){
                     result = checkAnswer(envelope);
                 }
                 else{
