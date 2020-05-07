@@ -50,13 +50,13 @@ public class ClientEndpoint {
 
     /****************************************************/
 
-    public ClientEndpoint(String userName, String server, int faults){
+    public ClientEndpoint(String userName, int faults){
     	criptoManager = new CryptoManager();
         setPrivateKey(criptoManager.getPrivateKeyFromKs(userName));
         setPublicKey(criptoManager.getPublicKeyFromKs(userName, userName));
         setServerPublicKey(criptoManager.getPublicKeyFromKs(userName, "server"));
         setUsername(userName);
-        setServerAddress(server);
+        setServerAddress(getServerAddressFromFile());
         setNFaults(faults);
         nServers = faults * 3 + 1;
         nQuorum = (nServers + faults)/2;
@@ -216,6 +216,10 @@ public class ClientEndpoint {
     private void startHandshake(int port) throws NonceTimeoutException {
         setServerNonce(port, askForServerNonce(getPublicKey(), port));
         setClientNonce(port, criptoManager.generateClientNonce());
+    }
+
+    private void startOneWayHandshake(PublicKey publicKey, int port) throws NonceTimeoutException {
+        setServerNonce(port, askForServerNonce(publicKey, port));
     }
 
     private boolean checkNonce(Response response, int port){
@@ -491,44 +495,12 @@ public class ClientEndpoint {
     //////////////////////////////////////////////////
 
     public JSONObject read(String announcUserName, int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-        int responses = 0;
         int port = PORT;
-
         rid += 1;
 
         //forall t > 0 do answers [t] := [⊥] N ;
-        
         // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
-        if(getNFaults() == 0) {
-            Response response = readMethod(announcUserName, number, port, rid);
-
-            if(response.getSuccess()){
-                return response.getJsonObject();
-            }
-            else{
-                switch (response.getErrorCode()) {
-                    case (-1):
-                        throw new UserNotRegisteredException("User not Registered");
-                    case (-3):
-                        throw new UserNotRegisteredException("The user you're reading from is not registered!");
-                    case (-6):
-                        throw new InvalidPostsNumberException("Invalid announcements number to be read!");
-                    case (-10):
-                        throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
-                    case (-11):
-                        throw new NonceTimeoutException("Nonce timeout");
-                    case (-12):
-                        throw new OperationTimeoutException("Operation timeout");
-                    case (-13):
-                        throw new FreshnessException("Freshness Exception");
-                    case (-14):
-                        throw new IntegrityException("Integrity Exception");
-                    default:
-                        break;
-                }
-            }
-
-        }
+        
         Listener listener = null;
         try {
             listener = new Listener(new ServerSocket(getClientPort()), nQuorum);
@@ -536,12 +508,12 @@ public class ClientEndpoint {
             e.printStackTrace();
         }
 
-
         for (int i = 0; i < nServers; i++) {
 
             int finalPort = port;
 
-            CompletableFuture.supplyAsync(() -> readMethod(announcUserName, number, finalPort, rid));
+            CompletableFuture.runAsync(() -> readMethod(announcUserName, number, finalPort, rid));
+            
             port++;
         }
 
@@ -581,71 +553,24 @@ public class ClientEndpoint {
         return new JSONObject();
     }
 
-    public Response readMethod(String announcUserName, int number, int port, int rid) {
-    	
-        //  -----> Handshake one way
-
-        //  -----> send read operation to server
-        //Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(port), getClientNonce(port), rid);
-        //Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
-        // send(envelopeRequest, port);
-
-
-        /*try {
-            startHandshake(getPublicKey(), port);
-        } catch (NonceTimeoutException e) {
-            return new Response(false, -11, null);
-        }
-
-        PublicKey pubKeyToReadFrom = criptoManager.getPublicKeyFromKs(userName, announcUserName);
-
-    	Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(port), getClientNonce(port), rid);
-
-        Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
-        */
-        /***** SIMULATE ATTACKER: changing the user to read from. User might think is going to read from user X but reads from Y [in this case user3] (tamper) *****/
-        /*
-        if(isIntegrityFlag()) {
-        	envelopeRequest.getRequest().setPublicKeyToReadFrom(criptoManager.getPublicKeyFromKs(userName, "user3"));
-        }
-        /**********************************************************************************************************************************************************/
-        /*
+    public void readMethod(String announcUserName, int number, int port, int rid) throws OperationTimeoutException {
         try {
-            Listener listener = new Listener(new ServerSocket(getClientPort()), nQuorum);
-            while(listener.getResult() == null){
+            //  -----> Handshake one way
+            startOneWayHandshake(getPublicKey(), port);
 
-            }
-            JSONObject result = listener.getResult();
+            //  -----> get public key to read from
+            PublicKey pubKeyToReadFrom = criptoManager.getPublicKeyFromKs(userName, announcUserName);
 
-            //Envelope envelopeResponse = sendReceive(envelopeRequest, port); // SO SEND E ABRE UM PORT A ESPERA DE MENSAGENS VALUE
-
+            //  -----> send read operation to server
+            Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(port), rid);
+            Envelope envelopeRequest = new Envelope(request, criptoManager.signRequest(request, getPrivateKey()));
             send(envelopeRequest, port);
-            /***** SIMULATE ATTACKER: send replayed messages to the server *****/
-        /*
-        if(isReplayFlag()){
-            	this.replayAttacker.sendReplays(envelopeRequest, 2);
-            }
-            /*******************************************************************/
-        /*
-        if (!checkNonce(envelopeResponse.getResponse(), port)) {
-                return new Response(false, -13, null);
-                //throw new FreshnessException(errorMessage);
-            }
-            if (!criptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)) {
-                return new Response(false, -14, null);
-                //throw new IntegrityException(errorMessage);
-            }
-            //checkRead(envelopeResponse.getResponse());
-            return envelopeResponse.getResponse();   //if it has exceptions they are already inside with the correct error code
-            
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        	return new Response(false, -12, null);
-            //throw new OperationTimeoutException("There was a problem with the connection, please try again!");
-        } 
-        return null;*/
+
+        } catch (ClassNotFoundException |
+                NonceTimeoutException   |
+                IOException e) {
+                throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
+            } 
     }
 
 	//////////////////////////////////////////////////
@@ -957,4 +882,24 @@ public class ClientEndpoint {
         }
         return 0;
     }
+    
+    private static String getServerAddressFromFile(){
+    	File file = new File("server_address.txt");
+
+		String address = null;
+
+		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
+
+			address = br.readLine();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(address == null){
+			return "localhost";
+		}
+		else{
+			return address;
+		}
+	}
 }
