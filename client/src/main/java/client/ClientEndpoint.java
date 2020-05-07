@@ -881,24 +881,11 @@ public class ClientEndpoint {
         }
         return 0;
     }
+
+    private HashMap<PublicKey, Integer> initiateServersPorts(String username){
+        return criptoManager.initiateServersPorts(username, nServers);
+
+    }
     
-    private static String getServerAddressFromFile(){
-    	File file = new File("server_address.txt");
 
-		String address = null;
-
-		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
-
-			address = br.readLine();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if(address == null){
-			return "localhost";
-		}
-		else{
-			return address;
-		}
-	}
 }
