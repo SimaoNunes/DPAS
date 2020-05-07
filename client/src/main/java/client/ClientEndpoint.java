@@ -58,6 +58,7 @@ public class ClientEndpoint {
         setPublicKey(cryptoManager.getPublicKeyFromKs(userName, userName));
         setServerPublicKey(cryptoManager.getPublicKeyFromKs(userName, "server"));
         setUsername(userName);
+        serversPorts = initiateServersPorts();
         setServerAddress(getServerAddressFromFile());
 
         serversNonces = new HashMap<PublicKey, byte[]>();
@@ -888,24 +889,11 @@ public class ClientEndpoint {
         }
         return 0;
     }
+
+    private HashMap<PublicKey, Integer> initiateServersPorts(){
+        return criptoManager.initiateServersPorts(userName, nServers);
+
+    }
     
-    private static String getServerAddressFromFile(){
-    	File file = new File("server_address.txt");
 
-		String address = null;
-
-		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
-
-			address = br.readLine();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		if(address == null){
-			return "localhost";
-		}
-		else{
-			return address;
-		}
-	}
 }

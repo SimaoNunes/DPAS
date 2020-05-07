@@ -17,12 +17,14 @@ import java.security.SignatureException;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
+import com.sun.tools.sjavac.comp.dependencies.PublicApiCollector;
 import library.Envelope;
 import library.Request;
 import library.Response;
@@ -166,4 +168,39 @@ public class CryptoManager {
         }
         return null;
     }
+
+	HashMap<PublicKey, Integer> initiateServersPorts(String userName, int nServers){
+
+		HashMap<PublicKey, Integer> result = new HashMap<>();
+
+		int i = 0;
+
+		char[] passphrase = "changeit".toCharArray();
+		KeyStore ks = null;
+
+		try{
+
+			ks = KeyStore.getInstance("JKS");
+			ks.load(new FileInputStream("keystores/" + userName + "_keystore"), passphrase);
+
+		} catch (CertificateException e) {
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		} catch (KeyStoreException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		while(i < nServers){
+			try {
+				result.put(ks.getCertificate("server" + String.valueOf(9000 + i)).getPublicKey(), 9000 + i);
+				i++;
+			} catch (KeyStoreException e) {
+				e.printStackTrace();
+			}
+		}
+		return result;
+	}
 }

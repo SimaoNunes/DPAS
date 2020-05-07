@@ -8,6 +8,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.PublicKey;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,6 +22,7 @@ public class Listener implements Runnable{
     private Response result = null;
     private CryptoManager criptoManager = null;
     private Thread listenerThread;
+    private ConcurrentHashMap<PublicKey, byte[]> nonces;
     private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Response>> answers = null;
 
     public Listener(ServerSocket ss, int nQuorum, String userName){
@@ -27,6 +30,7 @@ public class Listener implements Runnable{
         listenerName = userName;
         criptoManager = new CryptoManager();
         answers = new ConcurrentHashMap<>();
+        nonces = new ConcurrentHashMap<>();
         endpoint = ss;
         this.nQuorum = nQuorum;
         newListener();
@@ -68,14 +72,20 @@ public class Listener implements Runnable{
 
             // when Envelope has a request (nonce requests)
             if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("NONCE")) {
-                Response response         = new Response(true, criptoManager.generateClientNonce());
+                byte[] nonce = criptoManager.generateClientNonce();
+                nonces.put(envelope.getRequest().getPublicKey(), nonce);
+                Response response         = new Response(true, nonce);
                 Envelope responseEnvelope = new Envelope(response, criptoManager.signResponse(response, criptoManager.getPrivateKeyFromKs(listenerName)));
                 outStream.writeObject(responseEnvelope);
             }
             // when Envelope has a response (read value)
             else if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("VALUE")) {
-                // checkar o nonce primeiro .... slack 
-                result = checkAnswer(envelope);
+                if(checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceClient())){
+                    result = checkAnswer(envelope);
+                }
+                else{
+                    //old message or attacker
+                }
             }
 
             inStream.close();
@@ -95,7 +105,7 @@ public class Listener implements Runnable{
 
     private Response checkAnswer(Envelope envelope){
         Response response = envelope.getResponse();
-        //FALTA CHECKAR INTEGRITY E FRESHNESS
+        //FALTA CHECKAR INTEGRITY
         //FALTA CHECKAR SE SAO EXCEPTIONS
 
         if(answers.containsKey(response.getTs())){
@@ -136,6 +146,14 @@ public class Listener implements Runnable{
 
         }
         return null;
+    }
+
+    private boolean checkNonce(PublicKey key, byte[] nonce){
+        if(nonces.containsKey(key) && Arrays.equals(nonces.get(key), nonce)) {
+            nonces.put(key, null);
+            return true;
+        }
+        return false;
     }
 
     /*private boolean containsResponse(Set<Response> responses, Response response){

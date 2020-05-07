@@ -269,7 +269,7 @@ public class Server implements Runnable {
     
     private void write(Request request, ObjectOutputStream outStream) {
         // Get userName from keystore
-        if(request.getTs() > (int) usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst()) {  // if ts' > ts then (ts, val) := (ts', v')
+        if(request.getTs() > usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst()) {  // if ts' > ts then (ts, val) := (ts', v')
 
             usersBoards.get(userIdMap.get(request.getPublicKey())).setFirst(request.getTs());  // ts = ts'
 
