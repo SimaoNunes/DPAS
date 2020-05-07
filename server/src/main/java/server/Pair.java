@@ -3,30 +3,29 @@ package server;
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Pair implements Serializable {
+public class Pair<F, S> implements Serializable {
 
-    private AtomicInteger timestamp;
-    private AnnouncementBoard announcementBoard;
+    private F first;
+    private S second;
 
-    protected Pair(int timestamp, AnnouncementBoard announcementBoard){
-        this.timestamp = new AtomicInteger(timestamp);
-        this.announcementBoard = announcementBoard;
+    public Pair(F first, S second) {
+        this.first = first;
+        this.second = second;
     }
 
-    public void setTimestamp(int timestamp) {
-        this.timestamp.set(timestamp);
+    public void setFirst(F first) {
+        this.first = first;
     }
 
-    public int getTimestamp() {
-        return timestamp.get();
+    public void setSecond(S second) {
+        this.second = second;
     }
 
-
-    public void setAnnouncementBoard(AnnouncementBoard announcementBoard) {
-        this.announcementBoard = announcementBoard;
+    public F getFirst() {
+        return first;
     }
 
-    public AnnouncementBoard getAnnouncementBoard() {
-        return announcementBoard;
+    public S getSecond() {
+        return second;
     }
 }

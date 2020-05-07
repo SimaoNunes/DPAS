@@ -57,9 +57,9 @@ public class Server implements Runnable {
 
     /***************** Atomic Register variables ******************/
     
-    private HashMap<String, Pair> usersBoards = null;
-    private ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> listening = null;
-
+    private HashMap<String, Pair<Integer, AnnouncementBoard>> usersBoards = null;
+    private ConcurrentHashMap<String, ConcurrentHashMap<String, Pair<Integer, Integer>>> listening = null;
+    //Pair<Integer, Integer> -> <rid, number of posts to read>
     /**************************************************************/
 
 
@@ -267,9 +267,9 @@ public class Server implements Runnable {
     
     private void write(Request request, ObjectOutputStream outStream) {
         // Get userName from keystore
-        if(request.getTs() > usersBoards.get(userIdMap.get(request.getPublicKey())).getTimestamp()) {  // if ts' > ts then (ts, val) := (ts', v')
+        if(request.getTs() > (int) usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst()) {  // if ts' > ts then (ts, val) := (ts', v')
 
-            usersBoards.get(userIdMap.get(request.getPublicKey())).setTimestamp(request.getTs());  // ts = ts'
+            usersBoards.get(userIdMap.get(request.getPublicKey())).setFirst(request.getTs());  // ts = ts'
 
             String username = userIdMap.get(request.getPublicKey());                    //val = v'
             String path = announcementBoardsPath + username + "/";
@@ -295,6 +295,7 @@ public class Server implements Runnable {
 
             try {
                 saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
+                 usersBoards.get(userIdMap.get(request.getPublicKey())).getSecond().addAnnouncement(announcementObject); //update val with the new post
             } catch (IOException e) {
                 send(new Response(false, -9, request.getNonceClient()), outStream);
             }
@@ -304,16 +305,16 @@ public class Server implements Runnable {
 
         }
 
-        for(Map.Entry<String, Integer> entry : listening.get(request.getPublicKeyToReadFrom()).entrySet()){
+        for(Map.Entry<String, Pair<Integer, Integer>> entry : listening.get(request.getPublicKeyToReadFrom()).entrySet()){
             // -----> One way Handshake
             String[] address = getClientAddress(entry.getKey());
-            Socket socket = null;
-            try {
-                socket = new Socket(address[0], Integer.parseInt(address[1]));
-                ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-                //send(new Response) trigger ⟨ al, Send | q , [ V ALUE , listening [q], ts, val] ⟩ ;
-                outputStream.close();
-                socket.close();
+            try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket(address[0], Integer.parseInt(address[1])).getOutputStream())) {
+                int rid = entry.getValue().getFirst();
+                int number = entry.getValue().getSecond();
+                int ts = usersBoards.get(entry.getKey()).getFirst();
+                JSONObject objectToSend = usersBoards.get(entry.getKey()).getSecond().getAnnouncements(number);
+
+                //send(new Request("VALUE", rid, ts, nonce, objectToSend, Integer.parseInt(serverPort)), outputStream);
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -329,7 +330,7 @@ public class Server implements Runnable {
         //trigger ⟨ al, Send | p , [ A CK , ts] ⟩ ;
 
         if(!dropOperationFlag) {
-            send(new Response(true, request.getNonceClient(), usersBoards.get(userIdMap.get(request.getPublicKey())).getTimestamp()), outStream);
+            send(new Response(true, request.getNonceClient(), usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst()), outStream);
         } else {
             System.out.println("DROPPED POST");
         }
@@ -391,7 +392,7 @@ public class Server implements Runnable {
     private void read(Request request, ObjectOutputStream outStream, ObjectInputStream inStream) {
 
         if(listening.contains(userIdMap.get(request.getPublicKeyToReadFrom()))){  //someone is already reading that board
-            listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).put(userIdMap.get(request.getPublicKey()), request.getRid());  //listening [p] := r ;
+            listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).put(userIdMap.get(request.getPublicKey()), new Pair(request.getRid(), request.getNumber()));  //listening [p] := r ;
         }
         else{
             listening.put(userIdMap.get(request.getPublicKeyToReadFrom()), new ConcurrentHashMap<>()); //listening [p] := r ;
@@ -493,7 +494,7 @@ public class Server implements Runnable {
 
 
     private void readComplete(Request request){
-        if(request.getRid() == listening.get(request.getPublicKeyToReadFrom()).get(request.getPublicKey())){
+        if(request.getRid() == listening.get(request.getPublicKeyToReadFrom()).get(request.getPublicKey()).getFirst()){
             listening.get(request.getPublicKeyToReadFrom()).remove(request.getPublicKey());
         }
     }
@@ -504,7 +505,7 @@ public class Server implements Runnable {
     //////////////////////////////////////////////
     
     private void wtsRequest(Request request, ObjectOutputStream outStream) {
-    	int wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getTimestamp();
+    	int wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst();
     	send(new Response(true, request.getNonceClient(), wts), outStream);
     }
     
@@ -559,6 +560,29 @@ public class Server implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         } 
+    }
+
+    private void send(Request request, ObjectOutputStream outputStream){
+        try {
+            // Sign response
+            byte[] signature = cryptoManager.signRequest(request, cryptoManager.getPrivateKey());
+            /***** SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash] *****/
+            if(integrityFlag) {
+                //request.setSuccess(false);  --> alteramos outras coisas
+                //request.setErrorCode(-33);
+            }
+            /************************************************************************************************************/
+            /***** SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)] *****/
+            if(replayFlag && !handshake){
+                outputStream.writeObject(oldEnvelope);
+            }
+            /*********************************************************************************************************************/
+            else{
+                outputStream.writeObject(new Envelope(request, signature));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private Envelope sendReceive(Request serverRequest, ObjectOutputStream outputStream, ObjectInputStream inputStream) {
