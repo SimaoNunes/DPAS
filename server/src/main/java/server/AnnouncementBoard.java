@@ -2,6 +2,7 @@ package server;
 
 import java.io.Serializable;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 public class AnnouncementBoard implements Serializable{
     
@@ -11,6 +12,28 @@ public class AnnouncementBoard implements Serializable{
     protected AnnouncementBoard(String user, JSONArray list){
         this.annoucements = list;
         this.user = user;
+    }
+
+    public void addAnnouncement(JSONObject object){
+        this.annoucements.add(object);
+    }
+
+    public JSONObject getAnnouncements(int number){
+        JSONArray annoucementsList = new JSONArray();
+
+        if(number == 0){
+            annoucementsList = getAnnoucements();
+        }
+        else{
+            int i = 0;
+            while (i < number){
+                annoucementsList.add(annoucementsList.get(annoucementsList.size() - i));
+                i++;
+            }
+        }
+        JSONObject announcementsToSend =  new JSONObject();
+        announcementsToSend.put("announcementList", annoucementsList);
+        return announcementsToSend;
     }
 
     public void setAnnoucements(JSONArray annoucements) {
