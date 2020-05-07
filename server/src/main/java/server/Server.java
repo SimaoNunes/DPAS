@@ -303,7 +303,24 @@ public class Server implements Runnable {
 
         }
 
-        //for(ConcurrentHashMap.KeySetView<String, Integer> entry : listening.get(request.getPublicKey()).keySet()
+        for(Map.Entry<String, Integer> entry : listening.get(request.getPublicKeyToReadFrom()).entrySet()){
+            // -----> One way Handshake
+            String[] address = getClientAddress(entry.getKey());
+            Socket socket = null;
+            try {
+                socket = new Socket(address[0], Integer.parseInt(address[1]));
+                ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                //send(new Response) trigger ⟨ al, Send | q , [ V ALUE , listening [q], ts, val] ⟩ ;
+                outputStream.close();
+                socket.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+            //send
+        }
 
         //forall q ∈ Π such that listening [q] ̸ = ⊥ do
             //trigger ⟨ al, Send | q , [ VALUE , listening [q], ts, val] ⟩ ;
@@ -815,6 +832,26 @@ public class Server implements Runnable {
             }
         }
         return true;
+    }
+
+    private String[] getClientAddress(String client){
+        try(BufferedReader reader = new BufferedReader(new FileReader("../clients_addresses.txt"))){
+            String line;
+            while((line = reader.readLine()) != null){
+                String[] splitted = line.split(":");
+                if(splitted[0].equals(client)){
+                    String[] result = new String[2];
+                    result[0] = splitted[1];
+                    result[1] = splitted[2];
+                    return result;
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
     
 }
