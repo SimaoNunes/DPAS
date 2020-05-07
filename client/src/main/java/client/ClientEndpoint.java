@@ -56,10 +56,8 @@ public class ClientEndpoint {
     	cryptoManager = new CryptoManager();
         setPrivateKey(cryptoManager.getPrivateKeyFromKs(userName));
         setPublicKey(cryptoManager.getPublicKeyFromKs(userName, userName));
-        setServerPublicKey(cryptoManager.getPublicKeyFromKs(userName, "server"));
         setUsername(userName);
         serversPorts = initiateServersPorts();
-        setServerAddress(getServerAddressFromFile());
 
         serversNonces = new HashMap<PublicKey, byte[]>();
         clientNonces  = new HashMap<PublicKey, byte[]>();
@@ -197,7 +195,7 @@ public class ClientEndpoint {
 
     private Envelope askForServerNonce(PublicKey key, int port) throws NonceTimeoutException {
         try {
-        	return sendReceive(new Envelope(new Request("NONCE", key)), port).getResponse();
+        	return sendReceive(new Envelope(new Request("NONCE", key)), port);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -225,14 +223,14 @@ public class ClientEndpoint {
     	}
     }
 
-    private boolean checkNonce(Response response, int port){
-        if(Arrays.equals(response.getNonce(), getClientNonce(port))) {
-            setClientNonce(port, null);
-            setServerNonce(port, null);
+    private boolean checkNonce(Response response){
+        if(Arrays.equals(response.getNonce(), getClientNonce(response.getServerKey()))) {
+            setClientNonce(response.getServerKey(), null);
+            setServerNonce(response.getServerKey(), null);
             return true;
         }
-        setClientNonce(port, null);
-        setServerNonce(port, null);
+        setClientNonce(response.getServerKey(), null);
+        setServerNonce(response.getServerKey(), null);
         return false;
     }    
 
@@ -337,7 +335,7 @@ public class ClientEndpoint {
                 this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /********************************************************************/
-            if(!checkNonce(envelopeResponse.getResponse(), port)) {
+            if(!checkNonce(envelopeResponse.getResponse())) {
                 throw new FreshnessException(registerErrorMessage);
             }
             if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)) {
