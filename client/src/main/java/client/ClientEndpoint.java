@@ -22,12 +22,12 @@ public class ClientEndpoint {
 	
 	private Map<PublicKey, byte[]> serversNonces = null;
 	private Map<PublicKey, byte[]> clientNonces  = null;
+	private Map<PublicKey, Integer> serversPorts = null;
 	
     private String serverAddress = null;
 
     private PrivateKey privateKey = null;
     private PublicKey publicKey  = null;
-    private Map<PublicKey, Integer> serversPorts = null;
     private String userName = null;
     private CryptoManager cryptoManager = null;
 
@@ -193,9 +193,10 @@ public class ClientEndpoint {
 //						//
 //////////////////////////
 
-    private Envelope askForServerNonce(PublicKey key, int port) throws NonceTimeoutException {
+    private Envelope askForServerNonce(PublicKey clientKey, int port) throws NonceTimeoutException {
         try {
-        	return sendReceive(new Envelope(new Request("NONCE", key)), port);
+        	Request nonceRequest = new Request("NONCE", clientKey);
+        	return sendReceive(new Envelope(nonceRequest, cryptoManager.signRequest(nonceRequest, getPrivateKey())), port);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
