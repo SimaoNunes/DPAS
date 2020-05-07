@@ -2,7 +2,6 @@ package client;
 
 import library.Envelope;
 import library.Response;
-import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -11,8 +10,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Listener implements Runnable{
@@ -59,6 +56,7 @@ public class Listener implements Runnable{
         newListener();
 
         try{
+
             // inStream receives objects
             inStream = new ObjectInputStream(socket.getInputStream());
             // outStream sends objects
@@ -76,6 +74,7 @@ public class Listener implements Runnable{
             }
             // when Envelope has a response (read value)
             else {
+                // checkar o nonce primeiro .... slack 
                 result = checkAnswer(envelope);
             }
              
