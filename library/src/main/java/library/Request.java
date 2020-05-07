@@ -10,7 +10,6 @@ public class Request implements Serializable {
     private String operation;
     private byte[] nonceServer = null;   //server generated the nonce
     private byte[] nonceClient = null;   //client generated the nonce
-    private byte[] oneWayNonce = null;
     private PublicKey publicKey = null;
     private PublicKey publicKeyToReadFrom = null;
     private String message = null;
@@ -79,11 +78,12 @@ public class Request implements Serializable {
     public Request(String operation, int rid, int ts, byte[] nonce, JSONObject object, int port){
         this.operation = operation;
         this.jsonObject = object;
-        this.oneWayNonce = nonce;
+        this.nonceClient = nonce;
         this.rid = rid;
         this.ts = ts;
         this.port = port;
     }
+
 
     public int getRid() {
         return rid;
