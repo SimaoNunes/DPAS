@@ -503,7 +503,7 @@ public class ClientEndpoint {
         
         Listener listener = null;
         try {
-            listener = new Listener(new ServerSocket(getClientPort()), nQuorum);
+            listener = new Listener(new ServerSocket(getClientPort()), nQuorum, getUsername());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -553,7 +553,7 @@ public class ClientEndpoint {
         return new JSONObject();
     }
 
-    public void readMethod(String announcUserName, int number, int port, int rid) throws OperationTimeoutException {
+    public void readMethod(String announcUserName, int number, int port, int rid) {
         try {
             //  -----> Handshake one way
             startOneWayHandshake(getPublicKey(), port);
@@ -569,7 +569,9 @@ public class ClientEndpoint {
         } catch (ClassNotFoundException |
                 NonceTimeoutException   |
                 IOException e) {
-                throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
+                e.printStackTrace();
+                //Impossible to know if fault from the server when doing handshake or drop attack
+                //throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
             } 
     }
 
