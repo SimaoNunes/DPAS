@@ -3,6 +3,7 @@ package library;
 import org.json.simple.JSONObject;
 
 import java.io.Serializable;
+import java.security.PublicKey;
 
 public class Response implements Serializable {
 
@@ -14,6 +15,7 @@ public class Response implements Serializable {
     private int ts = 0;
     private int rid = 0;
     private int port = 0;
+    private PublicKey serverKey;
 
 
     public Response(byte[] nonce) {
@@ -26,9 +28,10 @@ public class Response implements Serializable {
         this.ts = ts;
     }
 
-    public Response(boolean success, byte[] nonce) {
+    public Response(boolean success, byte[] nonce, PublicKey serverKey) {
         this.success = success;
         this.nonce = nonce;
+        this.serverKey = serverKey;
     }
 
     public Response(boolean success, int errorCode, byte[] nonce) {
@@ -45,8 +48,6 @@ public class Response implements Serializable {
         this.rid = rid;
     }
     
-    
-
 
     //VALUE
 
@@ -57,6 +58,14 @@ public class Response implements Serializable {
         this.rid = rid;
         this.ts = ts;
         this.port = port;
+    }
+    
+    public PublicKey getServerKey() {
+    	return serverKey;
+    }
+    
+    public void setServerKey(PublicKey serverKey) {
+    	this.serverKey = serverKey;
     }
 
     public int getPort() {
@@ -120,7 +129,7 @@ public class Response implements Serializable {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         String s ="";
         s += this.success + " ";
 

@@ -55,11 +55,13 @@ public class Server implements Runnable {
     
     /**************************************************/
 
+    
     /***************** Atomic Register variables ******************/
     
     private HashMap<String, Pair<Integer, AnnouncementBoard>> usersBoards = null;
     private ConcurrentHashMap<String, ConcurrentHashMap<String, Pair<Integer, Integer>>> listening = null;
     //Pair<Integer, Integer> -> <rid, number of posts to read>
+    
     /**************************************************************/
 
 
