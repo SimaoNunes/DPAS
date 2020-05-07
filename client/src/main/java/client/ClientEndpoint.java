@@ -249,22 +249,20 @@ public class ClientEndpoint {
         // Port of first server
         int port = PORT;
         // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
-        if(getNFaults() == 0) {
-        	return registerMethod(port);
-        }
+
         // Variables to store responses and their results
         int responses = 0;
         int[] results = new int[nServers];
         // Threads that will make the requests to the server
         CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
         // Ask for wts to all Servers get results
-        for (int i = 0; i < tasks.length; i++) {
+        for (PublicKey key : serversPorts.keySet()) {
 
             int finalPort = port;
 
-            tasks[i] = CompletableFuture.supplyAsync(() -> {
+            tasks[serversPorts.get(key) - PORT] = CompletableFuture.supplyAsync(() -> {
 				try {
-					return registerMethod(finalPort);
+					return registerMethod(key);
 				} catch (AlreadyRegisteredException e) {
 					return -2;
 				} catch (UnknownPublicKeyException e) {
@@ -315,11 +313,11 @@ public class ClientEndpoint {
         }
     }
 
-    public int registerMethod(int port) throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int registerMethod(PublicKey key) throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
-        startHandshake(port);
+        startHandshake(serversPorts.get(key));
 
-        Request request = new Request("REGISTER", getPublicKey(), getServerNonce(port), getClientNonce(port));
+        Request request = new Request("REGISTER", getPublicKey(), getServerNonce(key), getClientNonce(key));
 
         Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request, getPrivateKey()));
         
@@ -329,7 +327,7 @@ public class ClientEndpoint {
         }
         /******************************************************************************************/
         try {
-            Envelope envelopeResponse = sendReceive(envelopeRequest, port);
+            Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(key));
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
                 this.replayAttacker.sendReplays(envelopeRequest, 2);
