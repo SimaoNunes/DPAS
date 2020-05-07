@@ -56,10 +56,8 @@ public class ClientEndpoint {
     	cryptoManager = new CryptoManager();
         setPrivateKey(cryptoManager.getPrivateKeyFromKs(userName));
         setPublicKey(cryptoManager.getPublicKeyFromKs(userName, userName));
-        setServerPublicKey(cryptoManager.getPublicKeyFromKs(userName, "server"));
         setUsername(userName);
         serversPorts = initiateServersPorts();
-        setServerAddress(getServerAddressFromFile());
 
         serversNonces = new HashMap<PublicKey, byte[]>();
         clientNonces  = new HashMap<PublicKey, byte[]>();
@@ -889,7 +887,7 @@ public class ClientEndpoint {
     }
 
     private HashMap<PublicKey, Integer> initiateServersPorts(){
-        return criptoManager.initiateServersPorts(userName, nServers);
+        return cryptoManager.initiateServersPorts(userName, nServers);
 
     }
     

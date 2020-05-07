@@ -128,7 +128,7 @@ public class Server implements Runnable {
                     case "REGISTER":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
                             cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
-                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-2}))
                             {
                             register(envelope.getRequest(), outStream);
@@ -137,7 +137,7 @@ public class Server implements Runnable {
                     case "POST":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
-                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5})) 
                             {
                             write(envelope.getRequest(), outStream);
@@ -146,7 +146,7 @@ public class Server implements Runnable {
                     case "POSTGENERAL":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
-                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5}))
                             {
                             writeGeneral(envelope.getRequest(), outStream);
@@ -155,7 +155,7 @@ public class Server implements Runnable {
                     case "READ":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
-                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
                             {
                             read(envelope.getRequest(), outStream, inStream);
@@ -164,7 +164,7 @@ public class Server implements Runnable {
                     case "READGENERAL":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
-                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10}))
                         	{
                             readGeneral(envelope.getRequest(), outStream);
@@ -186,7 +186,7 @@ public class Server implements Runnable {
                     case "WTS":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
-                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getNonceServer()) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1}))
                         	{
                             wtsRequest(envelope.getRequest(), outStream);
@@ -255,7 +255,7 @@ public class Server implements Runnable {
             userIdMap.put(request.getPublicKey(), username);
             saveUserIdMap();
             if(!dropOperationFlag) {
-            	send(new Response(true, request.getNonceClient()), outStream);
+            	send(new Response(true, request.getClientNonce()), outStream);
             } else {
             	System.out.println("DROPPED REGISTER");
             }
@@ -299,7 +299,7 @@ public class Server implements Runnable {
                 saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
                  usersBoards.get(userIdMap.get(request.getPublicKey())).getSecond().addAnnouncement(announcementObject); //update val with the new post
             } catch (IOException e) {
-                send(new Response(false, -9, request.getNonceClient()), outStream);
+                send(new Response(false, -9, request.getClientNonce()), outStream);
             }
 
             incrementTotalAnnouncs();
@@ -332,7 +332,7 @@ public class Server implements Runnable {
         //trigger ⟨ al, Send | p , [ A CK , ts] ⟩ ;
 
         if(!dropOperationFlag) {
-            send(new Response(true, request.getNonceClient(), usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst()), outStream);
+            send(new Response(true, request.getClientNonce(), usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst()), outStream);
         } else {
             System.out.println("DROPPED POST");
         }
@@ -373,14 +373,14 @@ public class Server implements Runnable {
         try {
             saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
         } catch (IOException e) {
-            send(new Response(false, -9, request.getNonceClient()), outStream);
+            send(new Response(false, -9, request.getClientNonce()), outStream);
         }
 
         incrementTotalAnnouncs();
         saveTotalAnnouncements();
         if(!dropOperationFlag) {
 
-            send(new Response(true, request.getNonceClient()), outStream);
+            send(new Response(true, request.getClientNonce()), outStream);
         } else {
             System.out.println("DROPPED POST");
         }
@@ -444,7 +444,7 @@ public class Server implements Runnable {
             send(new Response(true, announcementsToSend, clientResponse.getNonce(), request.getRid()), outStream);
 
         } catch(Exception e) {
-            send(new Response(false, -8, request.getNonceClient()), outStream);
+            send(new Response(false, -8, request.getClientNonce()), outStream);
         }
     }
     
@@ -490,7 +490,7 @@ public class Server implements Runnable {
                 System.out.println("DROPPED READ GENERAL");
             }
         } catch(Exception e) {
-            send(new Response(false, -8, request.getNonceClient()), outStream);
+            send(new Response(false, -8, request.getClientNonce()), outStream);
         }
     }
 
@@ -508,7 +508,7 @@ public class Server implements Runnable {
     
     private void wtsRequest(Request request, ObjectOutputStream outStream) {
     	int wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst();
-    	send(new Response(true, request.getNonceClient(), wts), outStream);
+    	send(new Response(true, request.getClientNonce(), wts), outStream);
     }
     
     
@@ -824,56 +824,56 @@ public class Server implements Runnable {
                 // ## UserNotRegistered ## -> check if user is registed
                 case -1:
                     if(!userIdMap.containsKey(request.getPublicKey())) {
-                        send(new Response(false, -1, request.getNonceClient()), outStream);
+                        send(new Response(false, -1, request.getClientNonce()), outStream);
                         return false;
                     }
                     break;
                 // ## AlreadyRegistered ## -> check if user is already registered
                 case -2:
                     if (userIdMap.containsKey(request.getPublicKey())) {
-                        send(new Response(false, -2, request.getNonceClient()), outStream);
+                        send(new Response(false, -2, request.getClientNonce()), outStream);
                         return false;
                     }
                     break;
                 // ## UserNotRegistered ## -> [READ] check if user TO READ FROM is registered
                 case -3:
                     if(!userIdMap.containsKey(request.getPublicKeyToReadFrom())) {
-                        send(new Response(false, -3, request.getNonceClient()), outStream);
+                        send(new Response(false, -3, request.getClientNonce()), outStream);
                         return false;
                     }
                     break;
                 // ## MessageTooBig ## -> Check if message length exceeds 255 characters
                 case -4:
                     if(request.getMessage().length() > 255) {
-                        send(new Response(false, -4, request.getNonceClient()), outStream);
+                        send(new Response(false, -4, request.getClientNonce()), outStream);
                         return false;
                     }
                     break;
                 // ## InvalidAnnouncement ## -> checks if announcements refered by the user are valid
                 case -5:
                     if(request.getAnnouncements() != null && !checkValidAnnouncements(request.getAnnouncements())) {
-                        send(new Response(false, -5, request.getNonceClient()), outStream); 
+                        send(new Response(false, -5, request.getClientNonce()), outStream);
                         return false;      
                     }
                     break;
                 // ## InvalidPostsNumber ## -> check if number of requested posts are bigger than zero
                 case -6:
                     if (request.getNumber() < 0) {
-                        send(new Response(false, -6, request.getNonceClient()), outStream);
+                        send(new Response(false, -6, request.getClientNonce()), outStream);
                         return false;
                     }
                     break;
                 // ## UnknownPublicKey ## -> Check if key is null or known by the Server. If method is read, check if key to ready from is null
                 case -7:
                     if (request.getPublicKey() == null || cryptoManager.checkKey(request.getPublicKey()) == "" || (request.getOperation().equals("READ") && (request.getPublicKeyToReadFrom() == null || cryptoManager.checkKey(request.getPublicKeyToReadFrom()) == ""))) {
-                        send(new Response(false, -7, request.getNonceClient()), outStream);
+                        send(new Response(false, -7, request.getClientNonce()), outStream);
                         return false;
                     }
                     break;
                 // ## TooMuchAnnouncements ## -> Check if user is trying to read more announcements that Board number of announcements
                 case -10:
                     if ((request.getOperation().equals("READ") && request.getNumber() > getDirectoryList(request.getPublicKey()).length) || (request.getOperation().equals("READGENERAL") && request.getNumber() > getDirectoryList(null).length) ) {
-                        send(new Response(false, -10, request.getNonceClient()), outStream);
+                        send(new Response(false, -10, request.getClientNonce()), outStream);
                         return false;
                     }
                     break;

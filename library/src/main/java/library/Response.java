@@ -22,6 +22,12 @@ public class Response implements Serializable {
         this.nonce = nonce;
     }
 
+    public Response(boolean success, byte[] nonce) {
+        this.success = success;
+        this.nonce = nonce;
+
+    }
+
     public Response(boolean success, byte[] nonce, int ts) {
         this.success = success;
         this.nonce = nonce;

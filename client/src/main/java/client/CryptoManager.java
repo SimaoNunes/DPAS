@@ -19,13 +19,6 @@ import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-
-import com.sun.tools.sjavac.comp.dependencies.PublicApiCollector;
-import library.Envelope;
 import library.Request;
 import library.Response;
 
