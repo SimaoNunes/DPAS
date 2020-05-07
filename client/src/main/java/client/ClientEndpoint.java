@@ -22,12 +22,12 @@ public class ClientEndpoint {
 	
 	private Map<PublicKey, byte[]> serversNonces = null;
 	private Map<PublicKey, byte[]> clientNonces  = null;
+	private Map<PublicKey, Integer> serversPorts = null;
 	
     private String serverAddress = null;
 
     private PrivateKey privateKey = null;
     private PublicKey publicKey  = null;
-    private Map<PublicKey, Integer> serversPorts = null;
     private String userName = null;
     private CryptoManager cryptoManager = null;
 
