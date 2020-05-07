@@ -22,15 +22,14 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
-import java.util.HashMap;
-
 public class Server implements Runnable {
 	
 	
     private ServerSocket server;
     private String serverPort;
-    private Map<PublicKey, String> userIdMap = null;
+    private ConcurrentHashMap<PublicKey, String> userIdMap = null;
+	private ConcurrentHashMap<PublicKey, byte[]> serverNonces = null;
+	private ConcurrentHashMap<PublicKey, byte[]> clientsNonces = null;
     private AtomicInteger totalAnnouncements;
     private CryptoManager cryptoManager = null;
 
@@ -60,7 +59,6 @@ public class Server implements Runnable {
     
     private HashMap<String, Pair<Integer, AnnouncementBoard>> usersBoards = null;
     private ConcurrentHashMap<String, ConcurrentHashMap<String, Pair<Integer, Integer>>> listening = null;
-    //Pair<Integer, Integer> -> <rid, number of posts to read>
     
     /**************************************************************/
 
@@ -71,6 +69,8 @@ public class Server implements Runnable {
         serverPort		  = port + "";  //adding "" converts int to string
 
         cryptoManager = new CryptoManager(port);
+        serverNonces = new ConcurrentHashMap<>();
+    	clientsNonces = new ConcurrentHashMap<>();
         oldResponse   = new Response(cryptoManager.generateRandomNonce());
         oldEnvelope   = new Envelope(oldResponse, null);
         
