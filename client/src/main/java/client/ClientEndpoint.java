@@ -375,13 +375,11 @@ public class ClientEndpoint {
         // Threads that will make the requests to the server
         CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
         // Make a post (write) to all Server and get results
-        for (int i = 0; i < tasks.length; i++) {
+        for (PublicKey key : serversPorts.keySet()) {
 
-            int finalPort = port;
-
-            tasks[i] = CompletableFuture.supplyAsync(() -> {
+            tasks[serversPorts.get(key) - PORT] = CompletableFuture.supplyAsync(() -> {
                 try {
-                    return postMethod(message, announcs, isGeneral, finalPort, wts);
+                    return postMethod(message, announcs, isGeneral, key, wts);
                 } catch (MessageTooBigException e) {
                     return -4;
                 } catch (UserNotRegisteredException e) {
@@ -437,9 +435,9 @@ public class ClientEndpoint {
         return result;
     }
     
-    public int postMethod(String message, int[] announcs, boolean isGeneral, int port, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-        startHandshake(port);
-        return write(getPublicKey(), message, announcs, isGeneral, getServerNonce(port), getClientNonce(port), getPrivateKey(), port, ts);
+    public int postMethod(String message, int[] announcs, boolean isGeneral, PublicKey key, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+        startHandshake(serversPorts.get(key));
+        return write(getPublicKey(), message, announcs, isGeneral, getServerNonce(key), getClientNonce(key), getPrivateKey(), serversPorts.get(key), ts);
     }
 
 	public int write(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port, int ts) throws InvalidAnnouncementException,
@@ -469,7 +467,7 @@ public class ClientEndpoint {
                 this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /**********************************************/
-            if(!checkNonce(envelopeResponse.getResponse(), port)){
+            if(!checkNonce(envelopeResponse.getResponse())){
                 throw new FreshnessException(errorMessage);
             }
             if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)){
