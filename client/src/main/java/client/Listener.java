@@ -67,17 +67,16 @@ public class Listener implements Runnable{
             System.out.println("JUST RECEIVED A NEW ENVELOPE");
 
             // when Envelope has a request (nonce requests)
-            if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("NONCE")){
+            if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("NONCE")) {
                 Response response         = new Response(true, criptoManager.generateClientNonce());
                 Envelope responseEnvelope = new Envelope(response, criptoManager.signResponse(response, criptoManager.getPrivateKeyFromKs(listenerName)));
                 outStream.writeObject(responseEnvelope);
             }
             // when Envelope has a response (read value)
-            else {
+            else if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("VALUE")) {
                 // checkar o nonce primeiro .... slack 
                 result = checkAnswer(envelope);
             }
-             
 
             inStream.close();
             socket.close();

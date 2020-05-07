@@ -34,10 +34,10 @@ public class ClientEndpoint {
     int rid = 0;
 
     /************ Replication variables *************/
-    private int nFaults;
     private static final int PORT = 9000;
-    private int nServers;
-    private int nQuorum;
+    private int nFaults = 1;
+    private int nServers = 4;
+    private int nQuorum = 2;
  
 
     private String registerErrorMessage = "There was a problem with your request, we cannot infer if you registered. Please try to login.";
@@ -50,16 +50,13 @@ public class ClientEndpoint {
 
     /****************************************************/
 
-    public ClientEndpoint(String userName, int faults) {
+    public ClientEndpoint(String userName) {
     	criptoManager = new CryptoManager();
         setPrivateKey(criptoManager.getPrivateKeyFromKs(userName));
         setPublicKey(criptoManager.getPublicKeyFromKs(userName, userName));
         setServerPublicKey(criptoManager.getPublicKeyFromKs(userName, "server"));
         setUsername(userName);
         setServerAddress(getServerAddressFromFile());
-        setNFaults(faults);
-        nServers = faults * 3 + 1;
-        nQuorum = (nServers + faults)/2;
 
         serverNonce = new byte[nServers][];
         clientNonce = new byte[nServers][];
