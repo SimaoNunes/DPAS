@@ -490,7 +490,6 @@ public class ClientEndpoint {
     //////////////////////////////////////////////////
 
     public JSONObject read(String announcUserName, int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-        int port = PORT;
         rid += 1;
 
         //forall t > 0 do answers [t] := [⊥] N ;
@@ -503,13 +502,10 @@ public class ClientEndpoint {
             e.printStackTrace();
         }
 
-        for (int i = 0; i < nServers; i++) {
+        for (PublicKey key : serversPorts.keySet()) {
 
-            int finalPort = port;
+            CompletableFuture.runAsync(() -> readMethod(announcUserName, number, key, rid));
 
-            CompletableFuture.runAsync(() -> readMethod(announcUserName, number, finalPort, rid));
-            
-            port++;
         }
 
         while(listener.getResult() == null){
@@ -548,26 +544,27 @@ public class ClientEndpoint {
         return new JSONObject();
     }
 
-    public void readMethod(String announcUserName, int number, int port, int rid) {
+    public void readMethod(String announcUserName, int number, PublicKey key, int rid) {
         try {
             //  -----> Handshake one way
-            startOneWayHandshake(port);
+            startOneWayHandshake(serversPorts.get(key));
 
             //  -----> get public key to read from
             PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(userName, announcUserName);
 
             //  -----> send read operation to server
-            Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(port), rid);
+            Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(key), rid);
             Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request, getPrivateKey()));
-            send(envelopeRequest, port);
+            send(envelopeRequest, serversPorts.get(key));
 
         } catch (ClassNotFoundException |
                 NonceTimeoutException   |
-                IOException e) {
+                IOException             |
+                IntegrityException   e) {
                 e.printStackTrace();
                 //Impossible to know if fault from the server when doing handshake or drop attack
                 //throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
-            } 
+        }
     }
 
 	//////////////////////////////////////////////////
@@ -672,24 +669,26 @@ public class ClientEndpoint {
 
     public Response readGeneralMethod(int number, int port) {
 
-        try {
+        /*try {
             startHandshake(port);
         } catch (NonceTimeoutException e) {
             return new Response(false, -11, null);
         }
 
-        Request request = new Request("READGENERAL", getPublicKey(), number, getServerNonce(port), getClientNonce(port));
+        Request request = new Request("READGENERAL", getPublicKey(), number, getServerNonce(publicKey), getClientNonce(port));
     	
     	Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request, getPrivateKey()));
 
         try {
             Envelope envelopeResponse = sendReceive(envelopeRequest, port);
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
-            if(isReplayFlag()){
+        /*
+        if(isReplayFlag()){
             	this.replayAttacker.sendReplays(new Envelope(request, null), 2);
             }
             /*******************************************************************/
-            if (!checkNonce(envelopeResponse.getResponse(), port)) {
+        /*
+        if (!checkNonce(envelopeResponse.getResponse(), port)) {
                 return new Response(false, -13, null);
                 //throw new FreshnessException(errorMessage);
             }
@@ -706,7 +705,7 @@ public class ClientEndpoint {
             return new Response(false, -12, null);
         	//throw new OperationTimeoutException("There was a problem with the connection, please try again!");
         }
-        return null;
+        */return null;
     }
     
 	//////////////////////////////////////////////////
@@ -717,22 +716,18 @@ public class ClientEndpoint {
         // Port of first server
         int port = PORT;
         // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
-        if(getNFaults() == 0) {
-        	return askForSingleWts(port);
-        }
+
         // Variables to store responses and their results
         int responses = 0;
         int[] results = new int[nServers];
         // Threads that will make the requests to the server
         CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
         // Ask for wts to all Servers get results
-        for (int i = 0; i < tasks.length; i++) {
+        for (PublicKey key : serversPorts.keySet()) {
 
-            int finalPort = port;
-
-            tasks[i] = CompletableFuture.supplyAsync(() -> {
+            tasks[serversPorts.get(key) - PORT] = CompletableFuture.supplyAsync(() -> {
 				try {
-					return askForSingleWts(finalPort);
+					return askForSingleWts(key);
 				} catch (UserNotRegisteredException e) {
 					return -1;
             	} catch (FreshnessException e) {
@@ -782,18 +777,18 @@ public class ClientEndpoint {
 	}
 
     
-	private int askForSingleWts(int port) throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
+	private int askForSingleWts(PublicKey key) throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
 		// Make handshake with server
-		startHandshake(port);
+		startHandshake(serversPorts.get(key));
         // Make wts Request sign it and send inside envelope
-        Request request = new Request("WTS", getPublicKey(), getServerNonce(port), getClientNonce(port));
+        Request request = new Request("WTS", getPublicKey(), getServerNonce(key), getClientNonce(key));
     	Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request, getPrivateKey()));
     	// Get wts inside a Response
     	int singleWts = -666;
 		try {
-			Envelope envelopeResponse = sendReceive(envelopeRequest, port);
+			Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(key));
 			// Verify Response's Freshness
-            if(!checkNonce(envelopeResponse.getResponse(), port)){
+            if(!checkNonce(envelopeResponse.getResponse())){
                 throw new FreshnessException(errorMessage);
             }
 	    	// Verify Response's Integrity
