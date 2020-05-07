@@ -218,8 +218,8 @@ public class ClientEndpoint {
         setClientNonce(port, criptoManager.generateClientNonce());
     }
 
-    private void startOneWayHandshake(PublicKey publicKey, int port) throws NonceTimeoutException {
-        setServerNonce(port, askForServerNonce(publicKey, port));
+    private void startOneWayHandshake(int port) throws NonceTimeoutException {
+        setServerNonce(port, askForServerNonce(getPublicKey(), port));
     }
 
     private boolean checkNonce(Response response, int port){
@@ -442,10 +442,10 @@ public class ClientEndpoint {
     
     public int postMethod(String message, int[] announcs, boolean isGeneral, int port, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(port);
-        return post(getPublicKey(), message, announcs, isGeneral, getServerNonce(port), getClientNonce(port), getPrivateKey(), port, ts);
+        return write(getPublicKey(), message, announcs, isGeneral, getServerNonce(port), getClientNonce(port), getPrivateKey(), port, ts);
     }
 
-	public int post(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port, int ts) throws InvalidAnnouncementException,
+	public int write(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port, int ts) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
         
@@ -556,7 +556,7 @@ public class ClientEndpoint {
     public void readMethod(String announcUserName, int number, int port, int rid) {
         try {
             //  -----> Handshake one way
-            startOneWayHandshake(getPublicKey(), port);
+            startOneWayHandshake(port);
 
             //  -----> get public key to read from
             PublicKey pubKeyToReadFrom = criptoManager.getPublicKeyFromKs(userName, announcUserName);
