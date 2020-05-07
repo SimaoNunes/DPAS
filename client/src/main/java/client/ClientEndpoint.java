@@ -50,7 +50,7 @@ public class ClientEndpoint {
 
     /****************************************************/
 
-    public ClientEndpoint(String userName, int faults){
+    public ClientEndpoint(String userName, int faults) {
     	criptoManager = new CryptoManager();
         setPrivateKey(criptoManager.getPrivateKeyFromKs(userName));
         setPublicKey(criptoManager.getPublicKeyFromKs(userName, userName));
@@ -442,10 +442,10 @@ public class ClientEndpoint {
     
     public int postMethod(String message, int[] announcs, boolean isGeneral, int port, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(port);
-        return write(getPublicKey(), message, announcs, isGeneral, getServerNonce(port), getClientNonce(port), getPrivateKey(), port, ts);
+        return post(getPublicKey(), message, announcs, isGeneral, getServerNonce(port), getClientNonce(port), getPrivateKey(), port, ts);
     }
 
-	public int write(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port, int ts) throws InvalidAnnouncementException,
+	public int post(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port, int ts) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
         

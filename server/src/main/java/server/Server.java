@@ -293,7 +293,6 @@ public class Server implements Runnable {
                 announcementObject.put("ref_announcements", annoucementsList);
             }
 
-
             try {
                 saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
             } catch (IOException e) {
