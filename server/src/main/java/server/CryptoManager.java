@@ -51,10 +51,10 @@ public class CryptoManager {
 			// Convert response to byteArray
 			out.writeObject(response);
 			out.flush();
-			byte[] requestBytes = bos.toByteArray();
+			byte[] responseBytes = bos.toByteArray();
 			// Sign with private key
 			signature.initSign(key);
-			signature.update(requestBytes);
+			signature.update(responseBytes);
 			return signature.sign();
 		} catch (
 			InvalidKeyException		 |

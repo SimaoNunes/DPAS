@@ -6,6 +6,7 @@ import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Collection;
@@ -18,12 +19,16 @@ public class Listener implements Runnable{
 
     private ServerSocket endpoint;
     private int nQuorum;
+    private String listenerName = null;
     private Response result = null;
+    private CryptoManager criptoManager = null;
     private Thread listenerThread;
     private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Response>> answers = null;
 
-    public Listener(ServerSocket ss, int nQuorum){
+    public Listener(ServerSocket ss, int nQuorum, String userName){
 
+        listenerName = userName;
+        criptoManager = new CryptoManager();
         answers = new ConcurrentHashMap<>();
         endpoint = ss;
         this.nQuorum = nQuorum;
@@ -43,6 +48,7 @@ public class Listener implements Runnable{
 
         Socket socket = null;
         ObjectInputStream inStream;
+        ObjectOutputStream outStream;
 
         try{
             socket = endpoint.accept();
@@ -53,13 +59,29 @@ public class Listener implements Runnable{
         newListener();
 
         try{
+            // inStream receives objects
             inStream = new ObjectInputStream(socket.getInputStream());
-            System.out.println("JUST RECEIVED A NEW MESSAGE");
+            // outStream sends objects
+            outStream = new ObjectOutputStream(socket.getOutputStream());
+
+            // receive an envelope
             Envelope envelope = (Envelope) inStream.readObject();
-            result = checkAnswer(envelope);
+            System.out.println("JUST RECEIVED A NEW ENVELOPE");
+
+            // when Envelope has a request (nonce requests)
+            if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("NONCE")){
+                Response response         = new Response(true, criptoManager.generateClientNonce());
+                Envelope responseEnvelope = new Envelope(response, criptoManager.signResponse(response, criptoManager.getPrivateKeyFromKs(listenerName)));
+                outStream.writeObject(responseEnvelope);
+            }
+            // when Envelope has a response (read value)
+            else {
+                result = checkAnswer(envelope);
+            }
+             
+
             inStream.close();
             socket.close();
-
 
         } catch (IOException e) {
             e.printStackTrace();
