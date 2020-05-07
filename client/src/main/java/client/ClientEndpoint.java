@@ -173,6 +173,8 @@ public class ClientEndpoint {
     private Envelope sendReceive(Envelope envelope, int port) throws IOException, ClassNotFoundException {
         Socket socket = createSocket(port);
         socket.setSoTimeout(4000);
+        // Sign envelope
+        envelope.setSignature(cryptoManager.signRequest(envelope.getRequest(), getPrivateKey()));
         createOutputStream(socket).writeObject(envelope);
         Envelope responseEnvelope = (Envelope) createInputStream(socket).readObject();
         return responseEnvelope;
@@ -182,6 +184,8 @@ public class ClientEndpoint {
         Socket socket = createSocket(port);
         socket.setSoTimeout(4000);
         ObjectOutputStream out = createOutputStream(socket);
+        // Sign envelope
+        envelope.setSignature(cryptoManager.signRequest(envelope.getRequest(), getPrivateKey()));
         out.writeObject(envelope);
         out.close();
     }
@@ -195,8 +199,7 @@ public class ClientEndpoint {
 
     private Envelope askForServerNonce(PublicKey clientKey, int port) throws NonceTimeoutException {
         try {
-        	Request nonceRequest = new Request("NONCE", clientKey);
-        	return sendReceive(new Envelope(nonceRequest, cryptoManager.signRequest(nonceRequest, getPrivateKey())), port);
+        	return sendReceive(new Envelope(new Request("NONCE", clientKey)), port);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -249,10 +252,6 @@ public class ClientEndpoint {
     public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         // Port of first server
         int port = PORT;
-        // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
-        if(getNFaults() == 0) {
-        	return registerMethod(port);
-        }
         // Variables to store responses and their results
         int responses = 0;
         int[] results = new int[nServers];
@@ -322,7 +321,7 @@ public class ClientEndpoint {
 
         Request request = new Request("REGISTER", getPublicKey(), getServerNonce(port), getClientNonce(port));
 
-        Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request, getPrivateKey()));
+        Envelope envelopeRequest = new Envelope(request);
         
         /***** SIMULATE ATTACKER: changing the userX key to userY pubKey [in this case user3] *****/
         if(isIntegrityFlag()) {
@@ -369,10 +368,6 @@ public class ClientEndpoint {
         // Ask Servers for actual wts in case we don't have it in memory
         if(wts == -1) {
         	askForWts();
-        }
-        // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
-        if(getNFaults() == 0) {
-            return postMethod(message, announcs, isGeneral, port, wts);
         }
         // Variables to store responses and their results
         int responses = 0;
@@ -458,7 +453,7 @@ public class ClientEndpoint {
             request = new Request("POST", key, message, announcs, serverNonce, clientNonce, ts);
         }
 
-        Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request, privateKey));
+        Envelope envelopeRequest = new Envelope(request);
 
         /***** SIMULATE ATTACKER: changing the message (tamper) *****/
         if(isIntegrityFlag()) {
@@ -565,7 +560,7 @@ public class ClientEndpoint {
 
             //  -----> send read operation to server
             Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(port), rid);
-            Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request, getPrivateKey()));
+            Envelope envelopeRequest = new Envelope(request);
             send(envelopeRequest, port);
 
         } catch (ClassNotFoundException |
@@ -585,35 +580,6 @@ public class ClientEndpoint {
         int responses = 0;
         int counter = 0;
         int port = PORT;
-        // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
-        if(getNFaults() == 0){
-            Response response = readGeneralMethod(number, port);
-
-            if(response.getSuccess()){
-                return response.getJsonObject();
-            }
-            else{
-                switch (response.getErrorCode()) {
-                    case (-1):
-                        throw new UserNotRegisteredException("User not Registered");
-                    case (-6):
-                        throw new InvalidPostsNumberException("Invalid announcements number to be read!");
-                    case (-10):
-                        throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
-                    case (-11):
-                        throw new NonceTimeoutException("Nonce timeout");
-                    case (-12):
-                        throw new OperationTimeoutException("Operation timeout");
-                    case (-13):
-                        throw new FreshnessException("Freshness Exception");
-                    case (-14):
-                        throw new IntegrityException("Integrity Exception");
-
-                    default:
-                        break;
-                }
-            }
-        }
 
         Response[] results = new Response[(getNFaults() * 3 + 1) / 2 + 1];
 
@@ -687,7 +653,7 @@ public class ClientEndpoint {
 
         Request request = new Request("READGENERAL", getPublicKey(), number, getServerNonce(port), getClientNonce(port));
     	
-    	Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request, getPrivateKey()));
+    	Envelope envelopeRequest = new Envelope(request);
 
         try {
             Envelope envelopeResponse = sendReceive(envelopeRequest, port);
@@ -794,7 +760,7 @@ public class ClientEndpoint {
 		startHandshake(port);
         // Make wts Request sign it and send inside envelope
         Request request = new Request("WTS", getPublicKey(), getServerNonce(port), getClientNonce(port));
-    	Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request, getPrivateKey()));
+    	Envelope envelopeRequest = new Envelope(request);
     	// Get wts inside a Response
     	int singleWts = -666;
 		try {
