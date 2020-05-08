@@ -523,7 +523,6 @@ public class ClientEndpoint {
             PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
 
             //  -----> send read operation to server
-
             Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, serverNonce, rid);
             Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
             send(envelopeRequest, serversPorts.get(key));
@@ -537,6 +536,31 @@ public class ClientEndpoint {
                 //Impossible to know if fault from the server when doing handshake or drop attack
                 //throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
         }
+    }
+
+    private void readComplete(String announcUserName, PublicKey key, int rid){
+
+        try {
+            //  -----> Handshake one way
+            byte[] serverNonce = startOneWayHandshake(serversPorts.get(key));
+
+            //  -----> get public key to read from
+            PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
+
+            //  -----> send read complete operation to server
+            Request request = new Request("READCOMPLETE", getPublicKey(), pubKeyToReadFrom, serverNonce, rid);
+            Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
+            send(envelopeRequest, serversPorts.get(key));
+
+        } catch (ClassNotFoundException |
+                NonceTimeoutException   |
+                IOException             |
+                IntegrityException   e) {
+            e.printStackTrace();
+            //Impossible to know if fault from the server when doing handshake or drop attack
+            //throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
+        }
+    
     }
 
 	//////////////////////////////////////////////////
