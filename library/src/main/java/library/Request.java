@@ -19,6 +19,7 @@ public class Request implements Serializable {
     private int rid;
     private int port;
     private JSONObject jsonObject = null;
+    private String username;
     
     ////////////////////////////////////////////////////////////////
     //				                                         	  //
@@ -41,11 +42,12 @@ public class Request implements Serializable {
     }
 
     // Register
-    public Request(String operation, PublicKey key, byte[] serverNonce, byte[] clientNonce){
+    public Request(String operation, PublicKey key, byte[] serverNonce, byte[] clientNonce, String username){
     	this.operation = operation;
         this.publicKey = key;
         this.serverNonce = serverNonce;
         this.clientNonce = clientNonce;
+        this.username = username;
     }
 
     // Register with one way handshake
@@ -100,6 +102,14 @@ public class Request implements Serializable {
         this.port = port;
     }
 
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
     public int getRid() {
         return rid;

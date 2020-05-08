@@ -285,11 +285,9 @@ public class ClientEndpoint {
     public int registerMethod(PublicKey serverKey) throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
 
-        System.out.println("ir buscar o do: " + serversPorts.get(serverKey) + " " + Base64.getEncoder().encodeToString(getClientNonce(serverKey)));
-
         byte[] serverNonce = startHandshake(serverKey, false);
 
-        Request request = new Request("REGISTER", getPublicKey(), serverNonce, getClientNonce(serverKey));
+        Request request = new Request("REGISTER", getPublicKey(), serverNonce, getClientNonce(serverKey), userName);
 
         Envelope envelopeRequest = new Envelope(request);
         
