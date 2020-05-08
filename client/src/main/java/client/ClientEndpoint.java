@@ -202,12 +202,12 @@ public class ClientEndpoint {
     }
 
     private boolean checkNonce(Response response) {
-        System.out.println(response.getNonce() + " " + getClientNonce(response.getServerKey()));
-        if(Arrays.equals(response.getNonce(), getClientNonce(response.getServerKey()))) {
-            setClientNonce(response.getServerKey(), null);
+        System.out.println(response.getNonce() + " " + getClientNonce(response.getPublicKey()));
+        if(Arrays.equals(response.getNonce(), getClientNonce(response.getPublicKey()))) {
+            setClientNonce(response.getPublicKey(), null);
             return true;
         }
-        setClientNonce(response.getServerKey(), null);
+        setClientNonce(response.getPublicKey(), null);
         return false;
     }    
 
@@ -468,7 +468,7 @@ public class ClientEndpoint {
         
         Listener listener = null;
         try {
-            listener = new Listener(new ServerSocket(getClientPort()), nQuorum, getUsername());
+            listener = new Listener(new ServerSocket(getClientPort()), nQuorum, getUsername(), getPublicKey());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -480,12 +480,11 @@ public class ClientEndpoint {
         }
 
         while(listener.getResult() == null){
-            //wait for quorum
+            System.out.println("tou a espera");
         }
 
-        Response result = listener.getResult();
-        System.out.println("RESULT: " + result.getSuccess() + result.getErrorCode());
-
+        Request result = listener.getResult();
+        System.out.println(result.toString());
         // send read complete to server
         for (PublicKey key : serversPorts.keySet()) {
 
@@ -493,7 +492,7 @@ public class ClientEndpoint {
 
         }
 
-        if(result.getSuccess()){
+        /*if(result.getSuccess()){
             return result.getJsonObject();
         }
         else{
@@ -519,8 +518,9 @@ public class ClientEndpoint {
                     break;
 
             }
-        }
-        return new JSONObject();
+        }*/
+        System.out.println(result.getJsonObject().toJSONString());
+        return result.getJsonObject();
     }
 
     public void readMethod(String announcUserName, int number, PublicKey serverKey, int rid) {

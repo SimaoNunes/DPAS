@@ -15,7 +15,7 @@ public class Response implements Serializable {
     private int ts = 0;
     private int rid = 0;
     private int port = 0;
-    private PublicKey serverKey;
+    private PublicKey publicKey;
 
 
     public Response(byte[] nonce) {
@@ -32,7 +32,7 @@ public class Response implements Serializable {
         this.success = success;
         this.nonce = nonce;
         this.ts = ts;
-        this.serverKey = key;
+        this.publicKey = key;
     }
 
     public Response(boolean success, byte[] nonce, int ts) {
@@ -41,10 +41,10 @@ public class Response implements Serializable {
         this.ts = ts;
     }
 
-    public Response(boolean success, byte[] nonce, PublicKey serverKey) {
+    public Response(boolean success, byte[] nonce, PublicKey publicKey) {
         this.success = success;
         this.nonce = nonce;
-        this.serverKey = serverKey;
+        this.publicKey = publicKey;
     }
 
     public Response(boolean success, int errorCode, byte[] nonce) {
@@ -73,12 +73,12 @@ public class Response implements Serializable {
         this.port = port;
     }
     
-    public PublicKey getServerKey() {
-    	return serverKey;
+    public PublicKey getPublicKey() {
+    	return publicKey;
     }
     
-    public void setServerKey(PublicKey serverKey) {
-    	this.serverKey = serverKey;
+    public void setServerKey(PublicKey publicKey) {
+    	this.publicKey = publicKey;
     }
 
     public int getPort() {

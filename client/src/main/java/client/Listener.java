@@ -1,6 +1,7 @@
 package client;
 
 import library.Envelope;
+import library.Request;
 import library.Response;
 
 import java.io.IOException;
@@ -18,28 +19,30 @@ public class Listener implements Runnable{
 
     private ServerSocket endpoint;
     private int nQuorum;
-    private Response result = null;
-    private CryptoManager criptoManager = null;
+    private Request result = null;
+    private CryptoManager cryptoManager = null;
     private Thread listenerThread;
+    private PublicKey clientKey;
     private ConcurrentHashMap<PublicKey, byte[]> nonces;
-    private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Response>> answers = null;
+    private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Request>> answers = null;
 
-    public Listener(ServerSocket ss, int nQuorum, String userName){
+    public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key){
 
-        criptoManager = new CryptoManager(userName);
+        cryptoManager = new CryptoManager(userName);
         answers = new ConcurrentHashMap<>();
         nonces = new ConcurrentHashMap<>();
         endpoint = ss;
         this.nQuorum = nQuorum;
+        this.clientKey = key;
         newListener();
 
     }
 
-    public Response getResult() {
+    public Request getResult() {
         return result;
     }
 
-    public void setResult(Response result) {
+    public void setResult(Request result) {
         this.result = result;
     }
 
@@ -70,16 +73,17 @@ public class Listener implements Runnable{
 
             // when Envelope has a request (nonce requests)
             if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("NONCE")) {
-                byte[] nonce = criptoManager.generateClientNonce();
+                byte[] nonce = cryptoManager.generateClientNonce();
                 nonces.put(envelope.getRequest().getPublicKey(), nonce);
-                Response response         = new Response(true, nonce);
-                Envelope responseEnvelope = new Envelope(response, criptoManager.signResponse(response));
+                Response response         = new Response(true, nonce, clientKey);
+                Envelope responseEnvelope = new Envelope(response, cryptoManager.signResponse(response));
                 outStream.writeObject(responseEnvelope);
             }
-            // when Envelope has a response (read value)
+            // when Envelope has a VALUE request but is a response
             else if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("VALUE")) {
                 if(checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getClientNonce())){
                     result = checkAnswer(envelope);
+                    System.out.println(result.toString());
                 }
                 else{
                     //old message or attacker
@@ -101,40 +105,44 @@ public class Listener implements Runnable{
         listenerThread.start();
     }
 
-    private Response checkAnswer(Envelope envelope){
-        Response response = envelope.getResponse();
+    private Request checkAnswer(Envelope envelope){ //do not forget that VALUE message is a request
+        Request request = envelope.getRequest();
         //FALTA CHECKAR INTEGRITY
         //FALTA CHECKAR SE SAO EXCEPTIONS
 
-        if(answers.containsKey(response.getTs())){
-            answers.get(response.getTs()).put(response.getPort(), response);
-            if(answers.get(response.getTs()).size() > nQuorum){
-
-                Response result = checkQuorum(answers.get(response.getTs()).values());
+        if(answers.containsKey(request.getTs())){
+            answers.get(request.getTs()).put(request.getPort(), request);
+            if(answers.get(request.getTs()).size() > nQuorum){
+                System.out.println("temos uma linha");
+                Request result = checkQuorum(answers.get(request.getTs()).values());
                 if(result != null){
+                    System.out.println("temos quorum");
                     listenerThread.interrupt();
-                    return result;
+                    return request;
                 }
 
             }
         }
 
         else{
-            answers.put(response.getTs(), new ConcurrentHashMap<>());
-            answers.get(response.getTs()).put(response.getPort(), response);
+            answers.put(request.getTs(), new ConcurrentHashMap<>());
+            answers.get(request.getTs()).put(request.getPort(), request);
 
         }
         return null;
 
     }
 
-    private Response checkQuorum(Collection<Response> line){
+    private Request checkQuorum(Collection<Request> line){
+        System.out.println("check quroum");
         HashMap<String, Integer> counter = new HashMap<>();
 
-        for(Response entry: line){
+        for(Request entry: line){
             if(counter.containsKey(entry.toString())){
+                System.out.println("1");
                 counter.put(entry.toString(), counter.get(entry.toString()) + 1);
                 if(counter.get(entry.toString()) > nQuorum){
+                    System.out.println("2");
                     return entry;
                 }
             }
@@ -148,7 +156,7 @@ public class Listener implements Runnable{
 
     private boolean checkNonce(PublicKey key, byte[] nonce){
         if(nonces.containsKey(key) && Arrays.equals(nonces.get(key), nonce)) {
-            nonces.put(key, null);
+            nonces.remove(key);
             return true;
         }
         return false;

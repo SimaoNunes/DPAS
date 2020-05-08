@@ -336,7 +336,7 @@ public class Server implements Runnable {
                     int ts = usersBoards.get(entry.getKey()).getFirst();
                     JSONObject objectToSend = usersBoards.get(entry.getKey()).getSecond().getAnnouncements(number);
 
-                    send(new Request("VALUE", rid, ts, nonce, objectToSend, Integer.parseInt(serverPort)), outputStream);
+                    send(new Request("VALUE", rid, ts, nonce, objectToSend, Integer.parseInt(serverPort), cryptoManager.getPublicKeyFromKs("server")), outputStream);
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -458,7 +458,7 @@ public class Server implements Runnable {
             // ------> Handshake one way
             byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
 
-            //send(new Request("VALUE", request.getRid(), usersBoards.get(userIdMap.get(request.getPublicKeyToReadFrom())).getFirst(), nonce, announcementsToSend, Integer.parseInt(serverPort)), outputStream);
+            send(new Request("VALUE", request.getRid(), usersBoards.get(userIdMap.get(request.getPublicKeyToReadFrom())).getFirst(), nonce, announcementsToSend, Integer.parseInt(serverPort), cryptoManager.getPublicKeyFromKs("server")), outputStream);
 
         } catch(Exception e) {
             e.printStackTrace();
@@ -936,7 +936,8 @@ public class Server implements Runnable {
 
     private byte[] startOneWayHandshake(String username) throws NonceTimeoutException, IntegrityException {
         Envelope nonceEnvelope = askForClientNonce(cryptoManager.getPublicKeyFromKs("server"), getClientPort(username));
-        if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), userIdMap.get(nonceEnvelope.getRequest().getPublicKey()))) {
+        System.out.println("consegui enviar e tenho o nonce: " + nonceEnvelope.getResponse().getNonce());
+        if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), userIdMap.get(nonceEnvelope.getResponse().getPublicKey()))) {
             return nonceEnvelope.getResponse().getNonce();
         } else {
             throw new IntegrityException("Integrity Exception");

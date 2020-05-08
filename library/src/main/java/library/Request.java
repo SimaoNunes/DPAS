@@ -100,15 +100,23 @@ public class Request implements Serializable {
     }
 
     //VALUE
-    public Request(String operation, int rid, int ts, byte[] nonce, JSONObject object, int port){
+    public Request(String operation, int rid, int ts, byte[] nonce, JSONObject object, int port, PublicKey key){
         this.operation = operation;
         this.jsonObject = object;
         this.clientNonce = nonce;
         this.rid = rid;
         this.ts = ts;
         this.port = port;
+        this.publicKey = key;
     }
 
+    public JSONObject getJsonObject() {
+        return jsonObject;
+    }
+
+    public void setJsonObject(JSONObject jsonObject) {
+        this.jsonObject = jsonObject;
+    }
 
     public String getUsername() {
         return username;
@@ -205,14 +213,26 @@ public class Request implements Serializable {
 	public void setPort(int port) {
 		this.port = port;
 	}
-	
-	public JSONObject getJSONObject() {
-		return jsonObject;
-	}
 
-	public void setJSONObject(JSONObject jsonObject) {
-		this.jsonObject = jsonObject;
-	}
-	
-	
+    @Override
+    public String toString() {
+        String s ="";
+        s += this.operation + " ";
+
+        if(this.jsonObject != null){
+            s += this.jsonObject.toJSONString() + " ";
+        }
+
+        if(this.ts != 0){
+            s += this.ts + " ";
+        }
+
+        if(this.rid != 0){
+            s += this.rid + " ";
+        }
+
+        s += '\n';
+
+        return s;
+    }
 }
