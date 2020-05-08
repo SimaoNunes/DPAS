@@ -164,4 +164,22 @@ public class Request implements Serializable {
 	public void setPublicKeyToReadFrom(PublicKey publicKeyToReadFrom) {
 		this.publicKeyToReadFrom = publicKeyToReadFrom;
 	}
+	
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+	
+	public JSONObject getJSONObject() {
+		return jsonObject;
+	}
+
+	public void setJSONObject(JSONObject jsonObject) {
+		this.jsonObject = jsonObject;
+	}
+	
+	
 }

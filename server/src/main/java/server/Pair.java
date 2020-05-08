@@ -1,7 +1,6 @@
 package server;
 
 import java.io.Serializable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Pair<F, S> implements Serializable {
 

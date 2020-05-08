@@ -44,9 +44,10 @@ public class CryptoManager {
 //	  							   //
 /////////////////////////////////////
     
-	byte[] signResponse(Response response, PrivateKey key) {
+	byte[] signResponse(Response response) {
 		try {
 			// Initialize needed structures
+			PrivateKey myKey = getPrivateKeyFromKs();
 			Signature signature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);
@@ -55,7 +56,7 @@ public class CryptoManager {
 			out.flush();
 			byte[] responseBytes = bos.toByteArray();
 			// Sign with private key
-			signature.initSign(key);
+			signature.initSign(myKey);
 			signature.update(responseBytes);
 			return signature.sign();
 		} catch (
@@ -68,9 +69,10 @@ public class CryptoManager {
 		return new byte[0];
     }
     
-    byte[] signRequest(Request request, PrivateKey key) {
+    byte[] signRequest(Request request) {
 		try {
 			// Initialize needed structures
+			PrivateKey myKey = getPrivateKeyFromKs();
 			Signature signature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);
@@ -79,7 +81,7 @@ public class CryptoManager {
 			out.flush();
 			byte[] requestBytes = bos.toByteArray();
 			// Sign with private key
-			signature.initSign(key);
+			signature.initSign(myKey);
 			signature.update(requestBytes);
 			return signature.sign();
 		} catch (
@@ -92,20 +94,20 @@ public class CryptoManager {
 		return new byte[0];
 	}
 	
-	boolean verifyRequest(Request request, byte[] signature) {
+	boolean verifyRequest(Request request, byte[] signature, String from) {
 		try {
 			// Initialize needed structures
-			PublicKey key = request.getPublicKey();
+			PublicKey keyFrom = getPublicKeyFromKs(from);
 			Signature verifySignature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);
 			// Convert response to byteArray
 			out.writeObject(request);
 			out.flush();
-			byte[] responseBytes = bos.toByteArray();
+			byte[] requestBytes = bos.toByteArray();
 			// Verify signature
-			verifySignature.initVerify(key);
-			verifySignature.update(responseBytes);
+			verifySignature.initVerify(keyFrom);
+			verifySignature.update(requestBytes);
 			return verifySignature.verify(signature);
 		} catch (
 			InvalidKeyException 	 |
@@ -117,10 +119,10 @@ public class CryptoManager {
 		return false;
 	}
 	
-	boolean verifyResponse(Response response, byte[] signature) {
+	boolean verifyResponse(Response response, byte[] signature, String from) {
 		try {
 			// Initialize needed structures
-			PublicKey key = response.getServerKey();
+			PublicKey keyFrom = getPublicKeyFromKs(from);
 			Signature verifySignature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);
@@ -129,7 +131,7 @@ public class CryptoManager {
 			out.flush();
 			byte[] responseBytes = bos.toByteArray();
 			// Verify signature
-			verifySignature.initVerify(key);
+			verifySignature.initVerify(keyFrom);
 			verifySignature.update(responseBytes);
 			return verifySignature.verify(signature);
 		} catch (
@@ -219,7 +221,7 @@ public class CryptoManager {
 //   									 //
 ///////////////////////////////////////////
     
-    public PrivateKey getPrivateKey(){
+    public PrivateKey getPrivateKeyFromKs(){
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
         PrivateKey key = null;
@@ -239,14 +241,14 @@ public class CryptoManager {
         return key;
     }
     
-    PublicKey getPublicKey() {
+    PublicKey getPublicKeyFromKs(String alias) {
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
 
         try{
             ks = KeyStore.getInstance("JKS");
             ks.load(new FileInputStream("keystores/port_" + port + "/keystore"), passphrase);
-            return ks.getCertificate("server").getPublicKey();
+            return ks.getCertificate(alias).getPublicKey();
         } catch (
             CertificateException | 
             NoSuchAlgorithmException | 
