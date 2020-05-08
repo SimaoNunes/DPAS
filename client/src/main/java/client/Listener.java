@@ -82,7 +82,7 @@ public class Listener implements Runnable{
             else if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("VALUE")) {
                 if(checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getClientNonce())){
                     result = checkAnswer(envelope);
-                    System.out.println(result.toString());
+                    System.out.println("result: " + result.toString());
                 }
                 else{
                     //old message or attacker
