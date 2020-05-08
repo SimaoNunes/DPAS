@@ -18,7 +18,6 @@ public class Listener implements Runnable{
 
     private ServerSocket endpoint;
     private int nQuorum;
-    private String listenerName = null;
     private Response result = null;
     private CryptoManager criptoManager = null;
     private Thread listenerThread;
@@ -27,8 +26,7 @@ public class Listener implements Runnable{
 
     public Listener(ServerSocket ss, int nQuorum, String userName){
 
-        listenerName = userName;
-        criptoManager = new CryptoManager();
+        criptoManager = new CryptoManager(userName);
         answers = new ConcurrentHashMap<>();
         nonces = new ConcurrentHashMap<>();
         endpoint = ss;
@@ -75,7 +73,7 @@ public class Listener implements Runnable{
                 byte[] nonce = criptoManager.generateClientNonce();
                 nonces.put(envelope.getRequest().getPublicKey(), nonce);
                 Response response         = new Response(true, nonce);
-                Envelope responseEnvelope = new Envelope(response, criptoManager.signResponse(response, criptoManager.getPrivateKeyFromKs(listenerName)));
+                Envelope responseEnvelope = new Envelope(response, criptoManager.signResponse(response));
                 outStream.writeObject(responseEnvelope);
             }
             // when Envelope has a response (read value)

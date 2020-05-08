@@ -22,6 +22,7 @@ import java.security.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server implements Runnable {
@@ -158,7 +159,7 @@ public class Server implements Runnable {
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
                             {
-                            read(envelope.getRequest(), outStream, inStream);
+                            read(envelope.getRequest(), outStream);
                         }
                         break;
                     case "READGENERAL":
@@ -728,14 +729,14 @@ public class Server implements Runnable {
     
     private void getUserIdMap() {
         try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(userMapPath))) {
-           userIdMap = (Map<PublicKey, String>) in.readObject();
+           userIdMap = (ConcurrentHashMap<PublicKey, String>) in.readObject();
         } catch (ClassNotFoundException c) {
            System.out.println("SERVER ON PORT " + this.serverPort + ": Map<PublicKey, String> class not found");
            c.printStackTrace();
            return;
         }
         catch(FileNotFoundException e){
-            userIdMap = new HashMap<PublicKey, String>();
+            userIdMap = new ConcurrentHashMap<PublicKey, String>();
             createOriginalUserMap();
 
         } catch (IOException e) {
@@ -889,6 +890,15 @@ public class Server implements Runnable {
         return true;
     }
 
+
+    public void setClientNonce(PublicKey clientKey, byte[] clientNonce) {
+    	this.serverNonces.put(clientKey, clientNonce);
+    }
+
+    public byte[] getClientNonce (PublicKey clientKey) {
+        return serverNonces.get(clientKey);
+    }
+
     private int getClientPort(String client){
         try(BufferedReader reader = new BufferedReader(new FileReader("../clients_addresses.txt"))){
             String line;
@@ -908,7 +918,7 @@ public class Server implements Runnable {
 
 
     private byte[] startOneWayHandshake(String username) throws NonceTimeoutException, IntegrityException {
-        Envelope nonceEnvelope = askForClientNonce(cryptoManager.getPublicKey(), getClientPort(username);
+        Envelope nonceEnvelope = askForClientNonce(cryptoManager.getPublicKey(), getClientPort(username));
         if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature())) {
             return nonceEnvelope.getResponse().getNonce();  //FIXME IR BUSCAR KEY DO CLIENT AO KS
         } else {
