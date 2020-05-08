@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -18,11 +19,18 @@ import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import library.Request;
 import library.Response;
 
 public class CryptoManager {
+	
+	String username = null;
+	
+    public CryptoManager(String username){
+        this.username = username;
+    }
 	
 /////////////////////////////////////
 //   							   //
@@ -78,10 +86,10 @@ public class CryptoManager {
 		return new byte[0];
 	}
 	
-	boolean verifyResponse(Response response, byte[] signature, String username) {
+	boolean verifyResponse(Response response, byte[] signature, PublicKey serverKey) {
 		try {
 			// Initialize needed structures
-			PublicKey key = getPublicKeyFromKs(username, "server");
+			PublicKey key = getPublicKeyFromKs("server");
 			Signature verifySignature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);
@@ -124,7 +132,7 @@ public class CryptoManager {
 //									     //
 ///////////////////////////////////////////
     
-    PrivateKey getPrivateKeyFromKs(String username){
+    PrivateKey getPrivateKeyFromKs(){
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
         PrivateKey key = null;
@@ -144,13 +152,13 @@ public class CryptoManager {
         return key;
     }
     
-    PublicKey getPublicKeyFromKs(String userName, String entity){
+    PublicKey getPublicKeyFromKs(String entity){
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
 
         try{
             ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("keystores/" + userName + "_keystore"), passphrase);
+            ks.load(new FileInputStream("keystores/" + username + "_keystore"), passphrase);
             return ks.getCertificate(entity).getPublicKey();
         } catch (
             CertificateException | 
@@ -162,7 +170,7 @@ public class CryptoManager {
         return null;
     }
 
-	HashMap<PublicKey, Integer> initiateServersPorts(String userName, int nServers){
+	HashMap<PublicKey, Integer> initiateServersPorts(int nServers){
 
 		HashMap<PublicKey, Integer> result = new HashMap<>();
 
@@ -174,7 +182,7 @@ public class CryptoManager {
 		try{
 
 			ks = KeyStore.getInstance("JKS");
-			ks.load(new FileInputStream("keystores/" + userName + "_keystore"), passphrase);
+			ks.load(new FileInputStream("keystores/" + username + "_keystore"), passphrase);
 
 		} catch (CertificateException e) {
 			e.printStackTrace();
