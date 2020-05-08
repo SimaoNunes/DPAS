@@ -156,6 +156,7 @@ public class CryptoManager {
         try{
             ks = KeyStore.getInstance("JKS");
             ks.load(new FileInputStream("keystores/" + username + "_keystore"), passphrase);
+			System.out.println("ENTITY: " + entity);
             return ks.getCertificate(entity).getPublicKey();
         } catch (
             CertificateException | 

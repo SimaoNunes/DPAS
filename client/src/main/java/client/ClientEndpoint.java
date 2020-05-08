@@ -475,6 +475,14 @@ public class ClientEndpoint {
 
         Response result = listener.getResult();
         System.out.println("RESULT: " + result.getSuccess() + result.getErrorCode());
+
+        // send read complete to server
+        for (PublicKey key : serversPorts.keySet()) {
+
+            CompletableFuture.runAsync(() -> readComplete(announcUserName, key, rid));
+
+        }
+
         if(result.getSuccess()){
             return result.getJsonObject();
         }
@@ -514,7 +522,6 @@ public class ClientEndpoint {
             PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
 
             //  -----> send read operation to server
-
             Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, serverNonce, rid);
             Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
             send(envelopeRequest, serversPorts.get(serverKey));
@@ -528,6 +535,31 @@ public class ClientEndpoint {
                 //Impossible to know if fault from the server when doing handshake or drop attack
                 //throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
         }
+    }
+
+    private void readComplete(String announcUserName, PublicKey serverKey, int rid){
+
+        try {
+            //  -----> Handshake one way
+            byte[] serverNonce = startHandshake(serverKey, true);
+
+            //  -----> get public key to read from
+            PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
+
+            //  -----> send read complete operation to server
+            Request request = new Request("READCOMPLETE", getPublicKey(), pubKeyToReadFrom, serverNonce, rid);
+            Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
+            send(envelopeRequest, serversPorts.get(serverKey));
+
+        } catch (ClassNotFoundException |
+                NonceTimeoutException   |
+                IOException             |
+                IntegrityException   e) {
+            e.printStackTrace();
+            //Impossible to know if fault from the server when doing handshake or drop attack
+            //throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
+        }
+    
     }
 
 	//////////////////////////////////////////////////
