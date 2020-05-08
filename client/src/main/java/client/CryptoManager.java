@@ -38,8 +38,9 @@ public class CryptoManager {
 //	   							   //
 /////////////////////////////////////
 	
-	byte[] signRequest(Request request, PrivateKey key) {
+	byte[] signRequest(Request request) {
 		try {
+			PrivateKey key = getPrivateKey();
 			// Initialize needed structures
 			Signature signature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -62,8 +63,9 @@ public class CryptoManager {
 		return new byte[0];
 	}
 
-	byte[] signResponse(Response response, PrivateKey key) {
+	byte[] signResponse(Response response) {
 		try {
+			PrivateKey key = getPrivateKey();
 			// Initialize needed structures
 			Signature signature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -132,7 +134,7 @@ public class CryptoManager {
 //									     //
 ///////////////////////////////////////////
     
-    PrivateKey getPrivateKeyFromKs(){
+    PrivateKey getPrivateKey(){
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
         PrivateKey key = null;

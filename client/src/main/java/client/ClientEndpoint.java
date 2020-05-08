@@ -25,7 +25,6 @@ public class ClientEndpoint {
 	
     private String serverAddress = null;
 
-    private PrivateKey privateKey = null;
     private PublicKey publicKey  = null;
     private String userName = null;
     private CryptoManager cryptoManager = null;
@@ -53,7 +52,6 @@ public class ClientEndpoint {
 
     public ClientEndpoint(String username) {
     	cryptoManager = new CryptoManager(username);
-        setPrivateKey(cryptoManager.getPrivateKeyFromKs());
         setPublicKey(cryptoManager.getPublicKeyFromKs(username));
         setUsername(username);
         serversPorts = initiateServersPorts();
@@ -139,14 +137,6 @@ public class ClientEndpoint {
     	this.clientNonces.put(serverKey, clientNonce);
     }
 
-    public PrivateKey getPrivateKey() {
-        return this.privateKey;
-    }
-
-    public void setPrivateKey(PrivateKey privateKey) {
-        this.privateKey = privateKey;
-    }
-
     public PublicKey getPublicKey() {
         return publicKey;
     }
@@ -172,7 +162,7 @@ public class ClientEndpoint {
         Socket socket = createSocket(port);
         socket.setSoTimeout(4000);
         // Sign envelope
-        envelope.setSignature(cryptoManager.signRequest(envelope.getRequest(), getPrivateKey()));
+        envelope.setSignature(cryptoManager.signRequest(envelope.getRequest()));
         createOutputStream(socket).writeObject(envelope);
         Envelope responseEnvelope = (Envelope) createInputStream(socket).readObject();
         return responseEnvelope;
@@ -183,7 +173,7 @@ public class ClientEndpoint {
         socket.setSoTimeout(4000);
         ObjectOutputStream out = createOutputStream(socket);
         // Sign envelope
-        envelope.setSignature(cryptoManager.signRequest(envelope.getRequest(), getPrivateKey()));
+        envelope.setSignature(cryptoManager.signRequest(envelope.getRequest()));
         out.writeObject(envelope);
         out.close();
     }
@@ -435,10 +425,10 @@ public class ClientEndpoint {
     
     public int postMethod(String message, int[] announcs, boolean isGeneral, PublicKey key, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         startHandshake(serversPorts.get(key));
-        return write(getPublicKey(), message, announcs, isGeneral, getServerNonce(key), getClientNonce(key), getPrivateKey(), serversPorts.get(key), ts);
+        return write(getPublicKey(), message, announcs, isGeneral, getServerNonce(key), getClientNonce(key), serversPorts.get(key), ts);
     }
 
-	public int write(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PrivateKey privateKey, int port, int ts) throws InvalidAnnouncementException,
+	public int write(PublicKey key, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, int port, int ts) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
         
@@ -468,7 +458,7 @@ public class ClientEndpoint {
             if(!checkNonce(envelopeResponse.getResponse())){
                 throw new FreshnessException(errorMessage);
             }
-            if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)){
+            if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature())){
                 throw new IntegrityException(errorMessage);
             }
             ResponseChecker.checkPost(envelopeResponse.getResponse());
@@ -553,7 +543,7 @@ public class ClientEndpoint {
             //  -----> send read operation to server
 
             Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, getServerNonce(key), rid);
-            Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request, getPrivateKey()));
+            Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
             send(envelopeRequest, serversPorts.get(key));
 
 
@@ -753,7 +743,7 @@ public class ClientEndpoint {
 		startHandshake(serversPorts.get(key));
         // Make wts Request sign it and send inside envelope
         Request request = new Request("WTS", getPublicKey(), getServerNonce(key), getClientNonce(key));
-    	Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request, getPrivateKey()));
+    	Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
 
     	// Get wts inside a Response
     	int singleWts = -666;
