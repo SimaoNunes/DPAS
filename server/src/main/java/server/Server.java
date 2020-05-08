@@ -172,8 +172,13 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READCOMPLETE":
-                        //checkar o nonce
-                        readComplete(envelope.getRequest());
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
+                            cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature()) &&
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
+                            checkExceptions(envelope.getRequest(), outStream, new int[] {-3}))
+                            {
+                            readComplete(envelope.getRequest());
+                        }
                     case "NONCE":
                         handshake = true;
                         byte[] randomNonce = cryptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
