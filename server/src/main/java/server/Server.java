@@ -433,7 +433,7 @@ public class Server implements Runnable {
 
         Arrays.sort(directoryList);
         JSONParser parser = new JSONParser();
-        try{
+        try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", getClientPort(userIdMap.get(request.getPublicKey()))).getOutputStream())){
             JSONArray annoucementsList = new JSONArray();
             JSONObject announcement;
 
@@ -458,10 +458,10 @@ public class Server implements Runnable {
             // ------> Handshake one way
             byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
 
-            //send(new Response(true, announcementsToSend, nonce, request.getRid()), outStream);
-            send(new Request("VALUE", request.getRid(), usersBoards.get(userIdMap.get(request.getPublicKeyToReadFrom())).getFirst(), nonce, announcementsToSend, Integer.parseInt(serverPort)), outStream);
+            //send(new Request("VALUE", request.getRid(), usersBoards.get(userIdMap.get(request.getPublicKeyToReadFrom())).getFirst(), nonce, announcementsToSend, Integer.parseInt(serverPort)), outputStream);
 
         } catch(Exception e) {
+            e.printStackTrace();
             send(new Response(false, -8, request.getClientNonce()), outStream);
         }
     }
