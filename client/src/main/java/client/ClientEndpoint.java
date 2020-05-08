@@ -1,7 +1,6 @@
 package client;
 
 import exceptions.*;
-import jdk.swing.interop.SwingInterOpUtils;
 import library.Envelope;
 import library.Request;
 import library.Response;
@@ -13,9 +12,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -225,6 +224,11 @@ public class ClientEndpoint {
         // Variables to store responses and their results
         int responses = 0;
         int[] results = new int[nServers];
+        Set<Thread> threadSet1 = Thread.getAllStackTraces().keySet();
+        System.out.println("THREADS ANTES DO REGISTER");
+        for (Thread t : threadSet1) {
+            System.out.println(t.toString());
+        }
         // Threads that will make the requests to the server
         CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
         // Ask for wts to all Servers get results
@@ -253,19 +257,31 @@ public class ClientEndpoint {
             if (tasks[i].isDone()) {
                 try {
                     results[responses++] = tasks[i].get().intValue();
+                    System.out.println("TEMOS " + responses + " RESPOSTAS!");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (ExecutionException e) {
                     e.printStackTrace();
                 }
-                if (responses > nQuorum) // OBA
+                if (responses > nQuorum)
                     break;
             }
             if (i == tasks.length - 1)
                 i = 0;
         }
+        // Kill remaining CompletableFutures
+        for (int i = 0; i < tasks.length; i++) {
+            if (!tasks[i].isDone()) {
+                    tasks[i].cancel(true);
+                    System.out.println("KILL CONFIRMED");
+            }
+        }
+        Set<Thread> threadSet2 = Thread.getAllStackTraces().keySet();
+        System.out.println("THREADS DEPOIS DO REGISTER");
+        for (Thread t : threadSet2) {
+            System.out.println(t.toString());
+        }
         // Get Quorum from the result to make a decision regarding the responses
-        System.out.println(results);
         int result = getMajorityOfQuorumInt(results);
         switch (result) {
             case (-2):
@@ -287,8 +303,6 @@ public class ClientEndpoint {
 
         byte[] serverNonce = startHandshake(serverKey, false);
 
-        System.out.println(getClientNonce(serverKey));
-
         Request request = new Request("REGISTER", getPublicKey(), serverNonce, getClientNonce(serverKey), userName);
 
         Envelope envelopeRequest = new Envelope(request);
@@ -301,15 +315,12 @@ public class ClientEndpoint {
         try {
             Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(serverKey));
 
-            System.out.println(envelopeResponse.getResponse().getNonce());
-
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
                 this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /********************************************************************/
             if(!checkNonce(envelopeResponse.getResponse())) {
-                System.out.println("entrei aqui");
                 throw new FreshnessException(registerErrorMessage);
             }
 
@@ -485,7 +496,6 @@ public class ClientEndpoint {
         }
 
         Response result = listener.getResult();
-        System.out.println("RESULT: " + result.getSuccess() + result.getErrorCode());
 
         // send read complete to server
         for (PublicKey key : serversPorts.keySet()) {
@@ -597,7 +607,6 @@ public class ClientEndpoint {
             for (int i = 0; i < tasks.length; i++) {
 
                 if (tasks[i].isDone()) {
-                    System.out.println("is done");
 
                     responses++;
 
@@ -805,10 +814,8 @@ public class ClientEndpoint {
     }
 
     private Response getQuorumResponse(Response[] results) {
-        System.out.println(results[0].getSuccess() + "\n" + results[0].getErrorCode());
         Response finalResult = results[0];
         for(int i = 1; i < results.length; i++) {
-            System.out.println(results[i].getSuccess() + "\n" + results[i].getErrorCode());
             if (results[i].getSuccess() == finalResult.getSuccess() && results[i].getErrorCode() == finalResult.getErrorCode()) {
                 continue;
             } else {

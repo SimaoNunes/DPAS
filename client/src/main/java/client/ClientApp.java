@@ -6,6 +6,8 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.concurrent.ForkJoinPool;
 
 import exceptions.*;
 import org.json.simple.JSONArray;
@@ -56,6 +58,12 @@ public class ClientApp {
 			}
     	}
     	System.out.println("\n============================  End  ============================");
+        Set<Thread> threadSet1 = Thread.getAllStackTraces().keySet();
+        System.out.println("THREADS NO FIM");
+        for (Thread t : threadSet1) {
+            System.out.println(t.toString());
+        }
+        ForkJoinPool.awaitTermination(999999);
     }
     
     

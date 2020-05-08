@@ -183,7 +183,7 @@ public class Server implements Runnable {
                         if(!dropNonceFlag) {
                         	send(new Response(randomNonce), outStream);
                         } else {
-                        	System.out.println("DROPPED NONCE");
+                        	System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED NONCE");
                         }
                         handshake = false;
                         break;
@@ -250,7 +250,7 @@ public class Server implements Runnable {
     //////////////////////////////////////////////////
     
     public void register(Request request, ObjectOutputStream outStream) {
-        System.out.println("REGISTER METHOD");
+        System.out.println("SERVER ON PORT " + this.serverPort + ": REGISTER METHOD");
         synchronized (userIdMap) {
             String username = cryptoManager.checkKey(request.getPublicKey());
             String path = announcementBoardsPath + username;
@@ -259,10 +259,9 @@ public class Server implements Runnable {
             userIdMap.put(request.getPublicKey(), username);
             saveUserIdMap();
             if(!dropOperationFlag) {
-                System.out.println(Base64.getEncoder().encodeToString(request.getClientNonce()));
             	send(new Response(true, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
             } else {
-            	System.out.println("DROPPED REGISTER");
+            	System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED REGISTER");
             }
         }
     }
@@ -342,7 +341,7 @@ public class Server implements Runnable {
         if(!dropOperationFlag) {
             send(new Response(true, request.getClientNonce(), usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst()), outStream);
         } else {
-            System.out.println("DROPPED POST");
+            System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED POST");
         }
 
     }
@@ -390,7 +389,7 @@ public class Server implements Runnable {
 
             send(new Response(true, request.getClientNonce()), outStream);
         } else {
-            System.out.println("DROPPED POST");
+            System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED POST");
         }
     }
     
@@ -496,7 +495,7 @@ public class Server implements Runnable {
             if(!dropOperationFlag) {
                 // send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);   FIXME-> enviar o rid?
             } else {
-                System.out.println("DROPPED READ GENERAL");
+                System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED READ GENERAL");
             }
         } catch(Exception e) {
             send(new Response(false, -8, request.getClientNonce()), outStream);
@@ -707,7 +706,7 @@ public class Server implements Runnable {
                     usersBoards.put(user, pair);
 
                 } catch(Exception e) {
-                    System.out.println("Olha deu merda");
+                    System.out.println("OPAAAA");
                 }
             }
         }
@@ -834,8 +833,7 @@ public class Server implements Runnable {
     //	                                    //
     //////////////////////////////////////////
     @SuppressWarnings("all")
-    public boolean checkExceptions(Request request, ObjectOutputStream outStream, int[] codes){
-        System.out.println("EXCEPTIONS");
+    public boolean checkExceptions(Request request, ObjectOutputStream outStream, int[] codes) {
         for (int i = 0; i < codes.length; i++) {
             switch(codes[i]) {
                 // ## UserNotRegistered ## -> check if user is registed
