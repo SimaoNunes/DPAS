@@ -885,6 +885,15 @@ public class Server implements Runnable {
         return true;
     }
 
+
+    public void setClientNonce(PublicKey clientKey, byte[] clientNonce) {
+    	this.serverNonces.put(clientKey, clientNonce);
+    }
+
+    public byte[] getClientNonce (PublicKey clientKey) {
+        return serverNonces.get(clientKey);
+    }
+
     private String[] getClientAddress(String client){
         try(BufferedReader reader = new BufferedReader(new FileReader("../clients_addresses.txt"))){
             String line;
