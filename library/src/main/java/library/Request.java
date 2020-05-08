@@ -50,6 +50,13 @@ public class Request implements Serializable {
         this.username = username;
     }
 
+    public Request(String operation, PublicKey key, byte[] serverNonce, byte[] clientNonce){
+        this.operation = operation;
+        this.publicKey = key;
+        this.serverNonce = serverNonce;
+        this.clientNonce = clientNonce;
+    }
+
     // Register with one way handshake
     public Request(String operation, PublicKey key, byte[] serverNonce){
         this.operation = operation;

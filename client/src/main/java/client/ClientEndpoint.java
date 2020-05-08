@@ -284,7 +284,6 @@ public class ClientEndpoint {
 
     public int registerMethod(PublicKey serverKey) throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
-
         byte[] serverNonce = startHandshake(serverKey, false);
 
         Request request = new Request("REGISTER", getPublicKey(), serverNonce, getClientNonce(serverKey), userName);

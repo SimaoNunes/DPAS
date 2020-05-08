@@ -111,7 +111,6 @@ public class Server implements Runnable {
 
         try{
             socket = server.accept();
-            System.out.println(socket.getRemoteSocketAddress());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -127,7 +126,7 @@ public class Server implements Runnable {
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
-                            cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), userIdMap.get(envelope.getRequest().getPublicKey())) &&
+                            cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), envelope.getRequest().getUsername()) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-2}))
                             {
