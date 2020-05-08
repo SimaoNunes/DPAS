@@ -47,6 +47,13 @@ public class Request implements Serializable {
         this.serverNonce = serverNonce;
         this.clientNonce = clientNonce;
     }
+
+    // Register with one way handshake
+    public Request(String operation, PublicKey key, byte[] serverNonce){
+        this.operation = operation;
+        this.publicKey = key;
+        this.serverNonce = serverNonce;
+    }
     
     // Register (DELETEALL) (ASK FOR NONCE)
     public Request(String operation, PublicKey key){

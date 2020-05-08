@@ -93,6 +93,7 @@ public class CryptoManager {
 	}
 	
 	boolean verifyRequest(Request request, byte[] signature) {
+		System.out.println("VERIFY REQUEST");
 		try {
 			// Initialize needed structures
 			PublicKey key = request.getPublicKey();
@@ -190,6 +191,7 @@ public class CryptoManager {
     }
 
     public boolean checkNonce(PublicKey key, byte[] nonce) {
+		System.out.println("CHECK NONCE");
         if(getNonces().containsKey(key) && Arrays.equals(getNonces().get(key), nonce)) {
         	getNonces().put(key, null);
         	return true;

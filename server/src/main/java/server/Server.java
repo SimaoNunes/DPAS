@@ -252,7 +252,7 @@ public class Server implements Runnable {
     //////////////////////////////////////////////////
     
     public void register(Request request, ObjectOutputStream outStream) {
-
+        System.out.println("REGISTER METHOD");
         synchronized (userIdMap) {
             String username = cryptoManager.checkKey(request.getPublicKey());
             String path = announcementBoardsPath + username;
@@ -261,7 +261,8 @@ public class Server implements Runnable {
             userIdMap.put(request.getPublicKey(), username);
             saveUserIdMap();
             if(!dropOperationFlag) {
-            	send(new Response(true, request.getClientNonce()), outStream);
+                System.out.println(Base64.getEncoder().encodeToString(request.getClientNonce()));
+            	send(new Response(true, request.getClientNonce(), cryptoManager.getPublicKey()), outStream);
             } else {
             	System.out.println("DROPPED REGISTER");
             }
@@ -517,8 +518,13 @@ public class Server implements Runnable {
     //////////////////////////////////////////////
     
     private void wtsRequest(Request request, ObjectOutputStream outStream) {
-    	if(usersBoards)
-        int wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst();
+    	int wts;
+        if(usersBoards.containsKey(userIdMap.get(request.getPublicKey()))){
+            wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst();
+        }
+        else{
+            wts = 0;
+        }
     	send(new Response(true, request.getClientNonce(), wts), outStream);
     }
     
@@ -830,6 +836,7 @@ public class Server implements Runnable {
     //////////////////////////////////////////
     @SuppressWarnings("all")
     public boolean checkExceptions(Request request, ObjectOutputStream outStream, int[] codes){
+        System.out.println("EXCEPTIONS");
         for (int i = 0; i < codes.length; i++) {
             switch(codes[i]) {
                 // ## UserNotRegistered ## -> check if user is registed
