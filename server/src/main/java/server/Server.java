@@ -307,18 +307,24 @@ public class Server implements Runnable {
 
         }
 
-        for(Map.Entry<String, Pair<Integer, Integer>> entry : listening.get(request.getPublicKeyToReadFrom()).entrySet()){
-
-            Envelope envelope = sendReceive(new Request("NONCE"), outStream, inStream);
+        for(Map.Entry<String, Pair<Integer, Integer>> entry : listening.get(request.getPublicKeyToReadFrom()).entrySet()){  //for every listening[q]
+            byte[] nonce = null;
+            try {
+                nonce = startOneWayHandshake(entry.getKey());
+            } catch (NonceTimeoutException e) {
+                e.printStackTrace();
+            } catch (IntegrityException e) {
+                e.printStackTrace();
+            }
             // -----> One way Handshake
-            String[] address = getClientAddress(entry.getKey());
-            try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket(address[0], Integer.parseInt(address[1])).getOutputStream())) {
+            int port = getClientPort(entry.getKey());
+            try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", port).getOutputStream())) {
                 int rid = entry.getValue().getFirst();
                 int number = entry.getValue().getSecond();
                 int ts = usersBoards.get(entry.getKey()).getFirst();
                 JSONObject objectToSend = usersBoards.get(entry.getKey()).getSecond().getAnnouncements(number);
 
-                //send(new Request("VALUE", rid, ts, nonce, objectToSend, Integer.parseInt(serverPort)), outputStream);
+                send(new Request("VALUE", rid, ts, nonce, objectToSend, Integer.parseInt(serverPort)), outputStream);
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -327,11 +333,6 @@ public class Server implements Runnable {
 
             //send
         }
-
-        //forall q ∈ Π such that listening [q] ̸ = ⊥ do
-            //trigger ⟨ al, Send | q , [ VALUE , listening [q], ts, val] ⟩ ;
-
-        //trigger ⟨ al, Send | p , [ A CK , ts] ⟩ ;
 
         if(!dropOperationFlag) {
             send(new Response(true, request.getClientNonce(), usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst()), outStream);
@@ -393,7 +394,7 @@ public class Server implements Runnable {
     //				      READ						//
     //////////////////////////////////////////////////
     
-    private void read(Request request, ObjectOutputStream outStream, ObjectInputStream inStream) {
+    private void read(Request request, ObjectOutputStream outStream) {
 
         if(listening.contains(userIdMap.get(request.getPublicKeyToReadFrom()))){  //someone is already reading that board
             listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).put(userIdMap.get(request.getPublicKey()), new Pair(request.getRid(), request.getNumber()));  //listening [p] := r ;
@@ -441,9 +442,10 @@ public class Server implements Runnable {
 
             // Send response to client
             // ------> Handshake one way
-            Envelope envelope = sendReceive(new Request("NONCE"), outStream, inStream);
-            Response clientResponse = envelope.getResponse();
-            send(new Response(true, announcementsToSend, clientResponse.getNonce(), request.getRid()), outStream);
+            byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
+
+            //send(new Response(true, announcementsToSend, nonce, request.getRid()), outStream);
+            send(new Request("VALUE", request.getRid(), usersBoards.get(request.getPublicKeyToReadFrom()).getFirst(), nonce, announcementsToSend, Integer.parseInt(serverPort)), outStream);
 
         } catch(Exception e) {
             send(new Response(false, -8, request.getClientNonce()), outStream);
@@ -901,14 +903,14 @@ public class Server implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return 0;
     }
 
 
-    private void startOneWayHandshake(PublicKey clientKey) throws NonceTimeoutException, IntegrityException {
-        Envelope nonceEnvelope = askForClientNonce(cryptoManager.getPublicKey(), getClientPort(userIdMap.get(clientKey)));
-        if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), userName)) {
-            setClientNonce(nonceEnvelope.getResponse().getServerKey(), nonceEnvelope.getResponse().getNonce());
+    private byte[] startOneWayHandshake(String username) throws NonceTimeoutException, IntegrityException {
+        Envelope nonceEnvelope = askForClientNonce(cryptoManager.getPublicKey(), getClientPort(username);
+        if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature())) {
+            return nonceEnvelope.getResponse().getNonce();  //FIXME IR BUSCAR KEY DO CLIENT AO KS
         } else {
             throw new IntegrityException("Integrity Exception");
         }

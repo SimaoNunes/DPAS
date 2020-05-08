@@ -19,7 +19,6 @@ import java.util.concurrent.ExecutionException;
 
 public class ClientEndpoint {
 
-
 	private Map<PublicKey, byte[]> clientNonces  = null;
 	private Map<PublicKey, Integer> serversPorts = null;
 	
@@ -59,6 +58,7 @@ public class ClientEndpoint {
         serversPorts = initiateServersPorts();
 
         clientNonces  = new HashMap<>();
+
     }
 
     public int getWts() {
@@ -121,14 +121,6 @@ public class ClientEndpoint {
 
     public void setUsername(String userName) {
         this.userName = userName;
-    }
-
-    public byte[] getServerNonce(PublicKey serverKey) {
-        return serversNonces.get(serverKey);
-    }
-
-    public void setServerNonce(PublicKey serverKey, byte[] serverNonce) {
-        this.serversNonces.put(serverKey, serverNonce);
     }
 
     public byte[] getClientNonce(PublicKey serverKey) {

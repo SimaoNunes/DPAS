@@ -116,7 +116,33 @@ public class CryptoManager {
 		}
 		return false;
 	}
+	
+	boolean verifyResponse(Response response, byte[] signature) {
+		try {
+			// Initialize needed structures
+			PublicKey key = response.getServerKey();
+			Signature verifySignature = Signature.getInstance("SHA256withRSA");
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream out = new ObjectOutputStream(bos);
+			// Convert response to byteArray
+			out.writeObject(response);
+			out.flush();
+			byte[] responseBytes = bos.toByteArray();
+			// Verify signature
+			verifySignature.initVerify(key);
+			verifySignature.update(responseBytes);
+			return verifySignature.verify(signature);
+		} catch (
+			InvalidKeyException 	 |
+			NoSuchAlgorithmException |
+			SignatureException 		 |
+			IOException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
     
+	
 //////////////////////////////////////////
 //										//
 //           Get Alias By Key           //
@@ -212,5 +238,24 @@ public class CryptoManager {
         }
         return key;
     }
+    
+    PublicKey getPublicKey() {
+        char[] passphrase = "changeit".toCharArray();
+        KeyStore ks = null;
+
+        try{
+            ks = KeyStore.getInstance("JKS");
+            ks.load(new FileInputStream("keystores/port_" + port + "/keystore"), passphrase);
+            return ks.getCertificate("server").getPublicKey();
+        } catch (
+            CertificateException | 
+            NoSuchAlgorithmException | 
+            IOException | 
+            KeyStoreException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
     
 }
