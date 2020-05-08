@@ -55,7 +55,8 @@ public class ClientEndpoint {
         setUsername(username);
         serversPorts = initiateServersPorts();
 
-        clientNonces  = new HashMap<PublicKey, byte[]>();
+        clientNonces  = new HashMap<>();
+
     }
 
     public int getWts() {

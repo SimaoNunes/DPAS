@@ -1,5 +1,7 @@
 package server;
 
+import exceptions.IntegrityException;
+import exceptions.NonceTimeoutException;
 import library.Envelope;
 import library.Request;
 import library.Response;
@@ -20,6 +22,7 @@ import java.security.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server implements Runnable {
@@ -29,7 +32,6 @@ public class Server implements Runnable {
     private String serverPort;
     private ConcurrentHashMap<PublicKey, String> userIdMap = null;
 	private ConcurrentHashMap<PublicKey, byte[]> serverNonces = null;
-	private ConcurrentHashMap<PublicKey, byte[]> clientsNonces = null;
     private AtomicInteger totalAnnouncements;
     private CryptoManager cryptoManager = null;
 
@@ -70,7 +72,6 @@ public class Server implements Runnable {
 
         cryptoManager = new CryptoManager(port);
         serverNonces = new ConcurrentHashMap<>();
-    	clientsNonces = new ConcurrentHashMap<>();
         oldResponse   = new Response(cryptoManager.generateRandomNonce());
         oldEnvelope   = new Envelope(oldResponse, null);
         
@@ -158,7 +159,7 @@ public class Server implements Runnable {
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
                             {
-                            read(envelope.getRequest(), outStream, inStream);
+                            read(envelope.getRequest(), outStream);
                         }
                         break;
                     case "READGENERAL":
@@ -307,16 +308,24 @@ public class Server implements Runnable {
 
         }
 
-        for(Map.Entry<String, Pair<Integer, Integer>> entry : listening.get(request.getPublicKeyToReadFrom()).entrySet()){
+        for(Map.Entry<String, Pair<Integer, Integer>> entry : listening.get(request.getPublicKeyToReadFrom()).entrySet()){  //for every listening[q]
+            byte[] nonce = null;
+            try {
+                nonce = startOneWayHandshake(entry.getKey());
+            } catch (NonceTimeoutException e) {
+                e.printStackTrace();
+            } catch (IntegrityException e) {
+                e.printStackTrace();
+            }
             // -----> One way Handshake
-            String[] address = getClientAddress(entry.getKey());
-            try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket(address[0], Integer.parseInt(address[1])).getOutputStream())) {
+            int port = getClientPort(entry.getKey());
+            try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", port).getOutputStream())) {
                 int rid = entry.getValue().getFirst();
                 int number = entry.getValue().getSecond();
                 int ts = usersBoards.get(entry.getKey()).getFirst();
                 JSONObject objectToSend = usersBoards.get(entry.getKey()).getSecond().getAnnouncements(number);
 
-                //send(new Request("VALUE", rid, ts, nonce, objectToSend, Integer.parseInt(serverPort)), outputStream);
+                send(new Request("VALUE", rid, ts, nonce, objectToSend, Integer.parseInt(serverPort)), outputStream);
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -325,11 +334,6 @@ public class Server implements Runnable {
 
             //send
         }
-
-        //forall q ∈ Π such that listening [q] ̸ = ⊥ do
-            //trigger ⟨ al, Send | q , [ VALUE , listening [q], ts, val] ⟩ ;
-
-        //trigger ⟨ al, Send | p , [ A CK , ts] ⟩ ;
 
         if(!dropOperationFlag) {
             send(new Response(true, request.getClientNonce(), usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst()), outStream);
@@ -391,7 +395,7 @@ public class Server implements Runnable {
     //				      READ						//
     //////////////////////////////////////////////////
     
-    private void read(Request request, ObjectOutputStream outStream, ObjectInputStream inStream) {
+    private void read(Request request, ObjectOutputStream outStream) {
 
         if(listening.contains(userIdMap.get(request.getPublicKeyToReadFrom()))){  //someone is already reading that board
             listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).put(userIdMap.get(request.getPublicKey()), new Pair(request.getRid(), request.getNumber()));  //listening [p] := r ;
@@ -439,9 +443,10 @@ public class Server implements Runnable {
 
             // Send response to client
             // ------> Handshake one way
-            Envelope envelope = sendReceive(new Request("NONCE"), outStream, inStream);
-            Response clientResponse = envelope.getResponse();
-            send(new Response(true, announcementsToSend, clientResponse.getNonce(), request.getRid()), outStream);
+            byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
+
+            //send(new Response(true, announcementsToSend, nonce, request.getRid()), outStream);
+            send(new Request("VALUE", request.getRid(), usersBoards.get(request.getPublicKeyToReadFrom()).getFirst(), nonce, announcementsToSend, Integer.parseInt(serverPort)), outStream);
 
         } catch(Exception e) {
             send(new Response(false, -8, request.getClientNonce()), outStream);
@@ -724,14 +729,14 @@ public class Server implements Runnable {
     
     private void getUserIdMap() {
         try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(userMapPath))) {
-           userIdMap = (Map<PublicKey, String>) in.readObject();
+           userIdMap = (ConcurrentHashMap<PublicKey, String>) in.readObject();
         } catch (ClassNotFoundException c) {
            System.out.println("SERVER ON PORT " + this.serverPort + ": Map<PublicKey, String> class not found");
            c.printStackTrace();
            return;
         }
         catch(FileNotFoundException e){
-            userIdMap = new HashMap<PublicKey, String>();
+            userIdMap = new ConcurrentHashMap<PublicKey, String>();
             createOriginalUserMap();
 
         } catch (IOException e) {
@@ -894,16 +899,13 @@ public class Server implements Runnable {
         return serverNonces.get(clientKey);
     }
 
-    private String[] getClientAddress(String client){
+    private int getClientPort(String client){
         try(BufferedReader reader = new BufferedReader(new FileReader("../clients_addresses.txt"))){
             String line;
             while((line = reader.readLine()) != null){
                 String[] splitted = line.split(":");
                 if(splitted[0].equals(client)){
-                    String[] result = new String[2];
-                    result[0] = splitted[1];
-                    result[1] = splitted[2];
-                    return result;
+                    return Integer.parseInt(splitted[2]);
                 }
             }
         } catch (FileNotFoundException e) {
@@ -911,7 +913,26 @@ public class Server implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return 0;
     }
-    
+
+
+    private byte[] startOneWayHandshake(String username) throws NonceTimeoutException, IntegrityException {
+        Envelope nonceEnvelope = askForClientNonce(cryptoManager.getPublicKey(), getClientPort(username));
+        if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature())) {
+            return nonceEnvelope.getResponse().getNonce();  //FIXME IR BUSCAR KEY DO CLIENT AO KS
+        } else {
+            throw new IntegrityException("Integrity Exception");
+        }
+    }
+
+    private Envelope askForClientNonce(PublicKey serverKey, int port) throws NonceTimeoutException {
+        try(Socket socket = new Socket("localhost", port);
+            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream())) {
+            return sendReceive(new Request("NONCE", serverKey), outputStream, inputStream);
+        } catch (IOException e) {
+            throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
+        }
+    }
 }
