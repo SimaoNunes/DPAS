@@ -484,6 +484,14 @@ public class ClientEndpoint {
 
         Response result = listener.getResult();
         System.out.println("RESULT: " + result.getSuccess() + result.getErrorCode());
+
+        // send read complete to server
+        for (PublicKey key : serversPorts.keySet()) {
+
+            CompletableFuture.runAsync(() -> readComplete(announcUserName, key, rid));
+
+        }
+
         if(result.getSuccess()){
             return result.getJsonObject();
         }
