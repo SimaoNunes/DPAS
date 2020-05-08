@@ -63,7 +63,6 @@ public class ClientApp {
         for (Thread t : threadSet1) {
             System.out.println(t.toString());
         }
-        ForkJoinPool.awaitTermination(999999);
     }
     
     

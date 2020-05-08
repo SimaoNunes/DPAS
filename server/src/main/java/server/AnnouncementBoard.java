@@ -14,6 +14,11 @@ public class AnnouncementBoard implements Serializable{
         this.user = user;
     }
 
+    protected AnnouncementBoard(String user){
+        this.user = user;
+        this.annoucements = new JSONArray();
+    }
+
     public void addAnnouncement(JSONObject object){
         this.annoucements.add(object);
     }
