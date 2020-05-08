@@ -69,7 +69,6 @@ public class Listener implements Runnable{
 
             // receive an envelope
             Envelope envelope = (Envelope) inStream.readObject();
-            System.out.println("JUST RECEIVED A NEW ENVELOPE");
 
             // when Envelope has a request (nonce requests)
             if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("NONCE")) {

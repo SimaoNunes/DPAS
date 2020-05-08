@@ -9,17 +9,17 @@ public class AnnouncementBoard implements Serializable{
     private String user;
     private JSONArray annoucements;
 
-    protected AnnouncementBoard(String user, JSONArray list){
+    protected AnnouncementBoard(String user, JSONArray list) {
         this.annoucements = list;
         this.user = user;
     }
 
-    protected AnnouncementBoard(String user){
+    protected AnnouncementBoard(String user) {
         this.user = user;
         this.annoucements = new JSONArray();
     }
 
-    public void addAnnouncement(JSONObject object){
+    public void addAnnouncement(JSONObject object) {
         this.annoucements.add(object);
     }
 

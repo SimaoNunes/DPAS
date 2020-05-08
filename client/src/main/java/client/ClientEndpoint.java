@@ -1,7 +1,6 @@
 package client;
 
 import exceptions.*;
-import jdk.swing.interop.SwingInterOpUtils;
 import library.Envelope;
 import library.Request;
 import library.Response;
@@ -13,9 +12,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -188,7 +187,6 @@ public class ClientEndpoint {
         return null;
     }
 
-
     private byte[] startHandshake(PublicKey serverKey, boolean oneWay) throws NonceTimeoutException, IntegrityException {
     	Envelope nonceEnvelope = askForServerNonce(getPublicKey(), serversPorts.get(serverKey));
     	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), serverKey)) {
@@ -259,11 +257,17 @@ public class ClientEndpoint {
                 } catch (ExecutionException e) {
                     e.printStackTrace();
                 }
-                if (responses > nQuorum) // OBA
+                if (responses > nQuorum)
                     break;
             }
             if (i == tasks.length - 1)
                 i = 0;
+        }
+        // Kill remaining CompletableFutures
+        for (int i = 0; i < tasks.length; i++) {
+            if (!tasks[i].isDone()) {
+                    tasks[i].cancel(true);
+            }
         }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getMajorityOfQuorumInt(results);
@@ -299,15 +303,12 @@ public class ClientEndpoint {
         try {
             Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(serverKey));
 
-            System.out.println(envelopeResponse.getResponse().getNonce());
-
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
                 this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /********************************************************************/
             if(!checkNonce(envelopeResponse.getResponse())) {
-                System.out.println("entrei aqui");
                 throw new FreshnessException(registerErrorMessage);
             }
 
@@ -385,6 +386,12 @@ public class ClientEndpoint {
             if (i == tasks.length - 1)
                 i = 0;
         }
+        // Kill remaining CompletableFutures
+        for (int i = 0; i < tasks.length; i++) {
+            if (!tasks[i].isDone()) {
+                    tasks[i].cancel(true);
+            }
+        }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getQuorumInt(results);
         switch (result) {
@@ -438,7 +445,6 @@ public class ClientEndpoint {
             }
             /**********************************************/
             if(!checkNonce(envelopeResponse.getResponse())){
-                System.out.println("TOU A ENTRAR NESTE FRESHNESS");
                 throw new FreshnessException(errorMessage);
             }
             if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serverKey)){
@@ -485,6 +491,7 @@ public class ClientEndpoint {
 
         Request result = listener.getResult();
         System.out.println(result.toString());
+
         // send read complete to server
         for (PublicKey key : serversPorts.keySet()) {
 
@@ -596,7 +603,6 @@ public class ClientEndpoint {
             for (int i = 0; i < tasks.length; i++) {
 
                 if (tasks[i].isDone()) {
-                    System.out.println("is done");
 
                     responses++;
 
@@ -731,6 +737,12 @@ public class ClientEndpoint {
             if (i == tasks.length - 1)
                 i = 0;
         }
+        // Kill remaining CompletableFutures
+        for (int i = 0; i < tasks.length; i++) {
+            if (!tasks[i].isDone()) {
+                    tasks[i].cancel(true);
+            }
+        }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getMajorityOfQuorumInt(results);
         switch (result) {
@@ -788,9 +800,6 @@ public class ClientEndpoint {
 //////////////////////////////////////////////////
 
     private int getQuorumInt(int[] results) {
-        System.out.println(results[0]);
-        System.out.println(results[1]);
-        System.out.println(results[2]);
         HashMap<Integer, Integer> map = new HashMap<>();
         for(int i = 0; i < results.length; i++) {
             if (!map.containsKey(results[i])) {
@@ -807,10 +816,8 @@ public class ClientEndpoint {
     }
 
     private Response getQuorumResponse(Response[] results) {
-        System.out.println(results[0].getSuccess() + "\n" + results[0].getErrorCode());
         Response finalResult = results[0];
         for(int i = 1; i < results.length; i++) {
-            System.out.println(results[i].getSuccess() + "\n" + results[i].getErrorCode());
             if (results[i].getSuccess() == finalResult.getSuccess() && results[i].getErrorCode() == finalResult.getErrorCode()) {
                 continue;
             } else {
