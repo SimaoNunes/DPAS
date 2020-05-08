@@ -188,11 +188,13 @@ public class Server implements Runnable {
                         handshake = false;
                         break;
                     case "WTS":
+                        System.out.println("WTS METHOD");
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), userIdMap.get(envelope.getRequest().getPublicKey())) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1}))
                         	{
+                                System.out.println("entrei no wts");
                             wtsRequest(envelope.getRequest(), outStream);
                         }
                     	break;
@@ -251,19 +253,19 @@ public class Server implements Runnable {
     
     public void register(Request request, ObjectOutputStream outStream) {
         System.out.println("REGISTER METHOD");
-        synchronized (userIdMap) {
-            String username = cryptoManager.checkKey(request.getPublicKey());
-            String path = announcementBoardsPath + username;
-            File file = new File(path);
-            file.mkdirs();
-            userIdMap.put(request.getPublicKey(), username);
-            saveUserIdMap();
-            if(!dropOperationFlag) {
-                System.out.println(Base64.getEncoder().encodeToString(request.getClientNonce()));
-            	send(new Response(true, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
-            } else {
-            	System.out.println("DROPPED REGISTER");
-            }
+        String username = cryptoManager.checkKey(request.getPublicKey());
+        String path = announcementBoardsPath + username;
+        File file = new File(path);
+        file.mkdirs();
+        userIdMap.put(request.getPublicKey(), username);
+        saveUserIdMap();
+        usersBoards.put(request.getUsername(), new Pair<>(0, new AnnouncementBoard(request.getUsername())));
+
+        if(!dropOperationFlag) {
+            System.out.println(Base64.getEncoder().encodeToString(request.getClientNonce()));
+            send(new Response(true, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
+        } else {
+            System.out.println("DROPPED REGISTER");
         }
     }
 
@@ -272,10 +274,12 @@ public class Server implements Runnable {
     //				      POST						//
     //////////////////////////////////////////////////
     @SuppressWarnings("unchecked")
-	private void write(Request request, ObjectOutputStream outStream) {
+	private void write(Request request, ObjectOutputStream outStream) throws IntegrityException, NonceTimeoutException {
         // Get userName from keystore
+        System.out.println(request.getTs());
+        System.out.println(usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst());
         if(request.getTs() > usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst()) {  // if ts' > ts then (ts, val) := (ts', v')
-
+            System.out.println("time stamps sao superiores");
             usersBoards.get(userIdMap.get(request.getPublicKey())).setFirst(request.getTs());  // ts = ts'
 
             String username = userIdMap.get(request.getPublicKey());                    //val = v'
@@ -301,8 +305,10 @@ public class Server implements Runnable {
             }
 
             try {
+                System.out.println("gonna save");
                 saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
-                 usersBoards.get(userIdMap.get(request.getPublicKey())).getSecond().addAnnouncement(announcementObject); //update val with the new post
+                System.out.println("just saved");
+                usersBoards.get(userIdMap.get(request.getPublicKey())).getSecond().addAnnouncement(announcementObject); //update val with the new post
             } catch (IOException e) {
                 send(new Response(false, -9, request.getClientNonce()), outStream);
             }
@@ -311,36 +317,39 @@ public class Server implements Runnable {
             saveTotalAnnouncements();
 
         }
+        if(listening.contains(userIdMap.get(request.getPublicKey()))){ // no one is reading from who is writing
+            System.out.println("alguem ta a ler");
+            for(Map.Entry<String, Pair<Integer, Integer>> entry : listening.get(userIdMap.get(request.getPublicKey())).entrySet()){  //for every listening[q]
+                byte[] nonce = null;
+                try {
+                    nonce = startOneWayHandshake(entry.getKey());
+                } catch (NonceTimeoutException e) {
+                    e.printStackTrace();
+                } catch (IntegrityException e) {
+                    e.printStackTrace();
+                }
+                // -----> One way Handshake
+                int port = getClientPort(entry.getKey());
+                try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", port).getOutputStream())) {
+                    int rid = entry.getValue().getFirst();
+                    int number = entry.getValue().getSecond();
+                    int ts = usersBoards.get(entry.getKey()).getFirst();
+                    JSONObject objectToSend = usersBoards.get(entry.getKey()).getSecond().getAnnouncements(number);
 
-        for(Map.Entry<String, Pair<Integer, Integer>> entry : listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).entrySet()){  //for every listening[q]
-            byte[] nonce = null;
-            try {
-                nonce = startOneWayHandshake(entry.getKey());
-            } catch (NonceTimeoutException e) {
-                e.printStackTrace();
-            } catch (IntegrityException e) {
-                e.printStackTrace();
+                    send(new Request("VALUE", rid, ts, nonce, objectToSend, Integer.parseInt(serverPort)), outputStream);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+                //send
             }
-            // -----> One way Handshake
-            int port = getClientPort(entry.getKey());
-            try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", port).getOutputStream())) {
-                int rid = entry.getValue().getFirst();
-                int number = entry.getValue().getSecond();
-                int ts = usersBoards.get(entry.getKey()).getFirst();
-                JSONObject objectToSend = usersBoards.get(entry.getKey()).getSecond().getAnnouncements(number);
-
-                send(new Request("VALUE", rid, ts, nonce, objectToSend, Integer.parseInt(serverPort)), outputStream);
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
-            //send
         }
+        System.out.println("ninguem ta a ler");
 
         if(!dropOperationFlag) {
-            send(new Response(true, request.getClientNonce(), usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst()), outStream);
+            send(new Response(true, request.getClientNonce(), usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         } else {
             System.out.println("DROPPED POST");
         }
@@ -516,14 +525,10 @@ public class Server implements Runnable {
     //////////////////////////////////////////////
     
     private void wtsRequest(Request request, ObjectOutputStream outStream) {
-    	int wts;
-        if(usersBoards.containsKey(userIdMap.get(request.getPublicKey()))){
-            wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst();
-        }
-        else{
-            wts = 0;
-        }
-    	send(new Response(true, request.getClientNonce(), wts), outStream);
+    	int wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst();
+        System.out.println("wts: " + wts);
+        System.out.println(request.getClientNonce());
+    	send(new Response(true, request.getClientNonce(), wts, cryptoManager.getPublicKeyFromKs("server")), outStream);
     }
     
     

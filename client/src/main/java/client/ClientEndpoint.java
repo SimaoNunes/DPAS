@@ -202,6 +202,7 @@ public class ClientEndpoint {
     }
 
     private boolean checkNonce(Response response) {
+        System.out.println(response.getNonce() + " " + getClientNonce(response.getServerKey()));
         if(Arrays.equals(response.getNonce(), getClientNonce(response.getServerKey()))) {
             setClientNonce(response.getServerKey(), null);
             return true;
@@ -265,7 +266,6 @@ public class ClientEndpoint {
                 i = 0;
         }
         // Get Quorum from the result to make a decision regarding the responses
-        System.out.println(results);
         int result = getMajorityOfQuorumInt(results);
         switch (result) {
             case (-2):
@@ -286,8 +286,6 @@ public class ClientEndpoint {
     public int registerMethod(PublicKey serverKey) throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
         byte[] serverNonce = startHandshake(serverKey, false);
-
-        System.out.println(getClientNonce(serverKey));
 
         Request request = new Request("REGISTER", getPublicKey(), serverNonce, getClientNonce(serverKey), userName);
 
@@ -340,8 +338,9 @@ public class ClientEndpoint {
     public int post(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         // Ask Servers for actual wts in case we don't have it in memory
         if(wts == -1) {
-        	askForWts();
+        	wts = askForWts();
         }
+        wts = wts + 1;
         // Variables to store responses and their results
         int responses = 0;
         int[] results = new int[nServers];
@@ -415,7 +414,6 @@ public class ClientEndpoint {
 	public int write(PublicKey clientKey, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PublicKey serverKey, int ts) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
-        
         if(isGeneral){
             request = new Request("POSTGENERAL", clientKey, message, announcs, serverNonce, clientNonce, ts);
         }
@@ -440,6 +438,7 @@ public class ClientEndpoint {
             }
             /**********************************************/
             if(!checkNonce(envelopeResponse.getResponse())){
+                System.out.println("TOU A ENTRAR NESTE FRESHNESS");
                 throw new FreshnessException(errorMessage);
             }
             if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serverKey)){
@@ -771,7 +770,7 @@ public class ClientEndpoint {
 	        if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serverKey)) {
 	            throw new IntegrityException("EPA NAO SEI AINDA O QUE ESCREVER AQUI MAS UM ATACANTE ALTEROU A RESP DO WTS");
 	        } else {
-	        	singleWts = envelopeResponse.getRequest().getTs();
+	        	singleWts = envelopeResponse.getResponse().getTs();
 	        }
 	        ResponseChecker.checkAskWts(envelopeResponse.getResponse());
 	        return singleWts;
@@ -789,12 +788,15 @@ public class ClientEndpoint {
 //////////////////////////////////////////////////
 
     private int getQuorumInt(int[] results) {
+        System.out.println(results[0]);
+        System.out.println(results[1]);
+        System.out.println(results[2]);
         HashMap<Integer, Integer> map = new HashMap<>();
         for(int i = 0; i < results.length; i++) {
             if (!map.containsKey(results[i])) {
                 map.put(results[i], 1);
             } else {
-                map.put(results[i], map.get(results[i]++));
+                map.put(results[i], map.get(results[i]) + 1);
                 if (map.get(results[i]) > nQuorum) {
                     return results[i];
                 }

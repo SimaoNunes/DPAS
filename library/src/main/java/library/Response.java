@@ -27,6 +27,13 @@ public class Response implements Serializable {
         this.nonce = nonce;
 
     }
+    //ASK FOR WTS
+    public Response(boolean success, byte[] nonce, int ts, PublicKey key) {
+        this.success = success;
+        this.nonce = nonce;
+        this.ts = ts;
+        this.serverKey = key;
+    }
 
     public Response(boolean success, byte[] nonce, int ts) {
         this.success = success;
