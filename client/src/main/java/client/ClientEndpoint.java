@@ -187,7 +187,6 @@ public class ClientEndpoint {
         return null;
     }
 
-
     private byte[] startHandshake(PublicKey serverKey, boolean oneWay) throws NonceTimeoutException, IntegrityException {
     	Envelope nonceEnvelope = askForServerNonce(getPublicKey(), serversPorts.get(serverKey));
     	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), serverKey)) {
@@ -201,7 +200,6 @@ public class ClientEndpoint {
     }
 
     private boolean checkNonce(Response response) {
-        System.out.println(response.getNonce() + " " + getClientNonce(response.getServerKey()));
         if(Arrays.equals(response.getNonce(), getClientNonce(response.getServerKey()))) {
             setClientNonce(response.getServerKey(), null);
             return true;
@@ -225,11 +223,6 @@ public class ClientEndpoint {
         // Variables to store responses and their results
         int responses = 0;
         int[] results = new int[nServers];
-        Set<Thread> threadSet1 = Thread.getAllStackTraces().keySet();
-        System.out.println("THREADS ANTES DO REGISTER");
-        for (Thread t : threadSet1) {
-            System.out.println(t.toString());
-        }
         // Threads that will make the requests to the server
         CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
         // Ask for wts to all Servers get results
@@ -258,7 +251,6 @@ public class ClientEndpoint {
             if (tasks[i].isDone()) {
                 try {
                     results[responses++] = tasks[i].get().intValue();
-                    System.out.println("TEMOS " + responses + " RESPOSTAS!");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (ExecutionException e) {
@@ -274,13 +266,7 @@ public class ClientEndpoint {
         for (int i = 0; i < tasks.length; i++) {
             if (!tasks[i].isDone()) {
                     tasks[i].cancel(true);
-                    System.out.println("KILL CONFIRMED");
             }
-        }
-        Set<Thread> threadSet2 = Thread.getAllStackTraces().keySet();
-        System.out.println("THREADS DEPOIS DO REGISTER");
-        for (Thread t : threadSet2) {
-            System.out.println(t.toString());
         }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getMajorityOfQuorumInt(results);
@@ -399,6 +385,12 @@ public class ClientEndpoint {
             if (i == tasks.length - 1)
                 i = 0;
         }
+        // Kill remaining CompletableFutures
+        for (int i = 0; i < tasks.length; i++) {
+            if (!tasks[i].isDone()) {
+                    tasks[i].cancel(true);
+            }
+        }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getQuorumInt(results);
         switch (result) {
@@ -452,7 +444,6 @@ public class ClientEndpoint {
             }
             /**********************************************/
             if(!checkNonce(envelopeResponse.getResponse())){
-                System.out.println("TOU A ENTRAR NESTE FRESHNESS");
                 throw new FreshnessException(errorMessage);
             }
             if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serverKey)){
@@ -743,6 +734,12 @@ public class ClientEndpoint {
             if (i == tasks.length - 1)
                 i = 0;
         }
+        // Kill remaining CompletableFutures
+        for (int i = 0; i < tasks.length; i++) {
+            if (!tasks[i].isDone()) {
+                    tasks[i].cancel(true);
+            }
+        }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getMajorityOfQuorumInt(results);
         switch (result) {
@@ -800,9 +797,6 @@ public class ClientEndpoint {
 //////////////////////////////////////////////////
 
     private int getQuorumInt(int[] results) {
-        System.out.println(results[0]);
-        System.out.println(results[1]);
-        System.out.println(results[2]);
         HashMap<Integer, Integer> map = new HashMap<>();
         for(int i = 0; i < results.length; i++) {
             if (!map.containsKey(results[i])) {

@@ -58,11 +58,27 @@ public class ClientApp {
 			}
     	}
     	System.out.println("\n============================  End  ============================");
+    	// Safely wait for threads to end
         Set<Thread> threadSet1 = Thread.getAllStackTraces().keySet();
-        System.out.println("THREADS NO FIM");
         for (Thread t : threadSet1) {
-            System.out.println(t.toString());
+            if(t.getName().startsWith("ForkJoinPool") && t.isAlive()) {
+            	t.interrupt();
+            }
         }
+        int threadCounter;
+        while(true) {
+        	threadSet1 = Thread.getAllStackTraces().keySet();
+        	threadCounter = 0;
+            for (Thread t : threadSet1) {
+                if(t.getName().startsWith("ForkJoinPool") && t.isAlive()) {
+                	threadCounter++;
+                }
+            }
+            if(threadCounter == 0)
+            	break;        	
+        }
+
+        
     }
     
     
