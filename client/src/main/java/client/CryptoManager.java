@@ -86,7 +86,7 @@ public class CryptoManager {
 		return new byte[0];
 	}
 	
-	boolean verifyResponse(Response response, byte[] signature, PublicKey serverKey) {
+	boolean verifyResponse(Response response, byte[] signature) {
 		try {
 			// Initialize needed structures
 			PublicKey key = getPublicKeyFromKs("server");

@@ -218,7 +218,7 @@ public class ClientEndpoint {
 
     private void startOneWayHandshake(int port) throws NonceTimeoutException, IntegrityException {
     	Envelope nonceEnvelope = askForServerNonce(getPublicKey(), port);
-    	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature()) {
+    	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature())) {
     		setServerNonce(nonceEnvelope.getResponse().getServerKey(), nonceEnvelope.getResponse().getNonce());
     	} else {
     		throw new IntegrityException("Integrity Exception");
