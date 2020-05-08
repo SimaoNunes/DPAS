@@ -36,7 +36,7 @@ public class CryptoManager {
 	
 	byte[] signRequest(Request request) {
 		try {
-			PrivateKey key = getPrivateKey();
+			PrivateKey key = getPrivateKeyFromKs();
 			// Initialize needed structures
 			Signature signature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -61,7 +61,7 @@ public class CryptoManager {
 
 	byte[] signResponse(Response response) {
 		try {
-			PrivateKey key = getPrivateKey();
+			PrivateKey key = getPrivateKeyFromKs();
 			// Initialize needed structures
 			Signature signature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -84,10 +84,9 @@ public class CryptoManager {
 		return new byte[0];
 	}
 	
-	boolean verifyResponse(Response response, byte[] signature, int port) {
+	boolean verifyResponse(Response response, byte[] signature, PublicKey keyFrom) {
 		try {
 			// Initialize needed structures
-			PublicKey key = getPublicKeyFromKs("server" + port);
 			Signature verifySignature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);
@@ -96,7 +95,7 @@ public class CryptoManager {
 			out.flush();
 			byte[] responseBytes = bos.toByteArray();
 			// Verify signature
-			verifySignature.initVerify(key);
+			verifySignature.initVerify(keyFrom);
 			verifySignature.update(responseBytes);
 			return verifySignature.verify(signature);
 		} catch (
@@ -130,7 +129,7 @@ public class CryptoManager {
 //									     //
 ///////////////////////////////////////////
     
-    PrivateKey getPrivateKey(){
+    PrivateKey getPrivateKeyFromKs(){
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
         PrivateKey key = null;
