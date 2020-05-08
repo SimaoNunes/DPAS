@@ -65,6 +65,15 @@ public class Request implements Serializable {
         this.rid = rid;
     }
 
+    // When the CLIENT sends a read complete operation
+    public Request(String operation, PublicKey key, PublicKey publicKeyToReadFrom, byte[] serverNonce, int rid) {
+    	this.operation = operation;
+        this.publicKey = key;
+        this.publicKeyToReadFrom = publicKeyToReadFrom;
+        this.serverNonce = serverNonce;
+        this.rid = rid;
+    }
+
     // ReadGeneral
     public Request(String operation, PublicKey key, int number, byte[] serverNonce, byte[] clientNonce) {
     	this.operation = operation;
