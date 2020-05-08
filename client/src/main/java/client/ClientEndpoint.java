@@ -1,6 +1,7 @@
 package client;
 
 import exceptions.*;
+import jdk.swing.interop.SwingInterOpUtils;
 import library.Envelope;
 import library.Request;
 import library.Response;
@@ -192,7 +193,7 @@ public class ClientEndpoint {
     	Envelope nonceEnvelope = askForServerNonce(getPublicKey(), serversPorts.get(serverKey));
     	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), serverKey)) {
     		if(!oneWay) {
-    			setClientNonce(nonceEnvelope.getResponse().getServerKey(), cryptoManager.generateClientNonce());
+    		    setClientNonce(serverKey, cryptoManager.generateClientNonce());
     		}
             return nonceEnvelope.getResponse().getNonce();
         } else {
@@ -285,6 +286,8 @@ public class ClientEndpoint {
     public int registerMethod(PublicKey serverKey) throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
         byte[] serverNonce = startHandshake(serverKey, false);
+
+        System.out.println(getClientNonce(serverKey));
 
         Request request = new Request("REGISTER", getPublicKey(), serverNonce, getClientNonce(serverKey), userName);
 
