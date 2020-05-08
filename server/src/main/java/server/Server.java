@@ -1,5 +1,7 @@
 package server;
 
+import exceptions.IntegrityException;
+import exceptions.NonceTimeoutException;
 import library.Envelope;
 import library.Request;
 import library.Response;
@@ -29,7 +31,6 @@ public class Server implements Runnable {
     private String serverPort;
     private ConcurrentHashMap<PublicKey, String> userIdMap = null;
 	private ConcurrentHashMap<PublicKey, byte[]> serverNonces = null;
-	private ConcurrentHashMap<PublicKey, byte[]> clientsNonces = null;
     private AtomicInteger totalAnnouncements;
     private CryptoManager cryptoManager = null;
 
@@ -70,7 +71,6 @@ public class Server implements Runnable {
 
         cryptoManager = new CryptoManager(port);
         serverNonces = new ConcurrentHashMap<>();
-    	clientsNonces = new ConcurrentHashMap<>();
         oldResponse   = new Response(cryptoManager.generateRandomNonce());
         oldEnvelope   = new Envelope(oldResponse, null);
         
@@ -308,6 +308,8 @@ public class Server implements Runnable {
         }
 
         for(Map.Entry<String, Pair<Integer, Integer>> entry : listening.get(request.getPublicKeyToReadFrom()).entrySet()){
+
+            Envelope envelope = sendReceive(new Request("NONCE"), outStream, inStream);
             // -----> One way Handshake
             String[] address = getClientAddress(entry.getKey());
             try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket(address[0], Integer.parseInt(address[1])).getOutputStream())) {
@@ -885,16 +887,13 @@ public class Server implements Runnable {
         return true;
     }
 
-    private String[] getClientAddress(String client){
+    private int getClientPort(String client){
         try(BufferedReader reader = new BufferedReader(new FileReader("../clients_addresses.txt"))){
             String line;
             while((line = reader.readLine()) != null){
                 String[] splitted = line.split(":");
                 if(splitted[0].equals(client)){
-                    String[] result = new String[2];
-                    result[0] = splitted[1];
-                    result[1] = splitted[2];
-                    return result;
+                    return Integer.parseInt(splitted[2]);
                 }
             }
         } catch (FileNotFoundException e) {
@@ -904,5 +903,24 @@ public class Server implements Runnable {
         }
         return null;
     }
-    
+
+
+    private void startOneWayHandshake(PublicKey clientKey) throws NonceTimeoutException, IntegrityException {
+        Envelope nonceEnvelope = askForClientNonce(cryptoManager.getPublicKey(), getClientPort(userIdMap.get(clientKey)));
+        if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), userName)) {
+            setClientNonce(nonceEnvelope.getResponse().getServerKey(), nonceEnvelope.getResponse().getNonce());
+        } else {
+            throw new IntegrityException("Integrity Exception");
+        }
+    }
+
+    private Envelope askForClientNonce(PublicKey serverKey, int port) throws NonceTimeoutException {
+        try(Socket socket = new Socket("localhost", port);
+            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream())) {
+            return sendReceive(new Request("NONCE", serverKey), outputStream, inputStream);
+        } catch (IOException e) {
+            throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
+        }
+    }
 }
