@@ -227,8 +227,6 @@ public class ClientEndpoint {
 	//////////////////////////////////////////////////
     
     public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-        // Port of first server
-        int port = PORT;
         // Variables to store responses and their results
         int responses = 0;
         int[] results = new int[nServers];
@@ -236,8 +234,6 @@ public class ClientEndpoint {
         CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
         // Ask for wts to all Servers get results
         for (PublicKey key : serversPorts.keySet()) {
-
-            int finalPort = port;
 
             tasks[serversPorts.get(key) - PORT] = CompletableFuture.supplyAsync(() -> {
 				try {
@@ -256,7 +252,6 @@ public class ClientEndpoint {
 					return -12;
 				}
             });
-            port++;
         }
         // Store results when they arrive
         for (int i = 0; i < tasks.length; i++) {
@@ -340,8 +335,6 @@ public class ClientEndpoint {
     //////////////////////////////////////////////////
     
     public int post(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-        // Port of first server
-        int port = PORT;
         // Ask Servers for actual wts in case we don't have it in memory
         if(wts == -1) {
         	askForWts();
@@ -373,7 +366,6 @@ public class ClientEndpoint {
                     return -14;
                 }
             });
-            port++;
         }
         // Store results when they arrive
         for (int i = 0; i < tasks.length; i++) {
@@ -663,8 +655,6 @@ public class ClientEndpoint {
 	//////////////////////////////////////////////////
     
     private int askForWts() throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
-        // Port of first server
-        int port = PORT;
         // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
 
         // Variables to store responses and their results
@@ -690,7 +680,6 @@ public class ClientEndpoint {
 					return -12;
 				}
             });
-            port++;
         }
         // Store results when they arrive
         for (int i = 0; i < tasks.length; i++) {
