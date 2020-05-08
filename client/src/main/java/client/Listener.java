@@ -28,7 +28,7 @@ public class Listener implements Runnable{
     public Listener(ServerSocket ss, int nQuorum, String userName){
 
         listenerName = userName;
-        criptoManager = new CryptoManager();
+        criptoManager = new CryptoManager(userName);
         answers = new ConcurrentHashMap<>();
         nonces = new ConcurrentHashMap<>();
         endpoint = ss;
