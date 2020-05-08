@@ -486,7 +486,7 @@ public class ClientEndpoint {
         }
 
         while(listener.getResult() == null){
-            System.out.println("tou a espera");
+            System.out.println("w");
         }
 
         Request result = listener.getResult();
@@ -559,7 +559,7 @@ public class ClientEndpoint {
         try {
             //  -----> Handshake one way
             byte[] serverNonce = startHandshake(serverKey, true);
-
+            System.out.println("handshake do readComplete: " + serverNonce);
             //  -----> get public key to read from
             PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
 

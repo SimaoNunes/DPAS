@@ -2,6 +2,7 @@ package server;
 
 import exceptions.IntegrityException;
 import exceptions.NonceTimeoutException;
+import jdk.swing.interop.SwingInterOpUtils;
 import library.Envelope;
 import library.Request;
 import library.Response;
@@ -60,7 +61,7 @@ public class Server implements Runnable {
     
     private HashMap<String, Pair<Integer, AnnouncementBoard>> usersBoards = null;
     private ConcurrentHashMap<String, ConcurrentHashMap<String, Pair<Integer, Integer>>> listening = null;
-    
+    //<Who we are reading, <who is reading<its ts, nposts>>>
     /**************************************************************/
 
 
@@ -411,10 +412,11 @@ public class Server implements Runnable {
 	private void read(Request request, ObjectOutputStream outStream) {
 
         if(listening.contains(userIdMap.get(request.getPublicKeyToReadFrom()))){  //someone is already reading that board
-            listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).put(userIdMap.get(request.getPublicKey()), new Pair<Integer, Integer>(request.getRid(), request.getNumber()));  //listening [p] := r ;
+            listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).put(userIdMap.get(request.getPublicKey()), new Pair<>(request.getRid(), request.getNumber()));  //listening [p] := r ;
         }
         else{
             listening.put(userIdMap.get(request.getPublicKeyToReadFrom()), new ConcurrentHashMap<>()); //listening [p] := r ;
+            listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).put(userIdMap.get(request.getPublicKey()), new Pair<>(request.getRid(), request.getNumber()));
         }
 
         String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
