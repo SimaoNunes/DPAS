@@ -154,7 +154,7 @@ public class CryptoManager {
         KeyStore ks = null;
         try {
             ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream("keystores/keystore"), passphrase);
+            ks.load(new FileInputStream("keystores/port_" + port + "/keystore"), passphrase);
 
             Enumeration<String> aliases = ks.aliases();
 

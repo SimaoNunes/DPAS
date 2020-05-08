@@ -84,10 +84,10 @@ public class CryptoManager {
 		return new byte[0];
 	}
 	
-	boolean verifyResponse(Response response, byte[] signature) {
+	boolean verifyResponse(Response response, byte[] signature, int port) {
 		try {
 			// Initialize needed structures
-			PublicKey key = getPublicKeyFromKs("server");
+			PublicKey key = getPublicKeyFromKs("server" + port);
 			Signature verifySignature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);
@@ -157,6 +157,7 @@ public class CryptoManager {
         try{
             ks = KeyStore.getInstance("JKS");
             ks.load(new FileInputStream("keystores/" + username + "_keystore"), passphrase);
+			System.out.println("ENTITY: " + entity);
             return ks.getCertificate(entity).getPublicKey();
         } catch (
             CertificateException | 

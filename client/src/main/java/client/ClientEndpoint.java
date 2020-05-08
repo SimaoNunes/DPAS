@@ -190,7 +190,8 @@ public class ClientEndpoint {
 
     private byte[] startHandshake(int port) throws NonceTimeoutException, IntegrityException {
     	Envelope nonceEnvelope = askForServerNonce(getPublicKey(), port);
-    	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature())) {
+        System.out.println("START HANDSHAKE PORT: " + port);
+    	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), port)) {
             setClientNonce(nonceEnvelope.getResponse().getServerKey(), cryptoManager.generateClientNonce());
             return nonceEnvelope.getResponse().getNonce();
         } else {
@@ -200,7 +201,7 @@ public class ClientEndpoint {
 
     private byte[] startOneWayHandshake(int port) throws NonceTimeoutException, IntegrityException {
     	Envelope nonceEnvelope = askForServerNonce(getPublicKey(), port);
-    	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature())) {
+    	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), port)) {
             return nonceEnvelope.getResponse().getNonce();
     	} else {
     		throw new IntegrityException("Integrity Exception");
@@ -311,7 +312,7 @@ public class ClientEndpoint {
             if(!checkNonce(envelopeResponse.getResponse())) {
                 throw new FreshnessException(registerErrorMessage);
             }
-            if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature())) {
+            if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serversPorts.get(key))) {
                 throw new IntegrityException(registerErrorMessage);
             }
             ResponseChecker.checkRegister(envelopeResponse.getResponse());
@@ -440,7 +441,7 @@ public class ClientEndpoint {
             if(!checkNonce(envelopeResponse.getResponse())){
                 throw new FreshnessException(errorMessage);
             }
-            if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature())){
+            if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), port)){
                 throw new IntegrityException(errorMessage);
             }
             ResponseChecker.checkPost(envelopeResponse.getResponse());
@@ -765,7 +766,7 @@ public class ClientEndpoint {
                 throw new FreshnessException(errorMessage);
             }
 	    	// Verify Response's Integrity
-	        if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature())) {
+	        if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serversPorts.get(key))) {
 	            throw new IntegrityException("EPA NAO SEI AINDA O QUE ESCREVER AQUI MAS UM ATACANTE ALTEROU A RESP DO WTS");
 	        } else {
 	        	singleWts = envelopeResponse.getRequest().getTs();

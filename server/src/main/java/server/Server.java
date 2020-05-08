@@ -517,7 +517,8 @@ public class Server implements Runnable {
     //////////////////////////////////////////////
     
     private void wtsRequest(Request request, ObjectOutputStream outStream) {
-    	int wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst();
+    	if(usersBoards)
+        int wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst();
     	send(new Response(true, request.getClientNonce(), wts), outStream);
     }
     
