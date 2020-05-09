@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,12 +51,14 @@ public class Listener implements Runnable{
 
         Socket socket = null;
         ObjectInputStream inStream;
-        ObjectOutputStream outStream;
+        ObjectOutputStream outputStream;
 
         try{
             socket = endpoint.accept();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (NullPointerException e) {
+            System.out.println("i was closed");
+        } catch(IOException e){
+            System.out.println("io");
         }
 
         newListener();
@@ -65,7 +68,7 @@ public class Listener implements Runnable{
             // inStream receives objects
             inStream = new ObjectInputStream(socket.getInputStream());
             // outStream sends objects
-            outStream = new ObjectOutputStream(socket.getOutputStream());
+            outputStream = new ObjectOutputStream(socket.getOutputStream());
 
             // receive an envelope
             Envelope envelope = (Envelope) inStream.readObject();
@@ -76,7 +79,7 @@ public class Listener implements Runnable{
                 nonces.put(envelope.getRequest().getPublicKey(), nonce);
                 Response response         = new Response(true, nonce, clientKey);
                 Envelope responseEnvelope = new Envelope(response, cryptoManager.signResponse(response));
-                outStream.writeObject(responseEnvelope);
+                outputStream.writeObject(responseEnvelope);
             }
             // when Envelope has a VALUE request but is a response
             else if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("VALUE")) {
@@ -87,7 +90,7 @@ public class Listener implements Runnable{
                     //old message or attacker
                 }
             }
-
+            outputStream.close();
             inStream.close();
             socket.close();
 
@@ -96,6 +99,7 @@ public class Listener implements Runnable{
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+
     }
 
     private void newListener() {
@@ -113,7 +117,9 @@ public class Listener implements Runnable{
             if(answers.get(request.getTs()).size() > nQuorum){
                 Request result = checkQuorum(answers.get(request.getTs()).values());
                 if(result != null){
+                    System.out.println(listenerThread);
                     listenerThread.interrupt();
+                    System.out.println(listenerThread.isInterrupted());
                     return request;
                 }
 

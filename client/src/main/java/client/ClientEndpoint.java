@@ -465,8 +465,10 @@ public class ClientEndpoint {
         //forall t > 0 do answers [t] := [⊥] N ;
         // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
         Listener listener = null;
+        ServerSocket listenerSocket = null;
         try {
-            listener = new Listener(new ServerSocket(getClientPort()), nQuorum, getUsername(), getPublicKey());
+            listenerSocket = new ServerSocket(getClientPort());
+            listener = new Listener(listenerSocket, nQuorum, getUsername(), getPublicKey());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -490,10 +492,19 @@ public class ClientEndpoint {
         }
         // Wait for listeners to get result
         while(listener.getResult() == null) {
-        	
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
         Request result = listener.getResult();
-        System.out.println(result.toString());
+        try {
+            listenerSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
         // Threads that will make the requests to the server
         tasks = new Thread[nServers];
@@ -550,6 +561,7 @@ public class ClientEndpoint {
 
             }
         }*/
+        System.out.println("vou retornar");
         return result.getJsonObject();
     }
 
@@ -579,8 +591,9 @@ public class ClientEndpoint {
 
         try {
             //  -----> Handshake one way
-            byte[] serverNonce = startHandshake(serverKey, true);
-            //  -----> get public key to read from
+        byte[] serverNonce = startHandshake(serverKey, true);
+
+        //  -----> get public key to read from
             PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
 
             //  -----> send read complete operation to server
@@ -596,7 +609,6 @@ public class ClientEndpoint {
             //Impossible to know if fault from the server when doing handshake or drop attack
             //throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
         }
-    
     }
 
     

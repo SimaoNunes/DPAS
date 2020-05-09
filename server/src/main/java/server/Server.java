@@ -178,7 +178,9 @@ public class Server implements Runnable {
                                 System.out.println("READCOMPLETE METHOD");
                             readComplete(envelope.getRequest());
                         }
+                        break;
                     case "NONCE":
+                        System.out.println("NONCE METHOD");
                         handshake = true;
                         byte[] randomNonce = cryptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
                         if(!dropNonceFlag) {
@@ -898,15 +900,6 @@ public class Server implements Runnable {
             }
         }
         return true;
-    }
-
-
-    public void setClientNonce(PublicKey clientKey, byte[] clientNonce) {
-    	this.serverNonces.put(clientKey, clientNonce);
-    }
-
-    public byte[] getClientNonce (PublicKey clientKey) {
-        return serverNonces.get(clientKey);
     }
 
     private int getClientPort(String client){
