@@ -47,9 +47,9 @@ public class Response implements Serializable {
         this.nonce = nonce;
         this.publicKey = publicKey;
     }
-
+    
+    // Throw exception
     public Response(boolean success, int errorCode, byte[] nonce) {
-
         this.success = success;
         this.errorCode = errorCode;
         this.nonce = nonce;
