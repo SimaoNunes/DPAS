@@ -55,10 +55,8 @@ public class Listener implements Runnable{
 
         try{
             socket = endpoint.accept();
-        } catch (NullPointerException e) {
-            System.out.println("i was closed");
         } catch(IOException e){
-            System.out.println("io");
+            return;
         }
 
         newListener();
@@ -103,6 +101,7 @@ public class Listener implements Runnable{
     }
 
     private void newListener() {
+
         listenerThread = new Thread(this);
         listenerThread.start();
     }
@@ -158,31 +157,5 @@ public class Listener implements Runnable{
         }
         return false;
     }
-
-    /*private boolean containsResponse(Set<Response> responses, Response response){
-        for(Response r : responses){
-            if(equalsResponses(r, response)){
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean equalsResponses(Response response1, Response response2){
-        if(response1.getSuccess() && response2.getSuccess()){
-            if(response1.getJsonObject().toJSONString().equals(response2.getJsonObject().toJSONString())){
-                System.out.println("equal responses true");
-                return true;
-            }
-        }
-        else{
-            if(!response1.getSuccess() && !response2.getSuccess()){
-                if(response1.getErrorCode() == response2.getErrorCode()){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }*/
 
 }
