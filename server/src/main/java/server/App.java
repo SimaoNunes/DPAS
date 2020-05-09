@@ -8,14 +8,7 @@ public class App
 	private static final int PORT = 9000;
 
     public static void main( String[] args ) {
-
-		// Check if arguments are being wrongly used (should only receive username, or no arguments at all)
-		if(args.length > 1 || args.length == 0) {
-			System.out.println("\nWrong way of running Server. Please provide the number of faults the system can support");
-		}
-		else{
-			startNServers(Integer.parseInt(args[0]));
-		}
+    	startNServers(1);
 	}
 
 	private static void startNServers(int faults){
@@ -33,4 +26,5 @@ public class App
 			}
 		}
 	}
+	
 }

@@ -558,7 +558,6 @@ public class ClientEndpoint {
 
             }
         }*/
-        System.out.println("vou retornar");
         return result.getJsonObject();
     }
 
