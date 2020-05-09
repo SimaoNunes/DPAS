@@ -82,7 +82,6 @@ public class Listener implements Runnable{
             else if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("VALUE")) {
                 if(checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getClientNonce())) {
                     result = checkAnswer(envelope);
-                    System.out.println("result: " + result.toString());
                 }
                 else{
                     //old message or attacker
@@ -112,10 +111,8 @@ public class Listener implements Runnable{
         if(answers.containsKey(request.getTs())){
             answers.get(request.getTs()).put(request.getPort(), request);
             if(answers.get(request.getTs()).size() > nQuorum){
-                System.out.println("temos uma linha");
                 Request result = checkQuorum(answers.get(request.getTs()).values());
                 if(result != null){
-                    System.out.println("temos quorum");
                     listenerThread.interrupt();
                     return request;
                 }
@@ -133,15 +130,12 @@ public class Listener implements Runnable{
     }
 
     private Request checkQuorum(Collection<Request> line){
-        System.out.println("check quroum");
         HashMap<String, Integer> counter = new HashMap<>();
 
         for(Request entry: line){
             if(counter.containsKey(entry.toString())){
-                System.out.println("1");
                 counter.put(entry.toString(), counter.get(entry.toString()) + 1);
                 if(counter.get(entry.toString()) > nQuorum){
-                    System.out.println("2");
                     return entry;
                 }
             }

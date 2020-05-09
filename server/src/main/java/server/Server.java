@@ -122,7 +122,6 @@ public class Server implements Runnable {
             inStream = new ObjectInputStream(socket.getInputStream());
             outStream = new ObjectOutputStream(socket.getOutputStream());
             try {
-                System.out.println("SERVER ON PORT " + this.serverPort + ": User connected.");
                 Envelope envelope = (Envelope) inStream.readObject();
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":

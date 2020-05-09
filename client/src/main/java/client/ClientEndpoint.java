@@ -254,6 +254,17 @@ public class ClientEndpoint {
         	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
         	tasks[serversPorts.get(serverKey) - PORT].start();
         }
+        // FIXME está a espera que todas as threads acabem!!!
+        boolean stillAlive = true;
+        while(stillAlive) {
+        	stillAlive = false;
+            for (PublicKey serverKey : serversPorts.keySet()) {
+            	if(tasks[serversPorts.get(serverKey) - PORT].isAlive()) {
+            		stillAlive = true;
+            		break;
+            	}
+            }
+        }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getMajorityOfQuorumInt(results);
         switch (result) {
@@ -363,6 +374,17 @@ public class ClientEndpoint {
             });
         	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
         	tasks[serversPorts.get(serverKey) - PORT].start();
+        }
+        // FIXME está a espera que todas as threads acabem!!!
+        boolean stillAlive = true;
+        while(stillAlive) {
+        	stillAlive = false;
+            for (PublicKey serverKey : serversPorts.keySet()) {
+            	if(tasks[serversPorts.get(serverKey) - PORT].isAlive()) {
+            		stillAlive = true;
+            		break;
+            	}
+            }
         }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getQuorumInt(results);
@@ -489,7 +511,17 @@ public class ClientEndpoint {
         	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
         	tasks[serversPorts.get(serverKey) - PORT].start();
         }
-
+        // FIXME está a espera que todas as threads acabem!!!
+        boolean stillAlive = true;
+        while(stillAlive) {
+        	stillAlive = false;
+            for (PublicKey serverKey : serversPorts.keySet()) {
+            	if(tasks[serversPorts.get(serverKey) - PORT].isAlive()) {
+            		stillAlive = true;
+            		break;
+            	}
+            }
+        }
         /*if(result.getSuccess()){
             return result.getJsonObject();
         }
@@ -713,6 +745,17 @@ public class ClientEndpoint {
             });
         	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
         	tasks[serversPorts.get(serverKey) - PORT].start();
+        }
+        // FIXME está a espera que todas as threads acabem!!!
+        boolean stillAlive = true;
+        while(stillAlive) {
+        	stillAlive = false;
+            for (PublicKey serverKey : serversPorts.keySet()) {
+            	if(tasks[serversPorts.get(serverKey) - PORT].isAlive()) {
+            		stillAlive = true;
+            		break;
+            	}
+            }
         }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getMajorityOfQuorumInt(results);
