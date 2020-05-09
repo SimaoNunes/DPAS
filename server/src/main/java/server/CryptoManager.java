@@ -187,13 +187,9 @@ public class CryptoManager {
 //										               //
 /////////////////////////////////////////////////////////
 
-    private HashMap<PublicKey, byte[]> getNonces(){
-        return nonces;
-    }
-
     public boolean checkNonce(PublicKey key, byte[] nonce) {
-        if(getNonces().containsKey(key) && Arrays.equals(getNonces().get(key), nonce)) {
-        	getNonces().put(key, null);
+        if(nonces.containsKey(key) && Arrays.equals(nonces.get(key), nonce)) {
+        	nonces.put(key, null);
         	return true;
         }
         return false;
@@ -203,10 +199,12 @@ public class CryptoManager {
         SecureRandom random = new SecureRandom();
         byte[] nonce = new byte[16];
         random.nextBytes(nonce);
-        getNonces().put(key, nonce);
+        nonces.put(key, nonce);
         return nonce;
     }
 
+
+	// este metodo é para os testes do old envelope ou o crl
     public byte[] generateRandomNonce() {
         SecureRandom random = new SecureRandom();
         byte[] nonce = new byte[16];
