@@ -20,9 +20,7 @@ import java.util.concurrent.ExecutionException;
 
 public class ClientEndpoint {
 
-	private Map<PublicKey, byte[]> clientNonces  = null;
 	private Map<PublicKey, Integer> serversPorts = null;
-	
     private String serverAddress = null;
 
     private PublicKey publicKey  = null;
@@ -55,7 +53,6 @@ public class ClientEndpoint {
         setPublicKey(cryptoManager.getPublicKeyFromKs(username));
         setUsername(username);
         serversPorts = initiateServersPorts();
-        clientNonces  = new HashMap<>();
     }
 
     public int getWts() {
@@ -118,14 +115,6 @@ public class ClientEndpoint {
 
     public void setUsername(String userName) {
         this.userName = userName;
-    }
-
-    public byte[] getClientNonce(PublicKey serverKey) {
-        return clientNonces.get(serverKey);
-    }
-
-    public void setClientNonce(PublicKey serverKey, byte[] clientNonce) {
-    	this.clientNonces.put(serverKey, clientNonce);
     }
 
     public PublicKey getPublicKey() {
@@ -191,22 +180,13 @@ public class ClientEndpoint {
     	Envelope nonceEnvelope = askForServerNonce(getPublicKey(), serversPorts.get(serverKey));
     	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), serverKey)) {
     		if(!oneWay) {
-    		    setClientNonce(serverKey, cryptoManager.generateClientNonce());
+                return cryptoManager.generateRandomNonce(serverKey);
     		}
             return nonceEnvelope.getResponse().getNonce();
         } else {
     		throw new IntegrityException("Integrity Exception");
         }
     }
-
-    private boolean checkNonce(Response response) {
-        if(Arrays.equals(response.getNonce(), getClientNonce(response.getPublicKey()))) {
-            setClientNonce(response.getPublicKey(), null);
-            return true;
-        }
-        setClientNonce(response.getPublicKey(), null);
-        return false;
-    }    
 
     
 ///////////////////////
@@ -288,7 +268,7 @@ public class ClientEndpoint {
 
         byte[] serverNonce = startHandshake(serverKey, false);
 
-        Request request = new Request("REGISTER", getPublicKey(), serverNonce, getClientNonce(serverKey), userName);
+        Request request = new Request("REGISTER", getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey), userName);
 
         Envelope envelopeRequest = new Envelope(request);
         
@@ -305,7 +285,7 @@ public class ClientEndpoint {
                 this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /********************************************************************/
-            if(!checkNonce(envelopeResponse.getResponse())) {
+            if(!cryptoManager.checkNonce(envelopeResponse.getRequest().getPublicKey(), envelopeResponse.getRequest().getClientNonce())) {
                 throw new FreshnessException(registerErrorMessage);
             }
 
@@ -409,7 +389,7 @@ public class ClientEndpoint {
 
     public int postMethod(String message, int[] announcs, boolean isGeneral, PublicKey serverKey, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         byte[] serverNonce = startHandshake(serverKey, false);
-        return write(getPublicKey(), message, announcs, isGeneral, serverNonce, getClientNonce(serverKey), serverKey, ts);
+        return write(getPublicKey(), message, announcs, isGeneral, serverNonce, cryptoManager.getNonce(serverKey), serverKey, ts);
     }
 
 	public int write(PublicKey clientKey, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PublicKey serverKey, int ts) throws InvalidAnnouncementException,
@@ -438,7 +418,7 @@ public class ClientEndpoint {
                 this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /**********************************************/
-            if(!checkNonce(envelopeResponse.getResponse())){
+            if(!cryptoManager.checkNonce(envelopeResponse.getRequest().getPublicKey(), envelopeResponse.getRequest().getClientNonce())){
                 throw new FreshnessException(errorMessage);
             }
             if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serverKey)){
@@ -497,7 +477,7 @@ public class ClientEndpoint {
                 e.printStackTrace();
             }
         }
-        Request result = listener.getResult();
+        
         try {
             listenerSocket.close();
         } catch (IOException e) {
@@ -795,7 +775,7 @@ public class ClientEndpoint {
 
 		byte[] serverNonce = startHandshake(serverKey, false);
         // Make wts Request sign it and send inside envelope
-        Request request = new Request("WTS", getPublicKey(), serverNonce, getClientNonce(serverKey));
+        Request request = new Request("WTS", getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey));
     	Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
 
     	// Get wts inside a Response
@@ -803,7 +783,7 @@ public class ClientEndpoint {
 		try {
 			Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(serverKey));
 			// Verify Response's Freshness
-            if(!checkNonce(envelopeResponse.getResponse())){
+            if(!cryptoManager.checkNonce(envelopeResponse.getRequest().getPublicKey(), envelopeResponse.getRequest().getClientNonce())){
                 throw new FreshnessException(errorMessage);
             }
 	    	// Verify Response's Integrity

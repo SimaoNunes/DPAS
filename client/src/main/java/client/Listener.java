@@ -24,14 +24,12 @@ public class Listener implements Runnable{
     private CryptoManager cryptoManager = null;
     private Thread listenerThread;
     private PublicKey clientKey;
-    private ConcurrentHashMap<PublicKey, byte[]> nonces;
     private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Request>> answers = null;
 
     public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key){
 
         cryptoManager = new CryptoManager(userName);
         answers = new ConcurrentHashMap<>();
-        nonces = new ConcurrentHashMap<>();
         endpoint = ss;
         this.nQuorum = nQuorum;
         this.clientKey = key;
@@ -75,15 +73,14 @@ public class Listener implements Runnable{
 
             // when Envelope has a NONCE request
             if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("NONCE")) {
-                byte[] nonce = cryptoManager.generateClientNonce();
-                nonces.put(envelope.getRequest().getPublicKey(), nonce);
+                byte[] nonce = cryptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
                 Response response         = new Response(true, nonce, clientKey);
                 Envelope responseEnvelope = new Envelope(response, cryptoManager.signResponse(response));
                 outputStream.writeObject(responseEnvelope);
             }
             // when Envelope has a VALUE request but is a response
             else if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("VALUE")) {
-                if(checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getClientNonce())) {
+                if(cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getClientNonce())) {
                     result = checkAnswer(envelope);
                 }
                 else{
@@ -149,14 +146,6 @@ public class Listener implements Runnable{
 
         }
         return null;
-    }
-
-    private boolean checkNonce(PublicKey key, byte[] nonce){
-        if(nonces.containsKey(key) && Arrays.equals(nonces.get(key), nonce)) {
-            nonces.remove(key);
-            return true;
-        }
-        return false;
     }
 
     /*private boolean containsResponse(Set<Response> responses, Response response){
