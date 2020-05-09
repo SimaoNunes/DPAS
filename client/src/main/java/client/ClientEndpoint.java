@@ -122,7 +122,6 @@ public class ClientEndpoint {
     public void setPublicKey(PublicKey publicKey) {
         this.publicKey = publicKey;
     }
-    
 
     private Socket createSocket(int port) throws IOException {
         return new Socket(getServerAddress(), port);
@@ -281,10 +280,11 @@ public class ClientEndpoint {
                 this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /*******************************************************************/
+            // Verify freshness of message (by checking if the request contains a fresh nonce)
             if(!cryptoManager.checkNonce(envelopeResponse.getRequest().getPublicKey(), envelopeResponse.getRequest().getClientNonce())) {
                 throw new FreshnessException(registerErrorMessage);
             }
-
+            // Verify message integrity
             if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serverKey)) {
                 throw new IntegrityException(registerErrorMessage);
             }
@@ -300,7 +300,7 @@ public class ClientEndpoint {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
             return 0;
-        } catch(IOException e){
+        } catch(IOException e) {
             throw new OperationTimeoutException("There was a problem in the connection we cannot infer precisely if the register was successful. Please try to log in");
         }
     }
@@ -415,9 +415,11 @@ public class ClientEndpoint {
                 this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
             /**********************************************/
+            // Verify freshness of message (by checking if the request contains a fresh nonce)
             if(!cryptoManager.checkNonce(envelopeResponse.getRequest().getPublicKey(), envelopeResponse.getRequest().getClientNonce())){
                 throw new FreshnessException(errorMessage);
             }
+            // Verify message integrity
             if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serverKey)){
                 throw new IntegrityException(errorMessage);
             }

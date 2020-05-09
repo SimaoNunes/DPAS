@@ -677,7 +677,7 @@ public class Server implements Runnable {
 //										   //
 /////////////////////////////////////////////
     @SuppressWarnings("unchecked")
-	private void initUsersBoard(){
+	private void initUsersBoard() {
 
         usersBoards = new HashMap<String, Pair<Integer, AnnouncementBoard>>();
 
@@ -705,6 +705,7 @@ public class Server implements Runnable {
                 }
             }
         }
+        
     }
     
     
