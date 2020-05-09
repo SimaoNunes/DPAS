@@ -15,6 +15,8 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
+
+import java.util.Arrays;
 import java.util.HashMap;
 
 import library.Request;
@@ -23,9 +25,11 @@ import library.Response;
 public class CryptoManager {
 	
 	String username = null;
+	private HashMap<PublicKey, byte[]> nonces = null;
 	
     public CryptoManager(String username){
-        this.username = username;
+		this.username = username;
+		this.nonces = new HashMap<>();
     }
 	
 /////////////////////////////////////
@@ -133,20 +137,32 @@ public class CryptoManager {
 	}
     
     
-//////////////////////////////
-//							//
-//		Nonce Methods		//
-//							//
-//////////////////////////////
+/////////////////////////////////////////////////////////
+//										               //
+//            Nonce Manipulation Methods               //
+//										               //
+/////////////////////////////////////////////////////////
     
-    byte[] generateClientNonce() {
+	public byte[] getNonce(PublicKey key){
+		return nonces.get(key);
+	}
+
+	public boolean checkNonce(PublicKey key, byte[] nonce) {
+        if(nonces.containsKey(key) && Arrays.equals(nonces.get(key), nonce)) {
+        	nonces.put(key, null);
+        	return true;
+        }
+        return false;
+    }    
+
+    public byte[] generateRandomNonce(PublicKey key) {
         SecureRandom random = new SecureRandom();
         byte[] nonce = new byte[16];
-        random.nextBytes(nonce);
+		random.nextBytes(nonce);
+		nonces.put(key, nonce);
         return nonce;
     }
 
-    
 ///////////////////////////////////////////
 //									     //
 //   Methods to get Keys from Keystore   //

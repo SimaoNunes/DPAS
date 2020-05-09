@@ -203,6 +203,8 @@ public class CryptoManager {
         return nonce;
     }
 
+
+	// este metodo é para os testes do old envelope ou o crl
     public byte[] generateRandomNonce() {
         SecureRandom random = new SecureRandom();
         byte[] nonce = new byte[16];

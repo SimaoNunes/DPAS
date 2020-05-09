@@ -9,9 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.security.PublicKey;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,14 +22,12 @@ public class Listener implements Runnable{
     private CryptoManager cryptoManager = null;
     private Thread listenerThread;
     private PublicKey clientKey;
-    private ConcurrentHashMap<PublicKey, byte[]> nonces;
     private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Request>> answers = null;
 
     public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key){
 
         cryptoManager = new CryptoManager(userName);
         answers = new ConcurrentHashMap<>();
-        nonces = new ConcurrentHashMap<>();
         endpoint = ss;
         this.nQuorum = nQuorum;
         this.clientKey = key;
@@ -73,15 +69,14 @@ public class Listener implements Runnable{
                 switch(envelope.getRequest().getOperation()) {
             		case "NONCE":
             			if(cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), envelope.getRequest().getPublicKey())) {
-                            byte[] nonce = cryptoManager.generateClientNonce();
-                            nonces.put(envelope.getRequest().getPublicKey(), nonce);
-                            Response response         = new Response(true, nonce, clientKey);
+                            byte[] clientNonce = cryptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
+                            Response response         = new Response(true, clientNonce, clientKey);
                             Envelope responseEnvelope = new Envelope(response, cryptoManager.signResponse(response));
                             outputStream.writeObject(responseEnvelope);
             			}
             			break;
             		case "VALUE":
-                        if(checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getClientNonce())) {
+                        if(cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getClientNonce())) {
                             result = checkAnswer(envelope);
                         }
                         else{
@@ -149,12 +144,30 @@ public class Listener implements Runnable{
         return null;
     }
 
-    private boolean checkNonce(PublicKey key, byte[] nonce) {
-        if(nonces.containsKey(key) && Arrays.equals(nonces.get(key), nonce)) {
-            nonces.remove(key);
-            return true;
+    /*private boolean containsResponse(Set<Response> responses, Response response){
+        for(Response r : responses){
+            if(equalsResponses(r, response)){
+                return true;
+            }
         }
         return false;
     }
+
+    private boolean equalsResponses(Response response1, Response response2){
+        if(response1.getSuccess() && response2.getSuccess()){
+            if(response1.getJsonObject().toJSONString().equals(response2.getJsonObject().toJSONString())){
+                System.out.println("equal responses true");
+                return true;
+            }
+        }
+        else{
+            if(!response1.getSuccess() && !response2.getSuccess()){
+                if(response1.getErrorCode() == response2.getErrorCode()){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }*/
 
 }
