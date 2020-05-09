@@ -200,7 +200,6 @@ public class ClientEndpoint {
     }
 
     private boolean checkNonce(Response response) {
-        System.out.println(response.getNonce() + " " + getClientNonce(response.getPublicKey()));
         if(Arrays.equals(response.getNonce(), getClientNonce(response.getPublicKey()))) {
             setClientNonce(response.getPublicKey(), null);
             return true;
@@ -222,52 +221,38 @@ public class ClientEndpoint {
     
     public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         // Variables to store responses and their results
-        int responses = 0;
         int[] results = new int[nServers];
         // Threads that will make the requests to the server
-        CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
-        // Ask for wts to all Servers get results
-        for (PublicKey key : serversPorts.keySet()) {
-
-            tasks[serversPorts.get(key) - PORT] = CompletableFuture.supplyAsync(() -> {
-				try {
-					return registerMethod(key);
-				} catch (AlreadyRegisteredException e) {
-					return -2;
-				} catch (UnknownPublicKeyException e) {
-					return -7;
-				} catch (FreshnessException e) {
-					return -13;
-            	} catch (NonceTimeoutException e) {
-					return -11;
-				} catch (IntegrityException e) {
-					return -14;
-				} catch (OperationTimeoutException e) {
-					return -12;
-				}
-            });
-        }
-        // Store results when they arrive
-        for (int i = 0; i < tasks.length; i++) {
-            if (tasks[i].isDone()) {
-                try {
-                    results[responses++] = tasks[i].get().intValue();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
+        Thread[] tasks = new Thread[nServers];
+        // Register to all servers
+        for (PublicKey serverKey : serversPorts.keySet()) {
+        	// Create a uncaught exception handler
+        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
+        	    public void uncaughtException(Thread th, Throwable ex) {
+        	        System.out.println("Uncaught exception: " + ex);
+        	    }
+        	};
+        	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+                public void run() {
+                	try {
+                		results[serversPorts.get(serverKey) - PORT] = registerMethod(serverKey);
+    				} catch (AlreadyRegisteredException e) {
+    					results[serversPorts.get(serverKey) - PORT] = -2;
+    				} catch (UnknownPublicKeyException e) {
+    					results[serversPorts.get(serverKey) - PORT] = -7;
+    				} catch (FreshnessException e) {
+    					results[serversPorts.get(serverKey) - PORT] = -13;
+                	} catch (NonceTimeoutException e) {
+                		results[serversPorts.get(serverKey) - PORT] = -11;
+    				} catch (IntegrityException e) {
+    					results[serversPorts.get(serverKey) - PORT] = -14;
+    				} catch (OperationTimeoutException e) {
+    					results[serversPorts.get(serverKey) - PORT] = -12;
+    				}
                 }
-                if (responses > nQuorum)
-                    break;
-            }
-            if (i == tasks.length - 1)
-                i = 0;
-        }
-        // Kill remaining CompletableFutures
-        for (int i = 0; i < tasks.length; i++) {
-            if (!tasks[i].isDone()) {
-                    tasks[i].cancel(true);
-            }
+            });
+        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
+        	tasks[serversPorts.get(serverKey) - PORT].start();
         }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getMajorityOfQuorumInt(results);
@@ -285,6 +270,7 @@ public class ClientEndpoint {
             default:
             	return result;
         }
+        
     }
 
     public int registerMethod(PublicKey serverKey) throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
@@ -341,60 +327,42 @@ public class ClientEndpoint {
         if(wts == -1) {
         	wts = askForWts();
         }
-        wts = wts + 1;
+        wts = wts + 1;  
         // Variables to store responses and their results
-        int responses = 0;
         int[] results = new int[nServers];
         // Threads that will make the requests to the server
         Thread[] tasks = new Thread[nServers];
-        // Make a post (write) to all Server and get results
+        // Post to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-
-            tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
-                @Override
+        	// Create a uncaught exception handler
+        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
+        	    public void uncaughtException(Thread th, Throwable ex) {
+        	        System.out.println("Uncaught exception: " + ex);
+        	    }
+        	};
+        	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
-                    return postMethod(message, announcs, isGeneral, serverKey, wts))
-                }
-                try {
-                    return postMethod(message, announcs, isGeneral, serverKey, wts);
-                } catch (MessageTooBigException e) {
-                    return -4;
-                } catch (UserNotRegisteredException e) {
-                    return -1;
-                } catch (InvalidAnnouncementException e) {
-                    return -5;
-                } catch (NonceTimeoutException e) {
-                    return -11;
-                } catch (OperationTimeoutException e) {
-                    return -12;
-                } catch (FreshnessException e) {
-                    return -13;
-                } catch (IntegrityException e) {
-                    return -14;
+                	try {
+                		results[serversPorts.get(serverKey) - PORT] = postMethod(message, announcs, isGeneral, serverKey, wts);
+                	} catch (UserNotRegisteredException e) {
+                		results[serversPorts.get(serverKey) - PORT] = -1;              		
+    				} catch (InvalidAnnouncementException e) {
+                		results[serversPorts.get(serverKey) - PORT] = -5;              		
+    				} catch (MessageTooBigException e) {
+    					results[serversPorts.get(serverKey) - PORT] = -4;
+    				} catch (FreshnessException e) {
+    					results[serversPorts.get(serverKey) - PORT] = -13;
+                	} catch (NonceTimeoutException e) {
+                		results[serversPorts.get(serverKey) - PORT] = -11;
+    				} catch (IntegrityException e) {
+    					results[serversPorts.get(serverKey) - PORT] = -14;
+    				} catch (OperationTimeoutException e) {
+    					results[serversPorts.get(serverKey) - PORT] = -12;
+    				}
                 }
             });
-        }
-        // Store results when they arrive
-        for (int i = 0; i < tasks.length; i++) {
-            if (tasks[i].isDone()) {
-                try {
-                    results[responses++] = tasks[i].get().intValue();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-                if (responses > nQuorum)
-                    break;
-            }
-            if (i == tasks.length - 1)
-                i = 0;
-        }
-        // Kill remaining CompletableFutures
-        for (int i = 0; i < tasks.length; i++) {
-            if (!tasks[i].isDone()) {
-                    tasks[i].cancel(true);
-            }
+        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
+        	tasks[serversPorts.get(serverKey) - PORT].start();
         }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getQuorumInt(results);
@@ -472,27 +440,36 @@ public class ClientEndpoint {
 
     public JSONObject read(String announcUserName, int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         rid += 1;
-
         //forall t > 0 do answers [t] := [⊥] N ;
         // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
-        
         Listener listener = null;
         try {
             listener = new Listener(new ServerSocket(getClientPort()), nQuorum, getUsername(), getPublicKey());
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        // Threads that will make the requests to the server
+        Thread[] tasks = new Thread[nServers];
+        // Send read to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-
-            CompletableFuture.runAsync(() -> readMethod(announcUserName, number, serverKey, rid));
-
+        	// Create a uncaught exception handler
+        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
+        	    public void uncaughtException(Thread th, Throwable ex) {
+        	        System.out.println("Uncaught exception: " + ex);
+        	    }
+        	};
+        	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+                public void run() {
+                	readMethod(announcUserName, number, serverKey, rid);
+                }
+            });
+        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
+        	tasks[serversPorts.get(serverKey) - PORT].start();
         }
-
-        while(listener.getResult() == null){
-            System.out.println("w");
+        // Wait for listeners to get result
+        while(listener.getResult() == null) {
+        	
         }
-
         Request result = listener.getResult();
         System.out.println(result.toString());
 
@@ -501,6 +478,24 @@ public class ClientEndpoint {
 
             CompletableFuture.runAsync(() -> readComplete(announcUserName, key, rid));
 
+        }*/
+        // Threads that will make the requests to the server
+        tasks = new Thread[nServers];
+        // Send 'read complete' to all servers
+        /*for (PublicKey serverKey : serversPorts.keySet()) {
+        	// Create a uncaught exception handler
+        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
+        	    public void uncaughtException(Thread th, Throwable ex) {
+        	        System.out.println("Uncaught exception: " + ex);
+        	    }
+        	};
+        	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+                public void run() {
+                	readComplete(announcUserName, serverKey, rid);
+                }
+            });
+        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
+        	tasks[serversPorts.get(serverKey) - PORT].start();
         }*/
 
         /*if(result.getSuccess()){
@@ -524,13 +519,11 @@ public class ClientEndpoint {
                     throw new FreshnessException("Freshness Exception");
                 case (-14):
                     throw new IntegrityException("Integrity Exception");
-
                 default:
                     break;
 
             }
         }*/
-        System.out.println(result.getJsonObject().toJSONString());
         return result.getJsonObject();
     }
 
@@ -538,10 +531,8 @@ public class ClientEndpoint {
         try {
             //  -----> Handshake one way
             byte[] serverNonce = startHandshake(serverKey, true);
-
             //  -----> get public key to read from
             PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
-
             //  -----> send read operation to server
             Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, serverNonce, rid);
             Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
@@ -563,7 +554,6 @@ public class ClientEndpoint {
         try {
             //  -----> Handshake one way
             byte[] serverNonce = startHandshake(serverKey, true);
-            System.out.println("handshake do readComplete: " + serverNonce);
             //  -----> get public key to read from
             PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
 
@@ -583,6 +573,7 @@ public class ClientEndpoint {
     
     }
 
+    
 	//////////////////////////////////////////////////
 	//				   READ GENERAL					//
 	//////////////////////////////////////////////////
@@ -699,53 +690,37 @@ public class ClientEndpoint {
 	//////////////////////////////////////////////////
     
     private int askForWts() throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
-        // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
-
         // Variables to store responses and their results
-        int responses = 0;
         int[] results = new int[nServers];
         // Threads that will make the requests to the server
-        CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
-        // Ask for wts to all Servers get results
+        Thread[] tasks = new Thread[nServers];
+        // Register to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-
-            tasks[serversPorts.get(serverKey) - PORT] = CompletableFuture.supplyAsync(() -> {
-				try {
-					return askForSingleWts(serverKey);
-				} catch (UserNotRegisteredException e) {
-					return -1;
-            	} catch (FreshnessException e) {
-					return -13;
-            	} catch (NonceTimeoutException e) {
-					return -11;
-				} catch (IntegrityException e) {
-					return -14;
-				} catch (OperationTimeoutException e) {
-					return -12;
-				}
-            });
-        }
-        // Store results when they arrive
-        for (int i = 0; i < tasks.length; i++) {
-            if (tasks[i].isDone()) {
-                try {
-                    results[responses++] = tasks[i].get().intValue();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
+        	// Create a uncaught exception handler
+        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
+        	    public void uncaughtException(Thread th, Throwable ex) {
+        	        System.out.println("Uncaught exception: " + ex);
+        	    }
+        	};
+        	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+                public void run() {
+                	try {
+                		results[serversPorts.get(serverKey) - PORT] = askForSingleWts(serverKey);
+                	} catch (UserNotRegisteredException e) {
+                		results[serversPorts.get(serverKey) - PORT] = -1;
+                	} catch (FreshnessException e) {
+    					results[serversPorts.get(serverKey) - PORT] = -13;
+                	} catch (NonceTimeoutException e) {
+                		results[serversPorts.get(serverKey) - PORT] = -11;
+    				} catch (IntegrityException e) {
+    					results[serversPorts.get(serverKey) - PORT] = -14;
+    				} catch (OperationTimeoutException e) {
+    					results[serversPorts.get(serverKey) - PORT] = -12;
+    				}
                 }
-                if (responses > nQuorum) // OBA
-                    break;
-            }
-            if (i == tasks.length - 1)
-                i = 0;
-        }
-        // Kill remaining CompletableFutures
-        for (int i = 0; i < tasks.length; i++) {
-            if (!tasks[i].isDone()) {
-                    tasks[i].cancel(true);
-            }
+            });
+        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
+        	tasks[serversPorts.get(serverKey) - PORT].start();
         }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getMajorityOfQuorumInt(results);
@@ -763,6 +738,7 @@ public class ClientEndpoint {
             default:
             	return result;
         }
+        
 	}
 
     
