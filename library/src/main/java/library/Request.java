@@ -101,7 +101,7 @@ public class Request implements Serializable {
         this.clientNonce = clientNonce;
     }
 
-    //VALUE
+    // VALUE
     public Request(String operation, boolean success, int rid, int ts, byte[] nonce, JSONObject object, int port, PublicKey key){
     	this.success = success;
         this.operation = operation;

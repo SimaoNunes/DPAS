@@ -24,7 +24,7 @@ public class ClientApp {
 	// Username
 	private static String userName = null;
 	
-	private static final String INVALID = "\nInvalid instruction!";
+	private static final String INVALID_INSTRUCTION = "\nInvalid instruction!";
 	
     public static void main(String[] args) {
     	System.out.println("\n======================  DPAS Application ======================");
@@ -122,7 +122,7 @@ public class ClientApp {
 					}				
 					break;
 				default:
-					System.out.println(INVALID);
+					System.out.println(INVALID_INSTRUCTION);
 			}
 		}
 	}
@@ -202,7 +202,7 @@ public class ClientApp {
 					run = false;				
 					break;
 				default:
-					System.out.println(INVALID);
+					System.out.println(INVALID_INSTRUCTION);
 			}
 		}
 	}	
@@ -287,7 +287,7 @@ public class ClientApp {
 					run = false;				
 					break;
 				default:
-					System.out.println(INVALID);
+					System.out.println(INVALID_INSTRUCTION);
 			}
 		}
 	}

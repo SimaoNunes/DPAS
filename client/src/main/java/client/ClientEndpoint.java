@@ -285,13 +285,11 @@ public class ClientEndpoint {
     }
 
     public int registerMethod(PublicKey serverKey) throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-
+    	// Ask server for a nonce and set a client nonce to send
         byte[] serverNonce = startHandshake(serverKey, false);
-
+        // Create request and seal it up inside envelope
         Request request = new Request("REGISTER", getPublicKey(), serverNonce, getClientNonce(serverKey), userName);
-
         Envelope envelopeRequest = new Envelope(request);
-        
         /***** SIMULATE ATTACKER: changing the userX key to userY pubKey [in this case user3] *****/
         if(isIntegrityFlag()) {
         	envelopeRequest.getRequest().setPublicKey(cryptoManager.getPublicKeyFromKs("user3"));
@@ -299,12 +297,11 @@ public class ClientEndpoint {
         /******************************************************************************************/
         try {
             Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(serverKey));
-
             /***** SIMULATE ATTACKER: send replayed messages to the server *****/
             if(isReplayFlag()){
                 this.replayAttacker.sendReplays(envelopeRequest, 2);
             }
-            /********************************************************************/
+            /*******************************************************************/
             if(!checkNonce(envelopeResponse.getResponse())) {
                 throw new FreshnessException(registerErrorMessage);
             }
@@ -312,9 +309,10 @@ public class ClientEndpoint {
             if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serverKey)) {
                 throw new IntegrityException(registerErrorMessage);
             }
+            // Verify if response has exceptions
             ResponseChecker.checkRegister(envelopeResponse.getResponse());
-            if(envelopeResponse.getResponse().getSuccess()){
-                // On success, return 1
+            // On success, return 1
+            if(envelopeResponse.getResponse().getSuccess()) {
                 return 1;
             }
             else{

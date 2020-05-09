@@ -44,31 +44,6 @@ public class CryptoManager {
 //	  							   //
 /////////////////////////////////////
     
-	byte[] signResponse(Response response) {
-		try {
-			// Initialize needed structures
-			PrivateKey myKey = getPrivateKeyFromKs();
-			Signature signature = Signature.getInstance("SHA256withRSA");
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			ObjectOutputStream out = new ObjectOutputStream(bos);
-			// Convert response to byteArray
-			out.writeObject(response);
-			out.flush();
-			byte[] responseBytes = bos.toByteArray();
-			// Sign with private key
-			signature.initSign(myKey);
-			signature.update(responseBytes);
-			return signature.sign();
-		} catch (
-			InvalidKeyException		 |
-			NoSuchAlgorithmException |
-			SignatureException		 |
-			IOException e) {
-			e.printStackTrace();
-		}
-		return new byte[0];
-    }
-    
     byte[] signRequest(Request request) {
 		try {
 			// Initialize needed structures
@@ -93,6 +68,31 @@ public class CryptoManager {
 		}
 		return new byte[0];
 	}
+    
+	byte[] signResponse(Response response) {
+		try {
+			// Initialize needed structures
+			PrivateKey myKey = getPrivateKeyFromKs();
+			Signature signature = Signature.getInstance("SHA256withRSA");
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream out = new ObjectOutputStream(bos);
+			// Convert response to byteArray
+			out.writeObject(response);
+			out.flush();
+			byte[] responseBytes = bos.toByteArray();
+			// Sign with private key
+			signature.initSign(myKey);
+			signature.update(responseBytes);
+			return signature.sign();
+		} catch (
+			InvalidKeyException		 |
+			NoSuchAlgorithmException |
+			SignatureException		 |
+			IOException e) {
+			e.printStackTrace();
+		}
+		return new byte[0];
+    }
 
 	boolean verifyRequest(Request request, byte[] signature, String from) {
 		try {
@@ -187,23 +187,19 @@ public class CryptoManager {
 //										               //
 /////////////////////////////////////////////////////////
 
-    private HashMap<PublicKey, byte[]> getNonces(){
-        return nonces;
-    }
-
     public boolean checkNonce(PublicKey key, byte[] nonce) {
-        if(getNonces().containsKey(key) && Arrays.equals(getNonces().get(key), nonce)) {
-        	getNonces().put(key, null);
+        if(nonces.containsKey(key) && Arrays.equals(nonces.get(key), nonce)) {
+        	nonces.put(key, null);
         	return true;
         }
         return false;
     }    
 
-    public byte[] generateRandomNonce(PublicKey key) {
+    public byte[] generateRandomNonce(PublicKey clientKey) {
         SecureRandom random = new SecureRandom();
         byte[] nonce = new byte[16];
         random.nextBytes(nonce);
-        getNonces().put(key, nonce);
+        nonces.put(clientKey, nonce);
         return nonce;
     }
 
