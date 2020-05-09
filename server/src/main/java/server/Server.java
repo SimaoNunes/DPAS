@@ -31,7 +31,6 @@ public class Server implements Runnable {
     private ServerSocket server;
     private String serverPort;
     private ConcurrentHashMap<PublicKey, String> userIdMap = null;
-	private ConcurrentHashMap<PublicKey, byte[]> serverNonces = null;
     private AtomicInteger totalAnnouncements;
     private CryptoManager cryptoManager = null;
 
@@ -61,7 +60,7 @@ public class Server implements Runnable {
     
     private HashMap<String, Pair<Integer, AnnouncementBoard>> usersBoards = null;
     private ConcurrentHashMap<String, ConcurrentHashMap<String, Pair<Integer, Integer>>> listening = null;
-    //<Who we are reading, <who is reading<its ts, nposts>>>
+
     /**************************************************************/
 
 
@@ -71,7 +70,6 @@ public class Server implements Runnable {
         serverPort		  = port + "";  //adding "" converts int to string
 
         cryptoManager = new CryptoManager(port);
-        serverNonces = new ConcurrentHashMap<>();
         oldResponse   = new Response(cryptoManager.generateRandomNonce());
         oldEnvelope   = new Envelope(oldResponse, null);
         
@@ -175,7 +173,7 @@ public class Server implements Runnable {
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3}))
                             {
-                                System.out.println("READCOMPLETE METHOD");
+                                System.out.println("SERVER ON PORT " + this.serverPort + ": READCOMPLETE METHOD");
                             readComplete(envelope.getRequest());
                         }
                         break;
@@ -414,7 +412,7 @@ public class Server implements Runnable {
         String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
         int directorySize = directoryList.length;
 
-        System.out.println("SERVER ON PORT " + this.serverPort + ": READ method");
+        System.out.println("SERVER ON PORT " + this.serverPort + ": READ METHOD");
         String username = userIdMap.get(request.getPublicKeyToReadFrom());
         String path = announcementBoardsPath + username + "/";
 
@@ -451,7 +449,7 @@ public class Server implements Runnable {
             // Send response to client
             // ------> Handshake one way
             byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
-
+            
             send(new Request("VALUE", true, request.getRid(), usersBoards.get(userIdMap.get(request.getPublicKeyToReadFrom())).getFirst(), nonce, announcementsToSend, Integer.parseInt(serverPort), cryptoManager.getPublicKeyFromKs("server")), outputStream);
 
         } catch(Exception e) {
@@ -886,9 +884,6 @@ public class Server implements Runnable {
                     break;
                 // ## TooMuchAnnouncements ## -> Check if user is trying to read more announcements that Board number of announcements
                 case -10:
-                    System.out.println("tou a entrar aqui what");
-                    System.out.println(request.getNumber());
-                    System.out.println(getDirectoryList(request.getPublicKey()).length);
                     if ((request.getOperation().equals("READ") && request.getNumber() > getDirectoryList(request.getPublicKey()).length) || (request.getOperation().equals("READGENERAL") && request.getNumber() > getDirectoryList(null).length) ) {
                         send(new Response(false, -10, request.getClientNonce()), outStream);
                         return false;

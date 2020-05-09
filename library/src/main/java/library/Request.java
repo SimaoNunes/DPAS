@@ -234,10 +234,10 @@ public class Request implements Serializable {
         String s ="";
         s += this.operation + " ";
         
-        s += this.success;
+        s += this.success + " ";
         
         if(!this.success) {
-        	s += this.errorCode;
+        	s += this.errorCode + " ";
         }
 
         if(this.jsonObject != null){

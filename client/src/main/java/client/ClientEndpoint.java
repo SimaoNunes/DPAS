@@ -463,7 +463,6 @@ public class ClientEndpoint {
     public JSONObject read(String announcUserName, int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         rid += 1;
         //forall t > 0 do answers [t] := [⊥] N ;
-        // No replicas on Server side [[[[[[[[[  TALVEZ NAO SEJA PRECISO  ]]]]]]]]]
         Listener listener = null;
         ServerSocket listenerSocket = null;
         try {
@@ -505,7 +504,7 @@ public class ClientEndpoint {
             e.printStackTrace();
         }
 
-
+        Request result = listener.getResult();
         // Threads that will make the requests to the server
         tasks = new Thread[nServers];
         // Send 'read complete' to all servers

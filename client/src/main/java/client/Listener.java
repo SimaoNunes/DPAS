@@ -73,7 +73,7 @@ public class Listener implements Runnable{
             // receive an envelope
             Envelope envelope = (Envelope) inStream.readObject();
 
-            // when Envelope has a request (nonce requests)
+            // when Envelope has a NONCE request
             if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("NONCE")) {
                 byte[] nonce = cryptoManager.generateClientNonce();
                 nonces.put(envelope.getRequest().getPublicKey(), nonce);
@@ -107,7 +107,7 @@ public class Listener implements Runnable{
         listenerThread.start();
     }
 
-    private Request checkAnswer(Envelope envelope){ //do not forget that VALUE message is a request
+    private Request checkAnswer(Envelope envelope) { //do not forget that VALUE message is a request
         Request request = envelope.getRequest();
         //FALTA CHECKAR INTEGRITY
         //FALTA CHECKAR SE SAO EXCEPTIONS
@@ -122,10 +122,8 @@ public class Listener implements Runnable{
                     System.out.println(listenerThread.isInterrupted());
                     return request;
                 }
-
             }
         }
-
         else{
             answers.put(request.getTs(), new ConcurrentHashMap<>());
             answers.get(request.getTs()).put(request.getPort(), request);
