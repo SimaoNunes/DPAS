@@ -346,11 +346,15 @@ public class ClientEndpoint {
         int responses = 0;
         int[] results = new int[nServers];
         // Threads that will make the requests to the server
-        CompletableFuture<Integer>[] tasks = new CompletableFuture[nServers];
+        Thread[] tasks = new Thread[nServers];
         // Make a post (write) to all Server and get results
         for (PublicKey serverKey : serversPorts.keySet()) {
 
-            tasks[serversPorts.get(serverKey) - PORT] = CompletableFuture.supplyAsync(() -> {
+            tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    return postMethod(message, announcs, isGeneral, serverKey, wts))
+                }
                 try {
                     return postMethod(message, announcs, isGeneral, serverKey, wts);
                 } catch (MessageTooBigException e) {
@@ -493,11 +497,11 @@ public class ClientEndpoint {
         System.out.println(result.toString());
 
         // send read complete to server
-        for (PublicKey key : serversPorts.keySet()) {
+        /*for (PublicKey key : serversPorts.keySet()) {
 
             CompletableFuture.runAsync(() -> readComplete(announcUserName, key, rid));
 
-        }
+        }*/
 
         /*if(result.getSuccess()){
             return result.getJsonObject();
