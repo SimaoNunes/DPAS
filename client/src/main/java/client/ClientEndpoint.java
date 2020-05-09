@@ -497,13 +497,11 @@ public class ClientEndpoint {
                 e.printStackTrace();
             }
         }
-        Request result = listener.getResult();
         try {
             listenerSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         Request result = listener.getResult();
         // Threads that will make the requests to the server
         tasks = new Thread[nServers];
