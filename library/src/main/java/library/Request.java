@@ -71,7 +71,6 @@ public class Request implements Serializable {
     	this.operation = operation;
         this.publicKey = key;
     }
-
     
     // When the CLIENT requests for a read operation - now we don't need the client's nounce
     public Request(String operation, PublicKey key, PublicKey publicKeyToReadFrom, int number, byte[] serverNonce, int rid) {

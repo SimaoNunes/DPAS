@@ -40,7 +40,8 @@ public class Response implements Serializable {
         this.nonce = nonce;
         this.ts = ts;
     }
-
+    
+    // Register
     public Response(boolean success, byte[] nonce, PublicKey publicKey) {
         this.success = success;
         this.nonce = nonce;

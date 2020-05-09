@@ -258,7 +258,6 @@ public class Server implements Runnable {
         userIdMap.put(request.getPublicKey(), username);
         saveUserIdMap();
         usersBoards.put(request.getUsername(), new Pair<>(0, new AnnouncementBoard(request.getUsername())));
-
         if(!dropOperationFlag) {
             sendResponse(new Response(true, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         } else {

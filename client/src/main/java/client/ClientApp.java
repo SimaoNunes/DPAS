@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.concurrent.ForkJoinPool;
 
 import exceptions.*;
 import org.json.simple.JSONArray;
@@ -58,26 +57,6 @@ public class ClientApp {
 			}
     	}
     	System.out.println("\n============================  End  ============================");
-    	// Safely wait for threads to end
-        Set<Thread> threadSet1 = Thread.getAllStackTraces().keySet();
-        for (Thread t : threadSet1) {
-            if(t.getName().startsWith("ForkJoinPool") && t.isAlive()) {
-            	t.interrupt();
-            }
-        }
-        int threadCounter;
-        while(true) {
-        	threadSet1 = Thread.getAllStackTraces().keySet();
-        	threadCounter = 0;
-            for (Thread t : threadSet1) {
-                if(t.getName().startsWith("ForkJoinPool") && t.isAlive()) {
-                	threadCounter++;
-                }
-            }
-            if(threadCounter == 0)
-            	break;        	
-        }
-
         
     }
     

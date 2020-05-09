@@ -281,7 +281,7 @@ public class ClientEndpoint {
             }
             /*******************************************************************/
             // Verify freshness of message (by checking if the request contains a fresh nonce)
-            if(!cryptoManager.checkNonce(envelopeResponse.getRequest().getPublicKey(), envelopeResponse.getRequest().getClientNonce())) {
+            if(!cryptoManager.checkNonce(envelopeResponse.getResponse().getPublicKey(), envelopeResponse.getResponse().getNonce())) {
                 throw new FreshnessException(registerErrorMessage);
             }
             // Verify message integrity
@@ -416,7 +416,7 @@ public class ClientEndpoint {
             }
             /**********************************************/
             // Verify freshness of message (by checking if the request contains a fresh nonce)
-            if(!cryptoManager.checkNonce(envelopeResponse.getRequest().getPublicKey(), envelopeResponse.getRequest().getClientNonce())){
+            if(!cryptoManager.checkNonce(envelopeResponse.getResponse().getPublicKey(), envelopeResponse.getResponse().getNonce())){
                 throw new FreshnessException(errorMessage);
             }
             // Verify message integrity
@@ -780,7 +780,7 @@ public class ClientEndpoint {
 		try {
 			Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(serverKey));
 			// Verify Response's Freshness
-            if(!cryptoManager.checkNonce(envelopeResponse.getRequest().getPublicKey(), envelopeResponse.getRequest().getClientNonce())){
+            if(!cryptoManager.checkNonce(envelopeResponse.getResponse().getPublicKey(), envelopeResponse.getResponse().getNonce())){
                 throw new FreshnessException(errorMessage);
             }
 	    	// Verify Response's Integrity
