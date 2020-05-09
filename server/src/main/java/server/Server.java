@@ -31,7 +31,6 @@ public class Server implements Runnable {
     private ServerSocket server;
     private String serverPort;
     private ConcurrentHashMap<PublicKey, String> userIdMap = null;
-	private ConcurrentHashMap<PublicKey, byte[]> serverNonces = null;
     private AtomicInteger totalAnnouncements;
     private CryptoManager cryptoManager = null;
 
@@ -71,7 +70,6 @@ public class Server implements Runnable {
         serverPort		  = port + "";  //adding "" converts int to string
 
         cryptoManager = new CryptoManager(port);
-        serverNonces  = new ConcurrentHashMap<>();
         oldResponse   = new Response(cryptoManager.generateRandomNonce());
         oldEnvelope   = new Envelope(oldResponse, null);
         
@@ -896,15 +894,6 @@ public class Server implements Runnable {
             }
         }
         return true;
-    }
-
-
-    public void setClientNonce(PublicKey clientKey, byte[] clientNonce) {
-    	this.serverNonces.put(clientKey, clientNonce);
-    }
-
-    public byte[] getClientNonce (PublicKey clientKey) {
-        return serverNonces.get(clientKey);
     }
 
     private int getClientPort(String client){
