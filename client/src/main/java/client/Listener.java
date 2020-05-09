@@ -24,7 +24,7 @@ public class Listener implements Runnable{
     private PublicKey clientKey;
     private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Request>> answers = null;
 
-    public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key){
+    public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key) {
 
         cryptoManager = new CryptoManager(userName);
         answers = new ConcurrentHashMap<>();
@@ -76,17 +76,18 @@ public class Listener implements Runnable{
             			}
             			break;
             		case "VALUE":
-                        if(cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getClientNonce())) {
-                            result = checkAnswer(envelope);
-                        }
-                        else{
-                            //old message or attacker
-                        }
+            			if(cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), envelope.getRequest().getPublicKey())) {
+	                        if(cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getClientNonce())) {
+	                            result = checkAnswer(envelope);
+	                        }
+	                        else{
+	                            //old message or attacker
+	                        }
+            			}
             			break;
             		default:
             			break;
                 }
-                
             }
             outputStream.close();
             inStream.close();
