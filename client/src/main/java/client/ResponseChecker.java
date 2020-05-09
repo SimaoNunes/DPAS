@@ -24,7 +24,6 @@ public class ResponseChecker {
                 throw new UnknownPublicKeyException("Such key doesn't exist in the server side!");
             }
             else if(error == -2) {
-            	System.out.println("JA TA REGISTADO");
                 throw new AlreadyRegisteredException("User with that public key already registered in the DPAS!");
             }
         }

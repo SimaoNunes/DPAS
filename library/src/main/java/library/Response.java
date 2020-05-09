@@ -49,10 +49,11 @@ public class Response implements Serializable {
     }
     
     // Throw exception
-    public Response(boolean success, int errorCode, byte[] nonce) {
+    public Response(boolean success, int errorCode, byte[] nonce, PublicKey publicKey) {
         this.success = success;
         this.errorCode = errorCode;
         this.nonce = nonce;
+        this.publicKey = publicKey;
     }
 
     public Response(boolean success, JSONObject object, byte[] nonce, int rid) {

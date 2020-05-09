@@ -301,7 +301,7 @@ public class Server implements Runnable {
                 saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
                 usersBoards.get(userIdMap.get(request.getPublicKey())).getSecond().addAnnouncement(announcementObject); //update val with the new post
             } catch (IOException e) {
-                sendResponse(new Response(false, -9, request.getClientNonce()), outStream);
+                sendResponse(new Response(false, -9, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
             }
 
             incrementTotalAnnouncs();
@@ -379,7 +379,7 @@ public class Server implements Runnable {
         try {
             saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
         } catch (IOException e) {
-            sendResponse(new Response(false, -9, request.getClientNonce()), outStream);
+            sendResponse(new Response(false, -9, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         }
 
         incrementTotalAnnouncs();
@@ -451,7 +451,7 @@ public class Server implements Runnable {
 
         } catch(Exception e) {
             e.printStackTrace();
-            sendResponse(new Response(false, -8, request.getClientNonce()), outStream);
+            sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         }
     }
     
@@ -497,7 +497,7 @@ public class Server implements Runnable {
                 System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED READ GENERAL");
             }
         } catch(Exception e) {
-            sendResponse(new Response(false, -8, request.getClientNonce()), outStream);
+            sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         }
     }
 
@@ -834,56 +834,56 @@ public class Server implements Runnable {
                 // ## UserNotRegistered ## -> check if user is registed
                 case -1:
                     if(!userIdMap.containsKey(request.getPublicKey())) {
-                        sendResponse(new Response(false, -1, request.getClientNonce()), outStream);
+                        sendResponse(new Response(false, -1, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
                         return false;
                     }
                     break;
                 // ## AlreadyRegistered ## -> check if user is already registered
                 case -2:
                     if (userIdMap.containsKey(request.getPublicKey())) {
-                        sendResponse(new Response(false, -2, request.getClientNonce()), outStream);
+                        sendResponse(new Response(false, -2, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
                         return false;
                     }
                     break;
                 // ## UserNotRegistered ## -> [READ] check if user TO READ FROM is registered
                 case -3:
                     if(!userIdMap.containsKey(request.getPublicKeyToReadFrom())) {
-                        sendResponse(new Response(false, -3, request.getClientNonce()), outStream);
+                        sendResponse(new Response(false, -3, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
                         return false;
                     }
                     break;
                 // ## MessageTooBig ## -> Check if message length exceeds 255 characters
                 case -4:
                     if(request.getMessage().length() > 255) {
-                        sendResponse(new Response(false, -4, request.getClientNonce()), outStream);
+                        sendResponse(new Response(false, -4, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
                         return false;
                     }
                     break;
                 // ## InvalidAnnouncement ## -> checks if announcements refered by the user are valid
                 case -5:
                     if(request.getAnnouncements() != null && !checkValidAnnouncements(request.getAnnouncements())) {
-                        sendResponse(new Response(false, -5, request.getClientNonce()), outStream);
+                        sendResponse(new Response(false, -5, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
                         return false;      
                     }
                     break;
                 // ## InvalidPostsNumber ## -> check if number of requested posts are bigger than zero
                 case -6:
                     if (request.getNumber() < 0) {
-                        sendResponse(new Response(false, -6, request.getClientNonce()), outStream);
+                        sendResponse(new Response(false, -6, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
                         return false;
                     }
                     break;
                 // ## UnknownPublicKey ## -> Check if key is null or known by the Server. If method is read, check if key to ready from is null
                 case -7:
                     if (request.getPublicKey() == null || cryptoManager.checkKey(request.getPublicKey()) == "" || (request.getOperation().equals("READ") && (request.getPublicKeyToReadFrom() == null || cryptoManager.checkKey(request.getPublicKeyToReadFrom()) == ""))) {
-                        sendResponse(new Response(false, -7, request.getClientNonce()), outStream);
+                        sendResponse(new Response(false, -7, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
                         return false;
                     }
                     break;
                 // ## TooMuchAnnouncements ## -> Check if user is trying to read more announcements that Board number of announcements
                 case -10:
                     if ((request.getOperation().equals("READ") && request.getNumber() > getDirectoryList(request.getPublicKey()).length) || (request.getOperation().equals("READGENERAL") && request.getNumber() > getDirectoryList(null).length) ) {
-                        sendResponse(new Response(false, -10, request.getClientNonce()), outStream);
+                        sendResponse(new Response(false, -10, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
                         return false;
                     }
                     break;
