@@ -69,8 +69,8 @@ public class Listener implements Runnable{
                 switch(envelope.getRequest().getOperation()) {
             		case "NONCE":
             			if(cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), envelope.getRequest().getPublicKey())) {
-                            byte[] clientNonce = cryptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
-                            Response response         = new Response(true, clientNonce, clientKey);
+                            cryptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
+                            Response response         = new Response(true, cryptoManager.getNonce(envelope.getRequest().getPublicKey()), clientKey);
                             Envelope responseEnvelope = new Envelope(response, cryptoManager.signResponse(response));
                             outputStream.writeObject(responseEnvelope);
             			}

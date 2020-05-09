@@ -187,20 +187,23 @@ public class CryptoManager {
 //										               //
 /////////////////////////////////////////////////////////
 
-    public boolean checkNonce(PublicKey key, byte[] nonce) {
-        if(nonces.containsKey(key) && Arrays.equals(nonces.get(key), nonce)) {
-        	nonces.put(key, null);
+	public byte[] getServerNonce(PublicKey clientKey){
+		return nonces.get(clientKey);
+	}
+
+    public boolean checkNonce(PublicKey clientKey, byte[] nonce) {
+        if(nonces.containsKey(clientKey) && Arrays.equals(nonces.get(clientKey), nonce)) {
+        	nonces.put(clientKey, null);
         	return true;
         }
         return false;
     }    
 
-    public byte[] generateRandomNonce(PublicKey clientKey) {
+    public void generateRandomNonce(PublicKey clientKey) {
         SecureRandom random = new SecureRandom();
         byte[] nonce = new byte[16];
         random.nextBytes(nonce);
         nonces.put(clientKey, nonce);
-        return nonce;
     }
 
 

@@ -155,12 +155,11 @@ public class CryptoManager {
         return false;
     }    
 
-    public byte[] generateRandomNonce(PublicKey key) {
+    public void generateRandomNonce(PublicKey key) {
         SecureRandom random = new SecureRandom();
         byte[] nonce = new byte[16];
 		random.nextBytes(nonce);
 		nonces.put(key, nonce);
-        return nonce;
     }
 
 ///////////////////////////////////////////

@@ -179,9 +179,9 @@ public class Server implements Runnable {
                     case "NONCE":
                     	// VERIFICAR INTEGRIDADE
                         handshake = true;
-                        byte[] randomNonce = cryptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
+                        cryptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
                         if(!dropNonceFlag) {
-                        	sendResponse(new Response(randomNonce), outStream);
+                        	sendResponse(new Response(cryptoManager.getServerNonce(envelope.getRequest().getPublicKey())), outStream);
                         } else {
                         	System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED NONCE");
                         }

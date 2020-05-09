@@ -177,7 +177,7 @@ public class ClientEndpoint {
     	Envelope nonceEnvelope = askForServerNonce(getPublicKey(), serversPorts.get(serverKey));
     	if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), serverKey)) {
     		if(!oneWay) {
-                return cryptoManager.generateRandomNonce(serverKey);
+                cryptoManager.generateRandomNonce(serverKey);
     		}
             return nonceEnvelope.getResponse().getNonce();
         } else {
