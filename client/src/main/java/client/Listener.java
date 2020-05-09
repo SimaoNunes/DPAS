@@ -9,9 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.security.PublicKey;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,32 +43,27 @@ public class Listener implements Runnable{
         this.result = result;
     }
 
-    public void run(){
+    public void run() {
 
         Socket socket = null;
         ObjectInputStream inStream;
         ObjectOutputStream outputStream;
 
-        try{
+        try {
             socket = endpoint.accept();
-        } catch (NullPointerException e) {
-            System.out.println("i was closed");
         } catch(IOException e){
-            System.out.println("io");
+            return;
         }
 
         newListener();
 
-        try{
-
+        try {
             // inStream receives objects
             inStream = new ObjectInputStream(socket.getInputStream());
             // outStream sends objects
             outputStream = new ObjectOutputStream(socket.getOutputStream());
-
             // receive an envelope
             Envelope envelope = (Envelope) inStream.readObject();
-
             // when Envelope has a NONCE request
             if(envelope.getRequest() != null && envelope.getRequest().getOperation().equals("NONCE")) {
                 byte[] nonce = cryptoManager.generateRandomNonce(envelope.getRequest().getPublicKey());
@@ -90,7 +83,6 @@ public class Listener implements Runnable{
             outputStream.close();
             inStream.close();
             socket.close();
-
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -100,6 +92,7 @@ public class Listener implements Runnable{
     }
 
     private void newListener() {
+
         listenerThread = new Thread(this);
         listenerThread.start();
     }

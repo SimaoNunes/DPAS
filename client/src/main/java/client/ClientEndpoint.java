@@ -11,10 +11,8 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -483,7 +481,6 @@ public class ClientEndpoint {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         Request result = listener.getResult();
         // Threads that will make the requests to the server
         tasks = new Thread[nServers];
@@ -540,7 +537,6 @@ public class ClientEndpoint {
 
             }
         }*/
-        System.out.println("vou retornar");
         return result.getJsonObject();
     }
 
