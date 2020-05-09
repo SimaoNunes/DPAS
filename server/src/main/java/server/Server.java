@@ -175,6 +175,7 @@ public class Server implements Runnable {
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3}))
                             {
+                                System.out.println("READCOMPLETE METHOD");
                             readComplete(envelope.getRequest());
                         }
                     case "NONCE":
@@ -883,6 +884,9 @@ public class Server implements Runnable {
                     break;
                 // ## TooMuchAnnouncements ## -> Check if user is trying to read more announcements that Board number of announcements
                 case -10:
+                    System.out.println("tou a entrar aqui what");
+                    System.out.println(request.getNumber());
+                    System.out.println(getDirectoryList(request.getPublicKey()).length);
                     if ((request.getOperation().equals("READ") && request.getNumber() > getDirectoryList(request.getPublicKey()).length) || (request.getOperation().equals("READGENERAL") && request.getNumber() > getDirectoryList(null).length) ) {
                         send(new Response(false, -10, request.getClientNonce()), outStream);
                         return false;

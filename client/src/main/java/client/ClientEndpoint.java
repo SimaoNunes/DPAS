@@ -493,6 +493,8 @@ public class ClientEndpoint {
         	
         }
         Request result = listener.getResult();
+        System.out.println(result.toString());
+
         // Threads that will make the requests to the server
         tasks = new Thread[nServers];
         // Send 'read complete' to all servers
