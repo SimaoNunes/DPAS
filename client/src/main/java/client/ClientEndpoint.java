@@ -22,7 +22,7 @@ public class ClientEndpoint {
     private String serverAddress = null;
 
     private PublicKey publicKey  = null;
-    private String userName = null;
+    private String username = null;
     private CryptoManager cryptoManager = null;
 
     /********** Atomic Register Variables ************/
@@ -43,50 +43,19 @@ public class ClientEndpoint {
     private ReplayAttacker replayAttacker = null;
     private boolean replayFlag = false;
     private boolean integrityFlag = false;
-
-    /************************************************/
+    
+    
+//////////////////////////////////////////
+//										//
+//	 Constructor, Getters and Setters	//
+//										//
+//////////////////////////////////////////
 
     public ClientEndpoint(String username) {
     	cryptoManager = new CryptoManager(username);
         setPublicKey(cryptoManager.getPublicKeyFromKs(username));
-        setUsername(username);
+        this.username = username;
         serversPorts = initiateServersPorts();
-    }
-
-    public int getWts() {
-        return wts;
-    }
-
-    public void setWts(int wts) {
-        this.wts = wts;
-    }
-
-    public int getRid() {
-        return rid;
-    }
-
-    public void setRid(int rid) {
-        this.rid = rid;
-    }
-
-    public int getNFaults() {
-        return nFaults;
-    }
-
-    public void setNFaults(int nFaults) {
-        this.nFaults = nFaults;
-    }
-
-    public String getServerAddress() {
-        return serverAddress;
-    }
-
-    public void setServerAddress(String serverAddress) {
-        this.serverAddress = serverAddress;
-    }
-    
-    public void instantiateReplayAttacker() {
-    	this.replayAttacker = new ReplayAttacker(this.serverAddress);
     }
 
     public boolean isReplayFlag() {
@@ -96,7 +65,7 @@ public class ClientEndpoint {
     public void setReplayFlag(boolean replayFlag) {
         this.replayFlag = replayFlag;
         if(replayFlag)
-        	this.instantiateReplayAttacker();
+        	this.replayAttacker = new ReplayAttacker(this.serverAddress);
     }
 
     public boolean isIntegrityFlag() {
@@ -107,14 +76,6 @@ public class ClientEndpoint {
 		this.integrityFlag = integrityFlag;
 	}
 
-	public String getUsername() {
-        return userName;
-    }
-
-    public void setUsername(String userName) {
-        this.userName = userName;
-    }
-
     public PublicKey getPublicKey() {
         return publicKey;
     }
@@ -123,8 +84,15 @@ public class ClientEndpoint {
         this.publicKey = publicKey;
     }
 
+    
+//////////////////////////////////////////
+//										//
+//	Communication with Server methods	//
+//										//
+//////////////////////////////////////////
+    
     private Socket createSocket(int port) throws IOException {
-        return new Socket(getServerAddress(), port);
+        return new Socket(serverAddress, port);
     }
 
     private ObjectOutputStream createOutputStream(Socket socket) throws IOException {
@@ -258,7 +226,7 @@ public class ClientEndpoint {
     	// Ask server for a nonce and set a client nonce to send
         byte[] serverNonce = startHandshake(serverKey, false);
         // Create request and seal it up inside envelope
-        Request request = new Request("REGISTER", getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey), userName);
+        Request request = new Request("REGISTER", getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey), username);
 
         Envelope envelopeRequest = new Envelope(request);
         /***** SIMULATE ATTACKER: changing the userX key to userY pubKey [in this case user3] *****/
@@ -432,7 +400,7 @@ public class ClientEndpoint {
         ServerSocket listenerSocket = null;
         try {
             listenerSocket = new ServerSocket(getClientPort());
-            listener = new Listener(listenerSocket, nQuorum, getUsername(), getPublicKey());
+            listener = new Listener(listenerSocket, nQuorum, username, getPublicKey());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -577,9 +545,9 @@ public class ClientEndpoint {
         int counter = 0;
         int port = PORT;
 
-        Response[] results = new Response[(getNFaults() * 3 + 1) / 2 + 1];
+        Response[] results = new Response[(nFaults * 3 + 1) / 2 + 1];
 
-        CompletableFuture<Response>[] tasks = new CompletableFuture[getNFaults() * 3 + 1];
+        CompletableFuture<Response>[] tasks = new CompletableFuture[nFaults * 3 + 1];
 
         for (int i = 0; i < tasks.length; i++) {
 
@@ -588,7 +556,7 @@ public class ClientEndpoint {
             tasks[i] = CompletableFuture.supplyAsync(() -> readGeneralMethod(number, finalPort));
             port++;
         }
-        while (responses < getNFaults()*3 + 1 / 2) {
+        while (responses < nFaults * 3 + 1 / 2) {
             for (int i = 0; i < tasks.length; i++) {
 
                 if (tasks[i].isDone()) {
@@ -826,7 +794,7 @@ public class ClientEndpoint {
             String line;
             while((line = reader.readLine()) != null){
                 String[] splitted = line.split(":");
-                if(splitted[0].equals(userName)){
+                if(splitted[0].equals(username)){
                     return Integer.parseInt(splitted[2]);
                 }
             }

@@ -31,7 +31,7 @@ public class BaseTest {
 	static String serverAddress = "localhost";
 
 	static final int faults = 1;
-	static final int PORT = 9000;
+	static final int PORT = 9003;
 
 	@BeforeClass
 	public static void oneTimeSetup() {

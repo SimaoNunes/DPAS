@@ -23,7 +23,7 @@ public class RegisterTest extends BaseTest {
 	}
 	
 	@Test
-	public void SimpleRegisterSuccess() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+	public void Should_Succeed_When_SimpleRegister() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		clientEndpoint1.register();
 	}
 	
@@ -37,12 +37,6 @@ public class RegisterTest extends BaseTest {
 	public void Should_Fail_When_ServerDoesntHavePubKey() throws KeyStoreException, AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		clientEndpointError.register();
 	}
-	
-	/*@Test(expected = InvalidPublicKeyException.class)
-	public void Should_Fail_When_PubKeyIsNull() throws AlreadyRegisteredException, UnknownPublicKeyException, InvalidPublicKeyException {
-		// ERA FIXE TESTAR PARA CHAVE A NULL
-		clientAPI.register(null, "userERROR", privateKey1);
-	}*/
 
 	@Test
 	public void Should_Succeed_With_TripleRegisters() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
