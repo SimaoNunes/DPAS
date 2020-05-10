@@ -11,6 +11,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.PublicKey;
 import java.util.Collection;
+import java.util.Map;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,13 +19,14 @@ public class Listener implements Runnable{
 
     private ServerSocket endpoint;
     private int nQuorum;
-    private Request result = null;
+    private Envelope result = null;
     private CryptoManager cryptoManager = null;
     private Thread listenerThread;
     private PublicKey clientKey;
-    private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Request>> answers = null;
+    private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Envelope>> answers = null;
+    private Map<PublicKey, Integer> serversPorts = null;
 
-    public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key) {
+    public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key,Map<PublicKey, Integer> serversPorts) {
 
         cryptoManager = new CryptoManager(userName);
         answers = new ConcurrentHashMap<>();
@@ -32,14 +34,14 @@ public class Listener implements Runnable{
         this.nQuorum = nQuorum;
         this.clientKey = key;
         newListener();
-
+        serversPorts = serversPorts;
     }
 
-    public Request getResult() {
+    public Envelope getResult() {
         return result;
     }
 
-    public void setResult(Request result) {
+    public void setResult(Envelope result) {
         this.result = result;
     }
 
@@ -91,6 +93,7 @@ public class Listener implements Runnable{
             } else {
                 System.out.println("Olha que merda");
                 System.out.println(envelope.getResponse().getErrorCode());
+                result = checkAnswer(envelope);
             }
             outputStream.close();
             inStream.close();
@@ -108,23 +111,43 @@ public class Listener implements Runnable{
         listenerThread.start();
     }
 
-    private Request checkAnswer(Envelope envelope) { //do not forget that VALUE message is a request
+    private Envelope checkAnswer(Envelope envelope) { //do not forget that VALUE message is a request
         Request request = envelope.getRequest();
+        Response response = envelope.getResponse();
         //FALTA CHECKAR INTEGRITY
         //FALTA CHECKAR SE SAO EXCEPTIONS
-        if(answers.containsKey(request.getTs())) {
-            answers.get(request.getTs()).put(request.getPort(), request);
-            if(answers.get(request.getTs()).size() > nQuorum){
-                Request result = checkQuorum(answers.get(request.getTs()).values());
-                if(result != null){
-                    listenerThread.interrupt();
-                    return request;
+        if(request != null){
+            if(answers.containsKey(request.getTs())) {
+                answers.get(request.getTs()).put(serversPorts.get(request.getPublicKey()), envelope);
+                if(answers.get(request.getTs()).size() > nQuorum){
+                    Request result = checkQuorum(answers.get(request.getTs()).values());
+                    if(result != null){
+                        listenerThread.interrupt();
+                        return request;
+                    }
                 }
             }
-        }
-        else {
-            answers.put(request.getTs(), new ConcurrentHashMap<>());
-            answers.get(request.getTs()).put(request.getPort(), request);
+            else {
+                answers.put(request.getTs(), new ConcurrentHashMap<>());
+                answers.get(request.getTs()).put(request.getPort(), request);
+            }
+        } else {
+            if(answers.containsKey(response.getTs())) {
+                answers.get(response.getTs()).put(response.getPort(), envelope);
+                if(answers.get(response.getTs()).size() > nQuorum){
+                   
+                    Response result = checkQuorum(answers.get(response.getTs()).values());
+                    
+                    if(result != null){
+                        listenerThread.interrupt();
+                        return response;
+                    }
+                }
+            }
+            else {
+                answers.put(response.getTs(), new ConcurrentHashMap<>());
+                answers.get(response.getTs()).put(response.getPort(), response);
+            }
         }
         return null;
 

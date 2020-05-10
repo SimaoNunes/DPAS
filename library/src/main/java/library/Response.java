@@ -56,6 +56,16 @@ public class Response implements Serializable {
         this.publicKey = publicKey;
     }
 
+     // Throw exception com o TIMESTAMP DO ERRO
+     public Response(boolean success, int errorCode, byte[] nonce, PublicKey publicKey, int ts) {
+        this.success = success;
+        this.errorCode = errorCode;
+        this.nonce = nonce;
+        this.publicKey = publicKey;
+        this.ts = ts;
+    }
+
+
     public Response(boolean success, JSONObject object, byte[] nonce, int rid) {
         this.success = success;
         this.jsonObject = object;

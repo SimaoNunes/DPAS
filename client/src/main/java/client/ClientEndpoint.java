@@ -402,7 +402,7 @@ public class ClientEndpoint {
         ServerSocket listenerSocket = null;
         try {
             listenerSocket = new ServerSocket(getClientPort());
-            listener = new Listener(listenerSocket, nQuorum, username, getPublicKey());
+            listener = new Listener(listenerSocket, nQuorum, username, getPublicKey(), serversPorts);
         } catch (IOException e) {
             e.printStackTrace();
         }

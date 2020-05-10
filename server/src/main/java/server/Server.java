@@ -871,7 +871,7 @@ public class Server implements Runnable {
                 // ## InvalidPostsNumber ## -> check if number of requested posts are bigger than zero
                 case -6:
                     if (request.getNumber() < 0) {
-                        sendResponse(new Response(false, -6, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
+                        sendExceptionCode(request.getPublicKey(), request.getClientNonce(), -6);
                         return false;
                     }
                     break;
@@ -900,8 +900,9 @@ public class Server implements Runnable {
 
     private void sendExceptionCode(PublicKey clientKey, byte[] clientNonce, int code){
         int clientPort = getClientPort(userIdMap.get(clientKey));
+        int ts = usersBoards.get(userIdMap.get(clientKey)).getFirst();
         try(ObjectOutputStream newOutputStream = new ObjectOutputStream(new Socket("localhost", clientPort).getOutputStream())) {
-            sendResponse(new Response(false, code, clientNonce, cryptoManager.getPublicKeyFromKs("server")), newOutputStream);
+            sendResponse(new Response(false, code, clientNonce, cryptoManager.getPublicKeyFromKs("server"), ts), newOutputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
