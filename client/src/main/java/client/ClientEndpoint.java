@@ -203,12 +203,6 @@ public class ClientEndpoint {
         Thread[] tasks = new Thread[nServers];
         // Register to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-        	// Create a uncaught exception handler
-        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-        	    public void uncaughtException(Thread th, Throwable ex) {
-        	        System.out.println("Uncaught exception: " + ex);
-        	    }
-        	};
         	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	try {
@@ -228,7 +222,6 @@ public class ClientEndpoint {
     				}
                 }
             });
-        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
         	tasks[serversPorts.get(serverKey) - PORT].start();
         }
         // FIXME está a espera que todas as threads acabem!!!
@@ -322,12 +315,6 @@ public class ClientEndpoint {
         Thread[] tasks = new Thread[nServers];
         // Post to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-        	// Create a uncaught exception handler
-        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-        	    public void uncaughtException(Thread th, Throwable ex) {
-        	        System.out.println("Uncaught exception: " + ex);
-        	    }
-        	};
         	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	try {
@@ -349,7 +336,6 @@ public class ClientEndpoint {
     				}
                 }
             });
-        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
         	tasks[serversPorts.get(serverKey) - PORT].start();
         }
         // FIXME está a espera que todas as threads acabem!!!
@@ -454,18 +440,11 @@ public class ClientEndpoint {
         Thread[] tasksRead = new Thread[nServers];
         // Send read to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-        	// Create a uncaught exception handler
-        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-        	    public void uncaughtException(Thread th, Throwable ex) {
-        	        System.out.println("Uncaught exception: " + ex);
-        	    }
-        	};
         	tasksRead[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	readMethod(announcUserName, number, serverKey, rid);
                 }
             });
-        	tasksRead[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
         	tasksRead[serversPorts.get(serverKey) - PORT].start();
         }
         // Wait for listeners to get result
@@ -487,18 +466,11 @@ public class ClientEndpoint {
         Thread[] tasksReadComplete = new Thread[nServers];
         // Send 'read complete' to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-        	// Create a uncaught exception handler
-        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-        	    public void uncaughtException(Thread th, Throwable ex) {
-        	        System.out.println("Uncaught exception: " + ex);
-        	    }
-        	};
         	tasksReadComplete[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	readComplete(announcUserName, serverKey, rid);
                 }
             });
-        	tasksReadComplete[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
         	tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
         }
         // FIXME está a espera que todas as threads acabem!!!
@@ -722,12 +694,6 @@ public class ClientEndpoint {
         Thread[] tasks = new Thread[nServers];
         // Register to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-        	// Create a uncaught exception handler
-        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-        	    public void uncaughtException(Thread th, Throwable ex) {
-        	        System.out.println("Uncaught exception: " + ex);
-        	    }
-        	};
         	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	try {
@@ -745,7 +711,6 @@ public class ClientEndpoint {
     				}
                 }
             });
-        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
         	tasks[serversPorts.get(serverKey) - PORT].start();
         }
         // FIXME está a espera que todas as threads acabem!!!
