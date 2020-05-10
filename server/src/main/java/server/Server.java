@@ -53,6 +53,9 @@ public class Server implements Runnable {
     private Envelope oldEnvelope;
     
     /**************************************************/
+    /********************** Regular Register **********************/
+
+    private Pair<Integer, GeneralBoard> generalBoard;
 
     
     /***************** Atomic Register variables ******************/
@@ -83,6 +86,7 @@ public class Server implements Runnable {
         File gb = new File(generalBoardPath);
         gb.mkdirs();
 
+        generalBoard = new Pair<>(0, new GeneralBoard());
         listening = new ConcurrentHashMap<>();
         
         System.out.println("SERVER ON PORT " + this.serverPort + ": Up and running.");
@@ -193,9 +197,19 @@ public class Server implements Runnable {
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-1}))
                         	{
-                            wtsRequest(envelope.getRequest(), outStream);
+                            wtsRequest(envelope.getRequest(), false,  outStream);
                         }
                     	break;
+                    case "WTSGENERAL":
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
+                                   cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), userIdMap.get(envelope.getRequest().getPublicKey())) &&
+                                   cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
+                                   checkExceptions(envelope.getRequest(), outStream, new int[] {-1}))
+                        {
+                            wtsRequest(envelope.getRequest(), true, outStream);
+                        }
+                        break;
+
                     case "DELETEALL":
                         deleteUsers();
                         break;
@@ -513,9 +527,15 @@ public class Server implements Runnable {
     //				   SEND WTS				    //
     //////////////////////////////////////////////
     
-    private void wtsRequest(Request request, ObjectOutputStream outStream) {
+    private void wtsRequest(Request request, boolean isGeneral, ObjectOutputStream outStream) {
     	System.out.println("SERVER ON PORT " + this.serverPort + ": WTS METHOD");
-    	int wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst();
+    	int wts = 0;
+    	if(isGeneral){
+            wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst();
+        }
+    	else{
+    	    wts = generalBoard.getFirst();
+        }
     	sendResponse(new Response(true, request.getClientNonce(), wts, cryptoManager.getPublicKeyFromKs("server")), outStream);
     }
     

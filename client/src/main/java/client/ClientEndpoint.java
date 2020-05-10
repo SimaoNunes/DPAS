@@ -27,6 +27,7 @@ public class ClientEndpoint {
 
     /********** Atomic Register Variables ************/
     int wts = -1; // -1 means we must ask server for the current wts
+    int wtsG = -1;
     int rid = 0;
 
     /************ Replication variables *************/
@@ -312,10 +313,22 @@ public class ClientEndpoint {
     
     public int post(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         // Ask Servers for actual wts in case we don't have it in memory
-        if(wts == -1) {
-        	wts = askForWts();
+        int ts = 0;
+        if(isGeneral){
+            if(wtsG == -1){
+                wtsG = askForWts(isGeneral);
+                wtsG = wtsG + 1;
+                ts = wtsG;
+            }
         }
-        wts = wts + 1;  
+        else{
+            if(wts == -1){
+                wts = askForWts(isGeneral);
+                wts = wts + 1;
+                ts = wts;
+            }
+        }
+
         // Variables to store responses and their results
         int[] results = new int[nServers];
         // Threads that will make the requests to the server
@@ -328,10 +341,11 @@ public class ClientEndpoint {
         	        System.out.println("Uncaught exception: " + ex);
         	    }
         	};
-        	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+            int finalTs = ts;
+            tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	try {
-                		results[serversPorts.get(serverKey) - PORT] = postMethod(message, announcs, isGeneral, serverKey, wts);
+                		results[serversPorts.get(serverKey) - PORT] = postMethod(message, announcs, isGeneral, serverKey, finalTs);
                 	} catch (UserNotRegisteredException e) {
                 		results[serversPorts.get(serverKey) - PORT] = -1;              		
     				} catch (InvalidAnnouncementException e) {
@@ -703,7 +717,7 @@ public class ClientEndpoint {
 	//				   ASK FOR WTS					//
 	//////////////////////////////////////////////////
     
-    private int askForWts() throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
+    private int askForWts(boolean isGeneral) throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
         // Variables to store responses and their results
         int[] results = new int[nServers];
         // Threads that will make the requests to the server
@@ -719,7 +733,7 @@ public class ClientEndpoint {
         	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	try {
-                		results[serversPorts.get(serverKey) - PORT] = askForSingleWts(serverKey);
+                		results[serversPorts.get(serverKey) - PORT] = askForSingleWts(serverKey, isGeneral);
                 	} catch (UserNotRegisteredException e) {
                 		results[serversPorts.get(serverKey) - PORT] = -1;
                 	} catch (FreshnessException e) {
@@ -767,12 +781,16 @@ public class ClientEndpoint {
 	}
 
     
-	private int askForSingleWts(PublicKey serverKey) throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
+	private int askForSingleWts(PublicKey serverKey, boolean isGeneral) throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
 		// Make handshake with server
 
 		byte[] serverNonce = startHandshake(serverKey, false);
         // Make wts Request sign it and send inside envelope
-        Request request = new Request("WTS", getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey));
+        String operation = "WTS";
+        if(isGeneral){
+            operation +="GENERAL";
+        }
+        Request request = new Request(operation, getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey));
     	Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
 
     	// Get wts inside a Response
