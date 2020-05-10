@@ -11,8 +11,7 @@ import org.apache.commons.io.FileUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-
-import java.io.FileReader;
+import org.json.simple.parser.ParseException;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -478,32 +477,32 @@ public class Server implements Runnable {
 
         Arrays.sort(directoryList);
         JSONParser parser = new JSONParser();
-        try{
-            JSONArray annoucementsList = new JSONArray();
-            JSONObject announcement;
+        try {
+			JSONArray annoucementsList = new JSONArray();
+			JSONObject announcement;
 
-            String fileToRead;
-            for (int i=0; i<total; i++) {
-                fileToRead = directoryList[directorySize-1];
-                announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
-                directorySize--;
-                annoucementsList.add(announcement);
-            }
-            JSONObject announcementsToSend =  new JSONObject();
-            announcementsToSend.put("announcementList", annoucementsList);
-            if(!dropOperationFlag) {
-                // send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);   FIXME-> enviar o rid?
-            } else {
-                System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED READ GENERAL");
-            }
-        } catch(Exception e) {
-            sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
-        }
+			String fileToRead;
+			for (int i=0; i<total; i++) {
+			    fileToRead = directoryList[directorySize-1];
+			    announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
+			    directorySize--;
+			    annoucementsList.add(announcement);
+			}
+			JSONObject announcementsToSend =  new JSONObject();
+			announcementsToSend.put("announcementList", annoucementsList);
+			if(!dropOperationFlag) {
+			    // send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);   FIXME-> enviar o rid?
+			} else {
+			    System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED READ GENERAL");
+			}
+		} catch (IOException | ParseException e) {
+			sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
+		}
+        
     }
 
-
     private void readComplete(Request request){
-        if(request.getRid() == listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).get(userIdMap.get(request.getPublicKey())).getFirst()){
+        if(request.getRid() == listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).get(userIdMap.get(request.getPublicKey())).getFirst()) {
             listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).remove(userIdMap.get(request.getPublicKey()));
         }
     }
@@ -540,8 +539,7 @@ public class Server implements Runnable {
         String path = "";
         if(key == null) {
             path = generalBoardPath;
-        }
-        else {
+        } else {
             path = announcementBoardsPath + userIdMap.get(key) + "/";
         }
 

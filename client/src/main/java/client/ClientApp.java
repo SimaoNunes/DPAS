@@ -6,12 +6,10 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Set;
 
 import exceptions.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
 
 public class ClientApp {
 	// ClientEndpoint
@@ -21,9 +19,7 @@ public class ClientApp {
 	// Keystore with the client keyPair and Server publicKey
 	private static KeyStore keyStore = null;
 	// Username
-	private static String userName = null;
-	
-	private static final String INVALID_INSTRUCTION = "\nInvalid instruction!";
+	private static String username = null;
 	
     public static void main(String[] args) {
     	System.out.println("\n======================  DPAS Application ======================");
@@ -34,20 +30,21 @@ public class ClientApp {
     	}
     	// Check if user name is provided. Otherwise register a new user
 		if(args.length == 1) {
-    		userName = args[0]; 																						//FIXME not sanitizing user input
+    		username = args[0]; 																		//FIXME not sanitizing user input
     		// Try to load user's keystore and if this user is the owner of the account
-			try(FileInputStream fis = new FileInputStream("keystores/" + userName + "_keystore")) {
+			try(FileInputStream fis = new FileInputStream("keystores/" + username + "_keystore")) {
 		    	// Try to load user's keystore
 	        	keyStore = KeyStore.getInstance("JKS");
 				keyStore.load(fis, "changeit".toCharArray());
-				clientEndpoint = new ClientEndpoint(userName);
+				clientEndpoint = new ClientEndpoint(username);
 				runApp();
 			} catch (KeyStoreException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded). You sure you typed your name right?");
+			} catch (IOException e) {
+				System.out.println("\nWrong Password!");
 			} catch (
 				NoSuchAlgorithmException | 
-				CertificateException	 | 
-				IOException e) {
+				CertificateException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
 			}
     	} 
@@ -62,16 +59,16 @@ public class ClientApp {
     
     
 ///////////////
-//			 //
-//	Run App  //
-//			 //
+//
+//	Run App
+//
 ///////////////
     
 	private static void runApp(){
 		// Run App
 		Boolean run = true;
 		String userInput;
-		System.out.println("\nWelcome " + userName + "!");
+		System.out.println("\nWelcome " + username + "!");
 		while(run) {
 			System.out.print("\nPlease choose the number of what you want to perform and press enter:\n"
 							+ "1) Post an Announcement\n"
@@ -101,30 +98,31 @@ public class ClientApp {
 					}				
 					break;
 				default:
-					System.out.println(INVALID_INSTRUCTION);
+					System.out.println("\nInvalid instruction!");
 			}
 		}
 	}
     
 	
 //////////////////////
-//					//
-//	Register User	//
-//					//
+//
+//	 Register User
+//
 //////////////////////
 	
 	private static Boolean registerUser() {
 		System.out.println("\nPlease register yourself in the DPAS.");
 		String inputUserName = null;
+		String pass = null;
 		// Check if username is trusted (aka if username alias is in keyStore)
 		System.out.print("\nInsert a username:\n>> ");
-		inputUserName = scanner.nextLine();																//FIXME Not sanitizing user input
+		inputUserName = scanner.nextLine();												//FIXME Not sanitizing user input
 		try(FileInputStream fis = new FileInputStream("keystores/" + inputUserName + "_keystore")) {
 	    	// Try to load user's keystore
 	    	keyStore = KeyStore.getInstance("JKS");
 			keyStore.load(fis, "changeit".toCharArray());
-			userName = inputUserName;
-			clientEndpoint = new ClientEndpoint(userName);
+			username = inputUserName;
+			clientEndpoint = new ClientEndpoint(username);
 			clientEndpoint.register();
 		} catch (
 			KeyStoreException		 | 
@@ -147,15 +145,16 @@ public class ClientApp {
 			FreshnessException e) {
 			System.out.println("\n" + e.getMessage());
 		}
-		System.out.println("\nHi " + userName + "! You're now registered on DPAS!");
+		System.out.println("\nHi " + username + "! You're now registered on DPAS!");
 		return true;
+		
 	}
 
 	
 ///////////////////
-//				 //
-//	Post Method	 //
-//				 //
+//
+//	Post Method
+//
 ///////////////////	
 
 	private static void post() {
@@ -181,7 +180,7 @@ public class ClientApp {
 					run = false;				
 					break;
 				default:
-					System.out.println(INVALID_INSTRUCTION);
+					System.out.println("\nInvalid instruction!");
 			}
 		}
 	}	
@@ -238,9 +237,9 @@ public class ClientApp {
 	
 	
 ///////////////////
-//				 //
-//	Read Method	 //
-//				 //
+//
+//	Read Method
+//
 ///////////////////
 	
 	private static void read() {
@@ -266,7 +265,7 @@ public class ClientApp {
 					run = false;				
 					break;
 				default:
-					System.out.println(INVALID_INSTRUCTION);
+					System.out.println("\nInvalid instruction!");
 			}
 		}
 	}
@@ -308,12 +307,12 @@ public class ClientApp {
 	
 	
 //////////////////////////////
-//						    //
-// 	   Auxiliary Methods    //
-//						    //
+//
+// 	   Auxiliary Methods
+//
 //////////////////////////////
 	
-	private static String askForNAnnouncements(){
+	private static String askForNAnnouncements() {
         Boolean goodInput = false;
         String numberOfPosts = null;
         while(!goodInput) {
@@ -365,7 +364,7 @@ public class ClientApp {
         }
 	}
 	
-	private static int[] toIntArray(List<Integer> list){
+	private static int[] toIntArray(List<Integer> list) {
 		if(list.size() == 0) {
 			return new int[0];
 		} else {
@@ -374,8 +373,7 @@ public class ClientApp {
 				ret[i] = list.get(i);
 			return ret;
 		}
-	}
-	
+	}	
 
 }
 
