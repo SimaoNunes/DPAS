@@ -114,7 +114,6 @@ public class Listener implements Runnable{
             			break;
                 }
             } else {
-                System.out.println("Olha que merda");
                 System.out.println(envelope.getResponse().getErrorCode());
                 result = checkAnswer(envelope);
             }
@@ -134,11 +133,9 @@ public class Listener implements Runnable{
         listenerThread.start();
     }
 
-    private Envelope checkAnswer(Envelope envelope) { //do not forget that VALUE message is a request
+    private Envelope checkAnswer(Envelope envelope) {
         //FALTA CHECKAR INTEGRITY
         //FALTA CHECKAR SE SAO EXCEPTIONS
-
-        System.out.println(envelope.toString());
 
         int timestamp;
         PublicKey serverPublicKey;
