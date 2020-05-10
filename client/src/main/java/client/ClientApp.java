@@ -223,10 +223,10 @@ public class ClientApp {
 		// Post announcement
 		try{
 			if(isGeneral){
-				clientEndpoint.post(message, announcsArray);
+				clientEndpoint.postGeneral(message, announcsArray);
 			}
 			else{
-				clientEndpoint.postGeneral(message, announcsArray);
+				clientEndpoint.post(message, announcsArray);
 
 			}
 		} catch (

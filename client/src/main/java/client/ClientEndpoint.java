@@ -13,8 +13,6 @@ import java.net.Socket;
 import java.security.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public class ClientEndpoint {
 
@@ -291,12 +289,6 @@ public class ClientEndpoint {
         Thread[] tasks = new Thread[nServers];
         // Post to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-        	// Create a uncaught exception handler
-        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-        	    public void uncaughtException(Thread th, Throwable ex) {
-        	        System.out.println("Uncaught exception: " + ex);
-        	    }
-        	};
             tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	try {
@@ -409,19 +401,12 @@ public class ClientEndpoint {
             wtsG = askForWts(true);
         }
         wtsG = wtsG + 1;
-
         // Variables to store responses and their results
         int[] results = new int[nServers];
         // Threads that will make the requests to the server
         Thread[] tasks = new Thread[nServers];
         // Post to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-            // Create a uncaught exception handler
-            Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-                public void uncaughtException(Thread th, Throwable ex) {
-                    System.out.println("Uncaught exception: " + ex);
-                }
-            };
             tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                     try {

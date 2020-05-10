@@ -12,7 +12,6 @@ import org.apache.commons.io.FileUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -878,6 +877,7 @@ public class Server implements Runnable {
                 // ## UserNotRegistered ## -> check if user is registered
                 case -1:
                     if(!userIdMap.containsKey(request.getPublicKey())) {
+                    	System.out.println("USER NOT REGISTERED");
                         sendResponse(new Response(false, -1, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
                         return false;
                     }
@@ -920,6 +920,7 @@ public class Server implements Runnable {
                 // ## UnknownPublicKey ## -> Check if key is null or unknown by the Server. If method is read, check if key to read from is null
                 case -7:
                     if (request.getPublicKey() == null || cryptoManager.checkKey(request.getPublicKey()) == "" || (request.getOperation().equals("READ") && (request.getPublicKeyToReadFrom() == null || cryptoManager.checkKey(request.getPublicKeyToReadFrom()) == ""))) {
+                    	System.out.println("UNKNOWN");
                     	sendResponse(new Response(false, -7, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
                         return false;
                     }
