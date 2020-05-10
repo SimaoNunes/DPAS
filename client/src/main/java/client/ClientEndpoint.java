@@ -433,6 +433,16 @@ public class ClientEndpoint {
             e.printStackTrace();
         }
         Request result = listener.getResult();
+
+        // if(result.getRequest() != null){
+        //     System.out.println("Recebi um request como resposta:");
+        //     System.out.println(result.getRequest().toString());
+        // } else {
+        //     System.out.println("Recebi uma response como resposta:");
+        //     System.out.println(result.getResponse().toString());
+        // }
+
+
         // Threads that will make the requests to the server
         Thread[] tasksReadComplete = new Thread[nServers];
         // Send 'read complete' to all servers

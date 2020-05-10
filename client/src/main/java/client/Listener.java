@@ -19,14 +19,14 @@ public class Listener implements Runnable{
 
     private ServerSocket endpoint;
     private int nQuorum;
-    private Envelope result = null;
+    private Request result = null;
     private CryptoManager cryptoManager = null;
     private Thread listenerThread;
     private PublicKey clientKey;
-    private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Envelope>> answers = null;
+    private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Request>> answers = null;
     private Map<PublicKey, Integer> serversPorts = null;
 
-    public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key,Map<PublicKey, Integer> serversPorts) {
+    public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key, Map<PublicKey, Integer> serversPortsFromEndpoint) {
 
         cryptoManager = new CryptoManager(userName);
         answers = new ConcurrentHashMap<>();
@@ -34,14 +34,14 @@ public class Listener implements Runnable{
         this.nQuorum = nQuorum;
         this.clientKey = key;
         newListener();
-        serversPorts = serversPorts;
+        serversPorts = serversPortsFromEndpoint;
     }
 
-    public Envelope getResult() {
+    public Request getResult() {
         return result;
     }
 
-    public void setResult(Envelope result) {
+    public void setResult(Request result) {
         this.result = result;
     }
 
@@ -93,7 +93,6 @@ public class Listener implements Runnable{
             } else {
                 System.out.println("Olha que merda");
                 System.out.println(envelope.getResponse().getErrorCode());
-                result = checkAnswer(envelope);
             }
             outputStream.close();
             inStream.close();
@@ -111,43 +110,26 @@ public class Listener implements Runnable{
         listenerThread.start();
     }
 
-    private Envelope checkAnswer(Envelope envelope) { //do not forget that VALUE message is a request
+    private Request checkAnswer(Envelope envelope) { //do not forget that VALUE message is a request
         Request request = envelope.getRequest();
-        Response response = envelope.getResponse();
+        System.out.println("naooo");
+        System.out.println(serversPorts.get(request.getPublicKey()));
+        System.out.println("brooo");
         //FALTA CHECKAR INTEGRITY
         //FALTA CHECKAR SE SAO EXCEPTIONS
-        if(request != null){
-            if(answers.containsKey(request.getTs())) {
-                answers.get(request.getTs()).put(serversPorts.get(request.getPublicKey()), envelope);
-                if(answers.get(request.getTs()).size() > nQuorum){
-                    Request result = checkQuorum(answers.get(request.getTs()).values());
-                    if(result != null){
-                        listenerThread.interrupt();
-                        return request;
-                    }
+        if(answers.containsKey(request.getTs())) {
+            answers.get(request.getTs()).put(serversPorts.get(request.getPublicKey()), request);
+            if(answers.get(request.getTs()).size() > nQuorum){
+                Request result = checkQuorum(answers.get(request.getTs()).values());
+                if(result != null){
+                    listenerThread.interrupt();
+                    return request;
                 }
             }
-            else {
-                answers.put(request.getTs(), new ConcurrentHashMap<>());
-                answers.get(request.getTs()).put(request.getPort(), request);
-            }
-        } else {
-            if(answers.containsKey(response.getTs())) {
-                answers.get(response.getTs()).put(response.getPort(), envelope);
-                if(answers.get(response.getTs()).size() > nQuorum){
-                   
-                    Response result = checkQuorum(answers.get(response.getTs()).values());
-                    
-                    if(result != null){
-                        listenerThread.interrupt();
-                        return response;
-                    }
-                }
-            }
-            else {
-                answers.put(response.getTs(), new ConcurrentHashMap<>());
-                answers.get(response.getTs()).put(response.getPort(), response);
-            }
+        }
+        else {
+            answers.put(request.getTs(), new ConcurrentHashMap<>());
+            answers.get(request.getTs()).put(serversPorts.get(request.getPublicKey()), request);
         }
         return null;
 
@@ -179,7 +161,6 @@ public class Listener implements Runnable{
         }
         return false;
     }
-
     private boolean equalsResponses(Response response1, Response response2){
         if(response1.getSuccess() && response2.getSuccess()){
             if(response1.getJsonObject().toJSONString().equals(response2.getJsonObject().toJSONString())){
