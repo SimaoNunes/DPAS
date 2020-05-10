@@ -539,6 +539,7 @@ public class ClientEndpoint {
             });
         	tasksRead[serversPorts.get(serverKey) - PORT].start();
         }
+        
         // Wait for listeners to get result
         while(listener.getResult() == null) {
             try {
@@ -553,6 +554,7 @@ public class ClientEndpoint {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         Envelope result = listener.getResult();
 
         if(result.getRequest() != null){
@@ -826,7 +828,7 @@ public class ClientEndpoint {
         // Make wts Request sign it and send inside envelope
         String operation = "WTS";
         if(isGeneral){
-            operation +="GENERAL";
+            operation += "GENERAL";
         }
         Request request = new Request(operation, getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey));
     	Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
