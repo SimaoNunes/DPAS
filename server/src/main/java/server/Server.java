@@ -366,13 +366,12 @@ public class Server implements Runnable {
     //////////////////////////////////////////////////
     @SuppressWarnings("unchecked")
 	private void writeGeneral(Request request, ObjectOutputStream outStream) {
-
+        System.out.println("WRITEGENERALMETHOD");
         if(request.getTs() > generalBoard.getFirst()){
             generalBoard.setFirst(request.getTs());
 
             // Get userName from keystore
             String username = userIdMap.get(request.getPublicKey());
-            String path = announcementBoardsPath + username + "/";
             // Write to file
             JSONObject announcementObject =  new JSONObject();
             announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
@@ -395,10 +394,10 @@ public class Server implements Runnable {
 
             generalBoard.getSecond().addAnnouncement(announcementObject, request.getSignature());
 
-            path = generalBoardPath;
+            String path = generalBoardPath;
 
             try {
-                saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
+                saveFile(path + request.getTs(), announcementObject.toJSONString()); //GeneralBoard
             } catch (IOException e) {
                 sendResponse(new Response(false, -9, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
             }
@@ -495,9 +494,7 @@ public class Server implements Runnable {
         } else {
             total = request.getNumber();
         }
-
-        JSONObject  announcementsToSend = generalBoard.getSecond().getAnnouncements(total);
-
+        JSONObject announcementsToSend = generalBoard.getSecond().getAnnouncements(total);
         try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", getClientPort(userIdMap.get(request.getPublicKey()))).getOutputStream())) {
             if(!dropOperationFlag) {
                 byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));

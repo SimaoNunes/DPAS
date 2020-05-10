@@ -223,10 +223,10 @@ public class ClientApp {
 		// Post announcement
 		try{
 			if(isGeneral){
-				clientEndpoint.post(message, announcsArray);
+				clientEndpoint.postGeneral(message, announcsArray);
 			}
 			else{
-				clientEndpoint.postGeneral(message, announcsArray);
+				clientEndpoint.post(message, announcsArray);
 
 			}
 		} catch (
@@ -339,18 +339,17 @@ public class ClientApp {
         JSONArray array = (JSONArray) jsonAnnouncs.get("announcementList");
         int i = 1;
         // ReadGeneral
-        for (Object object : array) {
+        for (Object array_obj : array) {
 
             String user = "";
             String result = "";
 
-            JSONObject obj = (JSONObject) object;
+            JSONObject obj = (JSONObject) ((JSONObject) array_obj).get("message");
             result = "\n" + i++ + ")";
             if(isGeneral){
                 user = (String) obj.get("user");
                 result += "\nAnnouncement From User: " + user;
             }
-
             String announcId = (String) obj.get("id");
             String date = (String) obj.get("date");
             String msg = (String) obj.get("message");

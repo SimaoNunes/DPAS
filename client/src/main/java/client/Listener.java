@@ -182,25 +182,24 @@ public class Listener implements Runnable{
         JSONArray array = (JSONArray) request.getJsonObject().get("announcementList");
         for(Object o : array){
             JSONObject json = (JSONObject) o;
-            if(cryptoManager.verifyMessage((JSONObject) json.get("message"), (byte[]) json.get("signature"))){
-                readlist.add(new Pair<>(request.getTs(), array));
-                if(readlist.size() > nQuorum){
-                    int max = 0;
-                    int index = 0;
-                    for(int i = 0; i < readlist.size(); i++){
-                        if(readlist.get(i).getFirst() > max){
-                            max = readlist.get(i).getFirst();
-                            index = i;
-                        }
-                    }
-                    JSONObject final_result = new JSONObject();
-                    final_result.put("announcementList", readlist.get(index).getSecond());
-                    return final_result;
-                }
-            }
-            else{
+            if(!cryptoManager.verifyMessage((JSONObject) json.get("message"), (byte[]) json.get("signature"))){
                 return null; // there is a message with the wrong signature, maybe send integrity exception?
             }
+        }
+        readlist.add(new Pair<>(request.getTs(), array));
+        if(readlist.size() > nQuorum){
+            int max = 0;
+            int index = 0;
+            for(int i = 0; i < readlist.size(); i++){
+                if(readlist.get(i).getFirst() > max){
+                    max = readlist.get(i).getFirst();
+                    index = i;
+                }
+            }
+            JSONObject final_result = new JSONObject();
+            final_result.put("announcementList", readlist.get(index).getSecond());
+            System.out.println(final_result);
+            return final_result;
         }
         return null;
     }
