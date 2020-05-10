@@ -14,6 +14,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.PublicKey;
 import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Listener implements Runnable{
@@ -27,8 +30,9 @@ public class Listener implements Runnable{
     private PublicKey clientKey;
     private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Request>> answers = null;
     private List<Pair<Integer, JSONArray>> readlist;
+    private Map<PublicKey, Integer> serversPorts = null;
 
-    public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key) {
+    public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key, Map<PublicKey, Integer> serversPortsFromEndpoint) {
 
         cryptoManager = new CryptoManager(userName);
         answers = new ConcurrentHashMap<>();
@@ -37,7 +41,7 @@ public class Listener implements Runnable{
         this.nQuorum = nQuorum;
         this.clientKey = key;
         newListener();
-
+        serversPorts = serversPortsFromEndpoint;
     }
 
     public JSONObject getResultGeneral() {
@@ -109,6 +113,9 @@ public class Listener implements Runnable{
             		default:
             			break;
                 }
+            } else {
+                System.out.println("Olha que merda");
+                System.out.println(envelope.getResponse().getErrorCode());
             }
             outputStream.close();
             inStream.close();
@@ -128,10 +135,13 @@ public class Listener implements Runnable{
 
     private Request checkAnswer(Envelope envelope) { //do not forget that VALUE message is a request
         Request request = envelope.getRequest();
+        System.out.println("naooo");
+        System.out.println(serversPorts.get(request.getPublicKey()));
+        System.out.println("brooo");
         //FALTA CHECKAR INTEGRITY
         //FALTA CHECKAR SE SAO EXCEPTIONS
         if(answers.containsKey(request.getTs())) {
-            answers.get(request.getTs()).put(request.getPort(), request);
+            answers.get(request.getTs()).put(serversPorts.get(request.getPublicKey()), request);
             if(answers.get(request.getTs()).size() > nQuorum){
                 Request result = checkQuorum(answers.get(request.getTs()).values());
                 if(result != null){
@@ -142,7 +152,7 @@ public class Listener implements Runnable{
         }
         else {
             answers.put(request.getTs(), new ConcurrentHashMap<>());
-            answers.get(request.getTs()).put(request.getPort(), request);
+            answers.get(request.getTs()).put(serversPorts.get(request.getPublicKey()), request);
         }
         return null;
 
@@ -203,7 +213,6 @@ public class Listener implements Runnable{
         }
         return false;
     }
-
     private boolean equalsResponses(Response response1, Response response2){
         if(response1.getSuccess() && response2.getSuccess()){
             if(response1.getJsonObject().toJSONString().equals(response2.getJsonObject().toJSONString())){

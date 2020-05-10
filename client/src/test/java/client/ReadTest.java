@@ -23,27 +23,27 @@ public class ReadTest extends BaseTest{
 		clientEndpoint1.register();
 		clientEndpoint2.register();
 
-		clientEndpoint1.post("message1 user1", null); // id = 0
-		clientEndpoint1.post("message2 user1", null); // id = 1
-		clientEndpoint1.post("message3 user1", null); // id = 2
+		clientEndpoint1.post("user1 announc message1", null); // id = 0
+		clientEndpoint1.post("user1 announc message2", null); // id = 1
+		clientEndpoint1.post("user1 announc message3", null); // id = 2
 
-		clientEndpoint2.post("message1 user2", null); // id = 3
-		clientEndpoint2.post("message2 user2", null); // id = 4
-		clientEndpoint2.post("message3 user2", null); // id = 5
+		clientEndpoint2.post("user2 announc message1", null); // id = 3
+		clientEndpoint2.post("user2 announc message2", null); // id = 4
+		clientEndpoint2.post("user2 announc message3", null); // id = 5
 		
 		int[] announcs  = {0,3};
-		clientEndpoint1.post("message with references from user1", announcs); // id = 6
+		clientEndpoint1.post("user1 announc message4", announcs); // id = 6
 		int[] announcs2 = {1,4};
-		clientEndpoint2.post("message with references from user2", announcs2); // id = 7
+		clientEndpoint2.post("user2 announc message4", announcs2); // id = 7
+
 	}
 
 	@Test
 	public void Should_Succeed_When_AnnouncsIsNull_With_1Post() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 
 		String[] result = getMessagesFromJSON(clientEndpoint1.read("user1", 2)); // will receive 2
-
-		// check the one that corresponds to the post refering null announcements
-		assertEquals("message3 user1", result[1]); 
+		// check the one that corresponds to the post referring null announcements
+		assertEquals("user1 announc message3", result[1]); 
 	}
 
 	@Test
@@ -51,8 +51,8 @@ public class ReadTest extends BaseTest{
 
 		String[] result1 = getMessagesFromJSON(clientEndpoint1.read("user1", 3)); // will receive 3
 		String[] result2 = getMessagesFromJSON(clientEndpoint2.read("user2", 3)); // will receive 3
- 
-		// check the ones that correspond to the posts refering null announcements
+
+		// check the ones that correspond to the posts referring null announcements
 		assertEquals(result1[1], "message3 user1");
 		assertEquals(result1[2], "message2 user1"); 
 
@@ -90,15 +90,15 @@ public class ReadTest extends BaseTest{
 		String[] result1 = getMessagesFromJSON(clientEndpoint1.read("user1", 0));
 		String[] result2 = getMessagesFromJSON(clientEndpoint2.read("user2", 0));
 
-		assertEquals(result1[0], "message with references from user1");
-		assertEquals(result1[1], "message3 user1");
-		assertEquals(result1[2], "message2 user1");
-		assertEquals(result1[3], "message1 user1");
+		assertEquals(result1[0], "user1 announc message4");
+		assertEquals(result1[1], "user1 announc message3");
+		assertEquals(result1[2], "user1 announc message2");
+		assertEquals(result1[3], "user1 announc message1");
 
-		assertEquals(result2[0], "message with references from user2");
-		assertEquals(result2[1], "message3 user2");
-		assertEquals(result2[2], "message2 user2");
-		assertEquals(result2[3], "message1 user2");
+		assertEquals(result2[0], "user2 announc message4");
+		assertEquals(result2[1], "user2 announc message3");
+		assertEquals(result2[2], "user2 announc message2");
+		assertEquals(result2[3], "user2 announc message1");
 	}
 
 	@Test

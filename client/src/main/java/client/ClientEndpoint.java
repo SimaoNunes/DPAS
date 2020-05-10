@@ -48,9 +48,9 @@ public class ClientEndpoint {
     
     
 //////////////////////////////////////////
-//										//
-//	 Constructor, Getters and Setters	//
-//										//
+//
+//	 Constructor, Getters and Setters
+//
 //////////////////////////////////////////
 
     public ClientEndpoint(String username) {
@@ -88,9 +88,9 @@ public class ClientEndpoint {
 
     
 //////////////////////////////////////////
-//										//
-//	Communication with Server methods	//
-//										//
+//
+//	Communication with Server methods
+//
 //////////////////////////////////////////
     
     private Socket createSocket(int port) throws IOException {
@@ -127,9 +127,9 @@ public class ClientEndpoint {
 
 
 //////////////////////////
-//						//
-//	Handshake Methods	//
-//						//
+//
+//	Handshake Methods
+//
 //////////////////////////
 
     private Envelope askForServerNonce(PublicKey clientKey, int port) throws NonceTimeoutException {
@@ -157,13 +157,13 @@ public class ClientEndpoint {
 
     
 ///////////////////////
-//					 //
-//   API Functions   //
-//	  	     		 //
+//
+//   API Functions
+//
 ///////////////////////
     
 	//////////////////////////////////////////////////
-	//				     REGISTER  					//
+	//				     REGISTER
 	//////////////////////////////////////////////////
     
     public int register() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
@@ -268,11 +268,12 @@ public class ClientEndpoint {
         } catch(IOException e) {
             throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_REGISTER);
         }
+        
     }
 
     
     //////////////////////////////////////////////////
-    //					   POST  					//
+    //					   POST
     //////////////////////////////////////////////////
     
     public int post(String message, int[] announcs) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
@@ -528,7 +529,7 @@ public class ClientEndpoint {
 
 
     //////////////////////////////////////////////////
-    //				      READ						//
+    //				      READ
     //////////////////////////////////////////////////
 
     public JSONObject read(String announcUserName, int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
@@ -538,7 +539,7 @@ public class ClientEndpoint {
         ServerSocket listenerSocket = null;
         try {
             listenerSocket = new ServerSocket(getClientPort());
-            listener = new Listener(listenerSocket, nQuorum, username, getPublicKey());
+            listener = new Listener(listenerSocket, nQuorum, username, getPublicKey(), serversPorts);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -568,6 +569,16 @@ public class ClientEndpoint {
             e.printStackTrace();
         }
         Request result = listener.getResult();
+
+        // if(result.getRequest() != null){
+        //     System.out.println("Recebi um request como resposta:");
+        //     System.out.println(result.getRequest().toString());
+        // } else {
+        //     System.out.println("Recebi uma response como resposta:");
+        //     System.out.println(result.getResponse().toString());
+        // }
+
+
         // Threads that will make the requests to the server
         Thread[] tasksReadComplete = new Thread[nServers];
         // Send 'read complete' to all servers
@@ -675,7 +686,7 @@ public class ClientEndpoint {
 
     
 	//////////////////////////////////////////////////
-	//				   READ GENERAL					//
+	//				   READ GENERAL
 	//////////////////////////////////////////////////
     
     public JSONObject readGeneral(int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
@@ -684,7 +695,7 @@ public class ClientEndpoint {
         ServerSocket listenerSocket = null;
         try {
             listenerSocket = new ServerSocket(getClientPort());
-            listener = new Listener(listenerSocket, nQuorum, username, getPublicKey());
+            listener = new Listener(listenerSocket, nQuorum, username, getPublicKey(), serversPorts);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -789,7 +800,7 @@ public class ClientEndpoint {
     }
     
 	//////////////////////////////////////////////////
-	//				   ASK FOR WTS					//
+	//				   ASK FOR WTS
 	//////////////////////////////////////////////////
     
     private int askForWts(boolean isGeneral) throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
@@ -851,7 +862,6 @@ public class ClientEndpoint {
     
 	private int askForSingleWts(PublicKey serverKey, boolean isGeneral) throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
 		// Make handshake with server
-
 		byte[] serverNonce = startHandshake(serverKey, false);
         // Make wts Request sign it and send inside envelope
         String operation = "WTS";
@@ -860,7 +870,6 @@ public class ClientEndpoint {
         }
         Request request = new Request(operation, getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey));
     	Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
-
     	// Get wts inside a Response
     	int singleWts = -666;
 		try {
@@ -871,7 +880,7 @@ public class ClientEndpoint {
             }
 	    	// Verify Response's Integrity
 	        if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serverKey)) {
-	            throw new IntegrityException("EPA NAO SEI AINDA O QUE ESCREVER AQUI MAS UM ATACANTE ALTEROU A RESP DO WTS");
+	            throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
 	        } else {
 	        	singleWts = envelopeResponse.getResponse().getTs();
 	        }
@@ -887,7 +896,7 @@ public class ClientEndpoint {
 
 
 //////////////////////////////////////////////////
-//				 Auxiliary Methods				//
+//				 Auxiliary Methods
 //////////////////////////////////////////////////
 
     private int getQuorumInt(int[] results) {

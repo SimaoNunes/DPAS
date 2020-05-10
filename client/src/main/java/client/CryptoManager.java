@@ -28,7 +28,7 @@ public class CryptoManager {
 	String username = null;
 	private HashMap<PublicKey, byte[]> nonces = null;
 	
-    public CryptoManager(String username){
+    public CryptoManager(String username) {
 		this.username = username;
 		this.nonces = new HashMap<>();
     }

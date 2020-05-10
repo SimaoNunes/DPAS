@@ -96,7 +96,6 @@ public class CryptoManager {
 
 	boolean verifyRequest(Request request, byte[] signature, PublicKey keyFrom) {
 		try {
-			System.out.println("OLHA EU A VERIFICAR");
 			// Initialize needed structures
 			Signature verifySignature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
