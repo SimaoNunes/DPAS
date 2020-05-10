@@ -88,6 +88,9 @@ public class Listener implements Runnable{
             		default:
             			break;
                 }
+            } else {
+                System.out.println("Olha que merda");
+                System.out.println(envelope.getResponse().getErrorCode());
             }
             outputStream.close();
             inStream.close();

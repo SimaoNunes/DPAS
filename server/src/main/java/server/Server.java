@@ -885,7 +885,7 @@ public class Server implements Runnable {
                 // ## TooMuchAnnouncements ## -> Check if user is trying to read more announcements that Board number of announcements
                 case -10:
                     if ((request.getOperation().equals("READ") && request.getNumber() > getDirectoryList(request.getPublicKey()).length) || (request.getOperation().equals("READGENERAL") && request.getNumber() > getDirectoryList(null).length) ) {
-                        sendResponse(new Response(false, -10, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
+                        sendExceptionCode(request.getPublicKey(), request.getClientNonce(), -10);
                         return false;
                     }
                     break;
@@ -895,6 +895,16 @@ public class Server implements Runnable {
             }
         }
         return true;
+    }
+    
+
+    private void sendExceptionCode(PublicKey clientKey, byte[] clientNonce, int code){
+        int clientPort = getClientPort(userIdMap.get(clientKey));
+        try(ObjectOutputStream newOutputStream = new ObjectOutputStream(new Socket("localhost", clientPort).getOutputStream())) {
+            sendResponse(new Response(false, code, clientNonce, cryptoManager.getPublicKeyFromKs("server")), newOutputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private int getClientPort(String client){
