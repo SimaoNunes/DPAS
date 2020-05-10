@@ -11,8 +11,7 @@ import org.apache.commons.io.FileUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-
-import java.io.FileReader;
+import org.json.simple.parser.ParseException;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -107,7 +106,7 @@ public class Server implements Runnable {
         ObjectOutputStream outStream;
         ObjectInputStream inStream;
 
-        try{
+        try {
             socket = server.accept();
         } catch (IOException e) {
             e.printStackTrace();
@@ -131,25 +130,25 @@ public class Server implements Runnable {
                         }
                         break;
                     case "POST":
-                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) &&
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
-                            checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5})) 
+                            checkExceptions(envelope.getRequest(), outStream, new int[] {-4, -5})) 
                             {
                             write(envelope.getRequest(), outStream);
                         }
                         break;
                     case "POSTGENERAL":
-                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) && 
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
-                            checkExceptions(envelope.getRequest(), outStream, new int[] {-1, -4, -5}))
+                            checkExceptions(envelope.getRequest(), outStream, new int[] {-4, -5}))
                             {
                             writeGeneral(envelope.getRequest(), outStream);
                         }
                         break;
                     case "READ":
-                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) && 
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
@@ -158,7 +157,7 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READGENERAL":
-                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) &&
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10}))
@@ -167,7 +166,7 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READCOMPLETE":
-                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) &&
                             cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-3}))
@@ -189,10 +188,9 @@ public class Server implements Runnable {
                     	}
                         break;
                     case "WTS":
-                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) &&
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
-                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
-                            checkExceptions(envelope.getRequest(), outStream, new int[] {-1}))
+                            cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
                         	{
                             wtsRequest(envelope.getRequest(), outStream);
                         }
@@ -327,7 +325,7 @@ public class Server implements Runnable {
                     int ts = usersBoards.get(entry.getKey()).getFirst();
                     JSONObject objectToSend = usersBoards.get(entry.getKey()).getSecond().getAnnouncements(number);
 
-                    sendRequest(new Request("VALUE", rid, ts, nonce, objectToSend, Integer.parseInt(serverPort), cryptoManager.getPublicKeyFromKs("server")), outputStream);
+                    sendRequest(new Request("VALUE", rid, ts, nonce, objectToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -448,7 +446,7 @@ public class Server implements Runnable {
             // ------> Handshake one way
             byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
             
-            sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(userIdMap.get(request.getPublicKeyToReadFrom())).getFirst(), nonce, announcementsToSend, Integer.parseInt(serverPort), cryptoManager.getPublicKeyFromKs("server")), outputStream);
+            sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(userIdMap.get(request.getPublicKeyToReadFrom())).getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
 
         } catch(Exception e) {
             e.printStackTrace();
@@ -479,32 +477,32 @@ public class Server implements Runnable {
 
         Arrays.sort(directoryList);
         JSONParser parser = new JSONParser();
-        try{
-            JSONArray annoucementsList = new JSONArray();
-            JSONObject announcement;
+        try {
+			JSONArray annoucementsList = new JSONArray();
+			JSONObject announcement;
 
-            String fileToRead;
-            for (int i=0; i<total; i++) {
-                fileToRead = directoryList[directorySize-1];
-                announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
-                directorySize--;
-                annoucementsList.add(announcement);
-            }
-            JSONObject announcementsToSend =  new JSONObject();
-            announcementsToSend.put("announcementList", annoucementsList);
-            if(!dropOperationFlag) {
-                // send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);   FIXME-> enviar o rid?
-            } else {
-                System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED READ GENERAL");
-            }
-        } catch(Exception e) {
-            sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
-        }
+			String fileToRead;
+			for (int i=0; i<total; i++) {
+			    fileToRead = directoryList[directorySize-1];
+			    announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
+			    directorySize--;
+			    annoucementsList.add(announcement);
+			}
+			JSONObject announcementsToSend =  new JSONObject();
+			announcementsToSend.put("announcementList", annoucementsList);
+			if(!dropOperationFlag) {
+			    // send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);   FIXME-> enviar o rid?
+			} else {
+			    System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED READ GENERAL");
+			}
+		} catch (IOException | ParseException e) {
+			sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
+		}
+        
     }
 
-
     private void readComplete(Request request){
-        if(request.getRid() == listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).get(userIdMap.get(request.getPublicKey())).getFirst()){
+        if(request.getRid() == listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).get(userIdMap.get(request.getPublicKey())).getFirst()) {
             listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).remove(userIdMap.get(request.getPublicKey()));
         }
     }
@@ -541,8 +539,7 @@ public class Server implements Runnable {
         String path = "";
         if(key == null) {
             path = generalBoardPath;
-        }
-        else {
+        } else {
             path = announcementBoardsPath + userIdMap.get(key) + "/";
         }
 
@@ -832,7 +829,7 @@ public class Server implements Runnable {
     public boolean checkExceptions(Request request, ObjectOutputStream outStream, int[] codes) {
         for (int i = 0; i < codes.length; i++) {
             switch(codes[i]) {
-                // ## UserNotRegistered ## -> check if user is registed
+                // ## UserNotRegistered ## -> check if user is registered
                 case -1:
                     if(!userIdMap.containsKey(request.getPublicKey())) {
                         sendResponse(new Response(false, -1, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
@@ -849,7 +846,6 @@ public class Server implements Runnable {
                 // ## UserNotRegistered ## -> [READ] check if user TO READ FROM is registered
                 case -3:
                     if(!userIdMap.containsKey(request.getPublicKeyToReadFrom())) {
-                    	System.out.println("ESTE CHAVALO NAO ESTA REGISTADO");
                         sendResponse(new Response(false, -3, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
                         return false;
                     }
@@ -861,7 +857,7 @@ public class Server implements Runnable {
                         return false;
                     }
                     break;
-                // ## InvalidAnnouncement ## -> checks if announcements refered by the user are valid
+                // ## InvalidAnnouncement ## -> checks if announcements referred by the user are valid
                 case -5:
                     if(request.getAnnouncements() != null && !checkValidAnnouncements(request.getAnnouncements())) {
                         sendResponse(new Response(false, -5, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
@@ -878,7 +874,7 @@ public class Server implements Runnable {
                 // ## UnknownPublicKey ## -> Check if key is null or unknown by the Server. If method is read, check if key to read from is null
                 case -7:
                     if (request.getPublicKey() == null || cryptoManager.checkKey(request.getPublicKey()) == "" || (request.getOperation().equals("READ") && (request.getPublicKeyToReadFrom() == null || cryptoManager.checkKey(request.getPublicKeyToReadFrom()) == ""))) {
-                        sendResponse(new Response(false, -7, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
+                    	sendResponse(new Response(false, -7, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
                         return false;
                     }
                     break;

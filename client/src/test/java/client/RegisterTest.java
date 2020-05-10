@@ -24,7 +24,7 @@ public class RegisterTest extends BaseTest {
 	
 	@Test
 	public void Should_Succeed_When_SimpleRegister() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-		clientEndpoint1.register();
+		assertEquals(1, clientEndpoint1.register());
 	}
 	
 	@Test(expected = AlreadyRegisteredException.class)
