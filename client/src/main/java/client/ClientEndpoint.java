@@ -553,17 +553,15 @@ public class ClientEndpoint {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Request result = listener.getResult();
+        Envelope result = listener.getResult();
 
-        // if(result.getRequest() != null){
-        //     System.out.println("Recebi um request como resposta:");
-        //     System.out.println(result.getRequest().toString());
-        // } else {
-        //     System.out.println("Recebi uma response como resposta:");
-        //     System.out.println(result.getResponse().toString());
-        // }
-
-
+        if(result.getRequest() != null){
+            System.out.println("Recebi um request como resposta:");
+            System.out.println(result.getRequest().toString());
+        } else {
+            System.out.println("Recebi uma response como resposta:");
+            System.out.println(result.getResponse().toString());
+        }
         // Threads that will make the requests to the server
         Thread[] tasksReadComplete = new Thread[nServers];
         // Send 'read complete' to all servers
@@ -574,29 +572,6 @@ public class ClientEndpoint {
                 }
             });
         	tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
-        }
-        // FIXME está a espera que todas as threads acabem!!!
-        // Kill remaining read threads
-        boolean stillAlive = true;
-        while(stillAlive) {
-        	stillAlive = false;
-            for (PublicKey serverKey : serversPorts.keySet()) {
-            	if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
-            		stillAlive = true;
-            		break;
-            	}
-            }
-        }
-        // Kill remaining read complete threads
-        stillAlive = true;
-        while(stillAlive) {
-        	stillAlive = false;
-            for (PublicKey serverKey : serversPorts.keySet()) {
-            	if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
-            		stillAlive = true;
-            		break;
-            	}
-            }
         }
         /*if(result.getSuccess()){
             return result.getJsonObject();
@@ -624,7 +599,7 @@ public class ClientEndpoint {
 
             }
         }*/
-        return result.getJsonObject();
+        return null;
     }
 
     public void readMethod(String announcUserName, int number, PublicKey serverKey, int rid) {

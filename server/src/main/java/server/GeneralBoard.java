@@ -36,8 +36,8 @@ public class GeneralBoard implements Serializable {
             int i = 0;
             while (i < number){
                 JSONObject object = new JSONObject();
-                object.put("message", annoucements.get(annoucements.size() - i).getFirst());
-                object.put("signature", annoucements.get(annoucements.size() - i).getSecond());
+                object.put("message", annoucements.get(annoucements.size() - 1 - i).getFirst());
+                object.put("signature", annoucements.get(annoucements.size() - 1 - i).getSecond());
                 annoucementsList.add(object);
                 i++;
             }

@@ -23,12 +23,12 @@ public class Listener implements Runnable{
 
     private ServerSocket endpoint;
     private int nQuorum;
-    private Request result = null;
+    private Envelope result = null;
     private JSONObject resultGeneral = null;
     private CryptoManager cryptoManager = null;
     private Thread listenerThread;
     private PublicKey clientKey;
-    private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Request>> answers = null;
+    private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Envelope>> answers = null;
     private List<Pair<Integer, JSONArray>> readlist;
     private Map<PublicKey, Integer> serversPorts = null;
 
@@ -52,11 +52,11 @@ public class Listener implements Runnable{
         this.resultGeneral = resultGeneral;
     }
 
-    public Request getResult() {
+    public Envelope getResult() {
         return result;
     }
 
-    public void setResult(Request result) {
+    public void setResult(Envelope result) {
         this.result = result;
     }
 
@@ -116,6 +116,7 @@ public class Listener implements Runnable{
             } else {
                 System.out.println("Olha que merda");
                 System.out.println(envelope.getResponse().getErrorCode());
+                result = checkAnswer(envelope);
             }
             outputStream.close();
             inStream.close();
@@ -133,35 +134,47 @@ public class Listener implements Runnable{
         listenerThread.start();
     }
 
-    private Request checkAnswer(Envelope envelope) { //do not forget that VALUE message is a request
-        Request request = envelope.getRequest();
-        System.out.println("naooo");
-        System.out.println(serversPorts.get(request.getPublicKey()));
-        System.out.println("brooo");
+    private Envelope checkAnswer(Envelope envelope) { //do not forget that VALUE message is a request
         //FALTA CHECKAR INTEGRITY
         //FALTA CHECKAR SE SAO EXCEPTIONS
-        if(answers.containsKey(request.getTs())) {
-            answers.get(request.getTs()).put(serversPorts.get(request.getPublicKey()), request);
-            if(answers.get(request.getTs()).size() > nQuorum){
-                Request result = checkQuorum(answers.get(request.getTs()).values());
+
+        System.out.println(envelope.toString());
+
+        int timestamp;
+        PublicKey serverPublicKey;
+
+        if(envelope.getResponse() != null){
+            Response obj    = envelope.getResponse();
+            timestamp       = obj.getTs();
+            serverPublicKey = obj.getPublicKey();
+        } else {
+            Request obj     = envelope.getRequest();
+            timestamp       = obj.getTs();
+            serverPublicKey = obj.getPublicKey();
+        }
+
+        if(answers.containsKey(timestamp)) {
+            answers.get(timestamp).put(serversPorts.get(serverPublicKey), envelope);
+            if(answers.get(timestamp).size() > nQuorum){
+                Envelope result = checkQuorum(answers.get(timestamp).values());
                 if(result != null){
                     listenerThread.interrupt();
-                    return request;
+                    return result;
                 }
             }
         }
         else {
-            answers.put(request.getTs(), new ConcurrentHashMap<>());
-            answers.get(request.getTs()).put(serversPorts.get(request.getPublicKey()), request);
+            answers.put(timestamp, new ConcurrentHashMap<>());
+            answers.get(timestamp).put(serversPorts.get(serverPublicKey), envelope);
         }
+        
         return null;
-
     }
 
-    private Request checkQuorum(Collection<Request> line) {
+    private Envelope checkQuorum(Collection<Envelope> line) {
         HashMap<String, Integer> counter = new HashMap<>();
 
-        for(Request entry: line){
+        for(Envelope entry: line){
             if(counter.containsKey(entry.toString())){
                 counter.put(entry.toString(), counter.get(entry.toString()) + 1);
                 if(counter.get(entry.toString()) > nQuorum){
@@ -182,52 +195,26 @@ public class Listener implements Runnable{
         JSONArray array = (JSONArray) request.getJsonObject().get("announcementList");
         for(Object o : array){
             JSONObject json = (JSONObject) o;
-            if(cryptoManager.verifyMessage((JSONObject) json.get("message"), (byte[]) json.get("signature"))){
-                readlist.add(new Pair<>(request.getTs(), array));
-                if(readlist.size() > nQuorum){
-                    int max = 0;
-                    int index = 0;
-                    for(int i = 0; i < readlist.size(); i++){
-                        if(readlist.get(i).getFirst() > max){
-                            max = readlist.get(i).getFirst();
-                            index = i;
-                        }
-                    }
-                    JSONObject final_result = new JSONObject();
-                    final_result.put("announcementList", readlist.get(index).getSecond());
-                    return final_result;
-                }
-            }
-            else{
+            if(!cryptoManager.verifyMessage((JSONObject) json.get("message"), (byte[]) json.get("signature"))){
                 return null; // there is a message with the wrong signature, maybe send integrity exception?
             }
         }
-        return null;
-    }
-
-    /*private boolean containsResponse(Set<Response> responses, Response response){
-        for(Response r : responses){
-            if(equalsResponses(r, response)){
-                return true;
-            }
-        }
-        return false;
-    }
-    private boolean equalsResponses(Response response1, Response response2){
-        if(response1.getSuccess() && response2.getSuccess()){
-            if(response1.getJsonObject().toJSONString().equals(response2.getJsonObject().toJSONString())){
-                System.out.println("equal responses true");
-                return true;
-            }
-        }
-        else{
-            if(!response1.getSuccess() && !response2.getSuccess()){
-                if(response1.getErrorCode() == response2.getErrorCode()){
-                    return true;
+        readlist.add(new Pair<>(request.getTs(), array));
+        if(readlist.size() > nQuorum){
+            int max = 0;
+            int index = 0;
+            for(int i = 0; i < readlist.size(); i++){
+                if(readlist.get(i).getFirst() > max){
+                    max = readlist.get(i).getFirst();
+                    index = i;
                 }
             }
+            JSONObject final_result = new JSONObject();
+            final_result.put("announcementList", readlist.get(index).getSecond());
+            System.out.println(final_result);
+            return final_result;
         }
-        return false;
-    }*/
+        return null;
+    }
 
 }
