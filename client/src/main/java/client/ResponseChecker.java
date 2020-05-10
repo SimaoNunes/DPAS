@@ -21,10 +21,10 @@ public class ResponseChecker {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -7) {
-                throw new UnknownPublicKeyException("Such key doesn't exist in the server side!");
+                throw new UnknownPublicKeyException(ExceptionsMessages.UNKNOWN_KEY);
             }
             else if(error == -2) {
-                throw new AlreadyRegisteredException("User with that public key already registered in the DPAS!");
+                throw new AlreadyRegisteredException(ExceptionsMessages.ALREADY_REGISTERED);
             }
         }
     }
@@ -34,13 +34,13 @@ public class ResponseChecker {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -1) {
-                throw new UserNotRegisteredException("This user is not registered!");
+                throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
             }
             else if(error == -4) {
-                throw new MessageTooBigException("Message cannot exceed 255 characters!");
+                throw new MessageTooBigException(ExceptionsMessages.MESSAGE_TOO_BIG);
             }
             else if(error == -5) {
-                throw new InvalidAnnouncementException("Announcements referenced do not exist!");
+                throw new InvalidAnnouncementException(ExceptionsMessages.INVALID_ANNOUNCEMENTS);
             }
         }
     }
@@ -49,16 +49,16 @@ public class ResponseChecker {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -1) {
-                throw new UserNotRegisteredException("This user is not registered!");
+                throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
             }
             else if(error == -3) {
-                throw new UserNotRegisteredException("The user you're reading from is not registered!");
+                throw new UserNotRegisteredException(ExceptionsMessages.USER_TO_READ_FROM_NOT_REGISTERED);
             }
             else if(error == -6) {
-                throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+                throw new InvalidPostsNumberException(ExceptionsMessages.INVALID_READ_POST);
             }
             else if(error == -10) {
-                throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
+                throw new TooMuchAnnouncementsException(ExceptionsMessages.TOO_MUCH_ANNOUNCEMENTS);
             }
         }
     }
@@ -67,13 +67,13 @@ public class ResponseChecker {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -1) {
-                throw new UserNotRegisteredException("This user is not registered!");
+                throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
             }
             else if(error == -6) {
-                throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+                throw new InvalidPostsNumberException(ExceptionsMessages.INVALID_READ_POST);
             }
             else if(error == -10) {
-                throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
+                throw new TooMuchAnnouncementsException(ExceptionsMessages.TOO_MUCH_ANNOUNCEMENTS);
             }
 		}
 	}
@@ -82,7 +82,7 @@ public class ResponseChecker {
         if(!response.getSuccess()){
             int error = response.getErrorCode();
             if(error == -1) {
-                throw new UserNotRegisteredException("This user is not registered!");
+                throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
             }
 		}
 	}

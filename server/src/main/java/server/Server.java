@@ -873,7 +873,7 @@ public class Server implements Runnable {
                         return false;
                     }
                     break;
-                // ## UnknownPublicKey ## -> Check if key is null or known by the Server. If method is read, check if key to ready from is null
+                // ## UnknownPublicKey ## -> Check if key is null or unknown by the Server. If method is read, check if key to read from is null
                 case -7:
                     if (request.getPublicKey() == null || cryptoManager.checkKey(request.getPublicKey()) == "" || (request.getOperation().equals("READ") && (request.getPublicKeyToReadFrom() == null || cryptoManager.checkKey(request.getPublicKeyToReadFrom()) == ""))) {
                         sendResponse(new Response(false, -7, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);

@@ -31,7 +31,7 @@ public class BaseTest {
 	static String serverAddress = "localhost";
 
 	static final int faults = 1;
-	static final int PORT = 9003;
+	static final int PORT = 9000;
 
 	@BeforeClass
 	public static void oneTimeSetup() {
@@ -70,7 +70,7 @@ public class BaseTest {
     public static void deleteUsers(){
         int port = PORT;
         int i = 0;
-        while( i < (faults*3) + 1){
+        while( i < (faults*3) + 1) {
             try(Socket socket = new Socket("localhost", port++)) {
                 ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
                 outputStream.writeObject(new Envelope(new Request("DELETEALL", null)));
@@ -79,7 +79,6 @@ public class BaseTest {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
     }
 

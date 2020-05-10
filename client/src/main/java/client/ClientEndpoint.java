@@ -206,6 +206,8 @@ public class ClientEndpoint {
         // Get Quorum from the result to make a decision regarding the responses
         int result = getMajorityOfQuorumInt(results);
         switch (result) {
+        	case (-7):
+        		throw new UnknownPublicKeyException(ExceptionsMessages.UNKNOWN_KEY);
             case (-2):
                 throw new AlreadyRegisteredException(ExceptionsMessages.ALREADY_REGISTERED);
             case (-11):
