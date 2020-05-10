@@ -7,19 +7,28 @@ public class Envelope implements Serializable {
     private Request request = null;
     private Response response = null;
     private byte[] signature = null;
+    private String toString = null;
 
     public Envelope(Request request, byte[] signature){
         this.request = request;
         this.signature = signature;
+        this.toString = request.toString();
     }
 
     public Envelope(Request request){
         this.request = request;
+        this.toString = request.toString();
     }
 
     public Envelope(Response response, byte[] signature){
         this.response = response;
         this.signature = signature;
+        this.toString = response.toString();
+    }
+
+    @Override
+    public String toString(){
+        return toString;
     }
 
     public Request getRequest() {
