@@ -239,7 +239,7 @@ public class ClientEndpoint {
         int result = getMajorityOfQuorumInt(results);
         switch (result) {
             case (-2):
-                throw new AlreadyRegisteredException("This user is already registered!");
+                throw new AlreadyRegisteredException("User with that public key already registered in the DPAS!");
             case (-11):
                 throw new NonceTimeoutException("Nonce timeout");
             case (-12):
@@ -353,11 +353,11 @@ public class ClientEndpoint {
         int result = getQuorumInt(results);
         switch (result) {
             case (-1):
-                throw new UserNotRegisteredException("User not Registered");
+                throw new UserNotRegisteredException("This user is not registered!");
             case (-4):
-                throw new MessageTooBigException("Message Too Big");
+                throw new MessageTooBigException("Message cannot exceed 255 characters!");
             case (-5):
-                throw new InvalidAnnouncementException("Invalid announcement");
+                throw new InvalidAnnouncementException("Announcements referenced do not exist!");
             case (-11):
                 throw new NonceTimeoutException("Nonce timeout");
             case (-12):
@@ -728,7 +728,7 @@ public class ClientEndpoint {
         int result = getMajorityOfQuorumInt(results);
         switch (result) {
             case (-1):
-                throw new UserNotRegisteredException("User not Registered");
+                throw new UserNotRegisteredException("This user is not registered!");
             case (-11):
                 throw new NonceTimeoutException("Nonce timeout");
             case (-12):
