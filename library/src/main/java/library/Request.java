@@ -20,8 +20,6 @@ public class Request implements Serializable {
     private int port;
     private JSONObject jsonObject = null;
     private String username;
-    private int errorCode;
-    private boolean success;
     
     ////////////////////////////////////////////////////////////////
     //				                                         	  //
@@ -101,20 +99,7 @@ public class Request implements Serializable {
     }
 
     // VALUE
-    public Request(String operation, boolean success, int rid, int ts, byte[] nonce, JSONObject object, int port, PublicKey key){
-    	this.success = success;
-        this.operation = operation;
-        this.jsonObject = object;
-        this.clientNonce = nonce;
-        this.rid = rid;
-        this.ts = ts;
-        this.port = port;
-        this.publicKey = key;
-    }
-    
-    public Request(String operation, boolean success, int errorCode, int rid, int ts, byte[] nonce, JSONObject object, int port, PublicKey key){
-    	this.success = success;
-    	this.errorCode = errorCode;
+    public Request(String operation, int rid, int ts, byte[] nonce, JSONObject object, int port, PublicKey key) {
         this.operation = operation;
         this.jsonObject = object;
         this.clientNonce = nonce;
@@ -232,12 +217,6 @@ public class Request implements Serializable {
     public String toString() {
         String s ="";
         s += this.operation + " ";
-        
-        s += this.success + " ";
-        
-        if(!this.success) {
-        	s += this.errorCode + " ";
-        }
 
         if(this.jsonObject != null){
             s += this.jsonObject.toJSONString() + " ";

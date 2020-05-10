@@ -326,7 +326,7 @@ public class Server implements Runnable {
                     int ts = usersBoards.get(entry.getKey()).getFirst();
                     JSONObject objectToSend = usersBoards.get(entry.getKey()).getSecond().getAnnouncements(number);
 
-                    sendRequest(new Request("VALUE", true, rid, ts, nonce, objectToSend, Integer.parseInt(serverPort), cryptoManager.getPublicKeyFromKs("server")), outputStream);
+                    sendRequest(new Request("VALUE", rid, ts, nonce, objectToSend, Integer.parseInt(serverPort), cryptoManager.getPublicKeyFromKs("server")), outputStream);
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -447,7 +447,7 @@ public class Server implements Runnable {
             // ------> Handshake one way
             byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
             
-            sendRequest(new Request("VALUE", true, request.getRid(), usersBoards.get(userIdMap.get(request.getPublicKeyToReadFrom())).getFirst(), nonce, announcementsToSend, Integer.parseInt(serverPort), cryptoManager.getPublicKeyFromKs("server")), outputStream);
+            sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(userIdMap.get(request.getPublicKeyToReadFrom())).getFirst(), nonce, announcementsToSend, Integer.parseInt(serverPort), cryptoManager.getPublicKeyFromKs("server")), outputStream);
 
         } catch(Exception e) {
             e.printStackTrace();

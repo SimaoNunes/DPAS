@@ -451,7 +451,7 @@ public class ClientEndpoint {
             e.printStackTrace();
         }
         // Threads that will make the requests to the server
-        Thread[] tasks = new Thread[nServers];
+        Thread[] tasksRead = new Thread[nServers];
         // Send read to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
         	// Create a uncaught exception handler
@@ -460,13 +460,13 @@ public class ClientEndpoint {
         	        System.out.println("Uncaught exception: " + ex);
         	    }
         	};
-        	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+        	tasksRead[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	readMethod(announcUserName, number, serverKey, rid);
                 }
             });
-        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
-        	tasks[serversPorts.get(serverKey) - PORT].start();
+        	tasksRead[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
+        	tasksRead[serversPorts.get(serverKey) - PORT].start();
         }
         // Wait for listeners to get result
         while(listener.getResult() == null) {
@@ -484,7 +484,7 @@ public class ClientEndpoint {
         }
         Request result = listener.getResult();
         // Threads that will make the requests to the server
-        tasks = new Thread[nServers];
+        Thread[] tasksReadComplete = new Thread[nServers];
         // Send 'read complete' to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
         	// Create a uncaught exception handler
@@ -493,20 +493,32 @@ public class ClientEndpoint {
         	        System.out.println("Uncaught exception: " + ex);
         	    }
         	};
-        	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+        	tasksReadComplete[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	readComplete(announcUserName, serverKey, rid);
                 }
             });
-        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
-        	tasks[serversPorts.get(serverKey) - PORT].start();
+        	tasksReadComplete[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
+        	tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
         }
         // FIXME está a espera que todas as threads acabem!!!
+        // Kill remaining read threads
         boolean stillAlive = true;
         while(stillAlive) {
         	stillAlive = false;
             for (PublicKey serverKey : serversPorts.keySet()) {
-            	if(tasks[serversPorts.get(serverKey) - PORT].isAlive()) {
+            	if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
+            		stillAlive = true;
+            		break;
+            	}
+            }
+        }
+        // Kill remaining read complete threads
+        stillAlive = true;
+        while(stillAlive) {
+        	stillAlive = false;
+            for (PublicKey serverKey : serversPorts.keySet()) {
+            	if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
             		stillAlive = true;
             		break;
             	}
