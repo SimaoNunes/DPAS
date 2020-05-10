@@ -222,7 +222,12 @@ public class ClientApp {
 		int[] announcsArray = toIntArray(announcsList);
 		// Post announcement
 		try{
-			clientEndpoint.post(message, announcsArray, isGeneral);
+			if(isGeneral){
+				clientEndpoint.postGeneral(message, announcsArray);
+			}
+			else{
+				clientEndpoint.post(message, announcsArray);
+			}
 		} catch (
 			UserNotRegisteredException 	 | 
 			MessageTooBigException 		 | 

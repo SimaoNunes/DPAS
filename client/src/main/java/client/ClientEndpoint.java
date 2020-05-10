@@ -27,7 +27,9 @@ public class ClientEndpoint {
 
     /********** Atomic Register Variables ************/
     int wts = -1; // -1 means we must ask server for the current wts
+    int wtsG = -1;
     int rid = 0;
+    int ridG = 0;
 
     /************ Replication variables *************/
     private static final int PORT = 9000;
@@ -274,22 +276,31 @@ public class ClientEndpoint {
     //					   POST
     //////////////////////////////////////////////////
     
-    public int post(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int post(String message, int[] announcs) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         // Ask Servers for actual wts in case we don't have it in memory
-        if(wts == -1) {
-        	wts = askForWts();
+
+        if(wts == -1){
+            wts = askForWts(false);
         }
-        wts = wts + 1;  
+
+        wts = wts + 1;
+
         // Variables to store responses and their results
         int[] results = new int[nServers];
         // Threads that will make the requests to the server
         Thread[] tasks = new Thread[nServers];
         // Post to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-        	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+        	// Create a uncaught exception handler
+        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
+        	    public void uncaughtException(Thread th, Throwable ex) {
+        	        System.out.println("Uncaught exception: " + ex);
+        	    }
+        	};
+            tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	try {
-                		results[serversPorts.get(serverKey) - PORT] = postMethod(message, announcs, isGeneral, serverKey, wts);
+                		results[serversPorts.get(serverKey) - PORT] = postMethod(message, announcs, serverKey, wts);
                 	} catch (UserNotRegisteredException e) {
                 		results[serversPorts.get(serverKey) - PORT] = -1;              		
     				} catch (InvalidAnnouncementException e) {
@@ -341,20 +352,16 @@ public class ClientEndpoint {
         return result;
     }
 
-    public int postMethod(String message, int[] announcs, boolean isGeneral, PublicKey serverKey, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int postMethod(String message, int[] announcs, PublicKey serverKey, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         byte[] serverNonce = startHandshake(serverKey, false);
-        return write(getPublicKey(), message, announcs, isGeneral, serverNonce, cryptoManager.getNonce(serverKey), serverKey, ts);
+        return write(getPublicKey(), message, announcs, serverNonce, cryptoManager.getNonce(serverKey), serverKey, ts);
     }
 
-	public int write(PublicKey clientKey, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PublicKey serverKey, int ts) throws InvalidAnnouncementException,
+	public int write(PublicKey clientKey, String message, int[] announcs, byte[] serverNonce, byte[] clientNonce, PublicKey serverKey, int ts) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
-        if(isGeneral){
-            request = new Request("POSTGENERAL", clientKey, message, announcs, serverNonce, clientNonce, ts);
-        }
-        else{
-            request = new Request("POST", clientKey, message, announcs, serverNonce, clientNonce, ts);
-        }
+
+        request = new Request("POST", clientKey, message, announcs, serverNonce, clientNonce, ts);
 
         Envelope envelopeRequest = new Envelope(request);
 
@@ -390,6 +397,135 @@ public class ClientEndpoint {
         }
         return 0;
     }
+
+
+    //////////////////////////////////////////////////
+    //					POSTGENERAL
+    //////////////////////////////////////////////////
+
+    public int postGeneral(String message, int[] announcs) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+        // Ask Servers for actual wts in case we don't have it in memory
+        if(wtsG == -1){
+            wtsG = askForWts(true);
+        }
+        wtsG = wtsG + 1;
+
+        // Variables to store responses and their results
+        int[] results = new int[nServers];
+        // Threads that will make the requests to the server
+        Thread[] tasks = new Thread[nServers];
+        // Post to all servers
+        for (PublicKey serverKey : serversPorts.keySet()) {
+            // Create a uncaught exception handler
+            Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
+                public void uncaughtException(Thread th, Throwable ex) {
+                    System.out.println("Uncaught exception: " + ex);
+                }
+            };
+            tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        results[serversPorts.get(serverKey) - PORT] = postGeneralMethod(message, announcs, serverKey, wtsG);
+                    } catch (UserNotRegisteredException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -1;
+                    } catch (InvalidAnnouncementException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -5;
+                    } catch (MessageTooBigException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -4;
+                    } catch (FreshnessException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -13;
+                    } catch (NonceTimeoutException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -11;
+                    } catch (IntegrityException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -14;
+                    } catch (OperationTimeoutException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -12;
+                    }
+                }
+            });
+            tasks[serversPorts.get(serverKey) - PORT].start();
+        }
+        // FIXME está a espera que todas as threads acabem!!!
+        boolean stillAlive = true;
+        while(stillAlive) {
+            stillAlive = false;
+            for (PublicKey serverKey : serversPorts.keySet()) {
+                if(tasks[serversPorts.get(serverKey) - PORT].isAlive()) {
+                    stillAlive = true;
+                    break;
+                }
+            }
+        }
+        // Get Quorum from the result to make a decision regarding the responses
+        int result = getQuorumInt(results);
+        switch (result) {
+            case (-1):
+                throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
+            case (-4):
+                throw new MessageTooBigException(ExceptionsMessages.MESSAGE_TOO_BIG);
+            case (-5):
+                throw new InvalidAnnouncementException(ExceptionsMessages.INVALID_ANNOUNCEMENTS);
+            case (-11):
+                throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+            case (-12):
+                throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
+            case (-13):
+                throw new FreshnessException(ExceptionsMessages.CANT_INFER_POST);
+            case (-14):
+                throw new IntegrityException(ExceptionsMessages.CANT_INFER_POST);
+        }
+        return result;
+    }
+
+    public int postGeneralMethod(String message, int[] announcs, PublicKey serverKey, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+        byte[] serverNonce = startHandshake(serverKey, false);
+        return writeGeneral(getPublicKey(), message, announcs, serverNonce, cryptoManager.getNonce(serverKey), serverKey, ts);
+    }
+
+    public int writeGeneral(PublicKey clientKey, String message, int[] announcs, byte[] serverNonce, byte[] clientNonce, PublicKey serverKey, int ts) throws InvalidAnnouncementException,
+                                                                                                                                                                                 UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
+        Request request;
+
+        byte[] signature = cryptoManager.signMessage(message);
+
+        request = new Request("POSTGENERAL", clientKey, message, announcs, serverNonce, clientNonce, ts, signature);
+
+        Envelope envelopeRequest = new Envelope(request);
+
+        /***** SIMULATE ATTACKER: changing the message (tamper) *****/
+        if(isIntegrityFlag()) {
+            envelopeRequest.getRequest().setMessage("Olá, eu odeio-te");
+        }
+        /************************************************************/
+        try {
+
+            Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(serverKey));
+
+            /***** SIMULATE ATTACKER: replay register *****/
+            if(isReplayFlag()){
+                this.replayAttacker.sendReplays(envelopeRequest, 2);
+            }
+            /**********************************************/
+            // Verify freshness of message (by checking if the request contains a fresh nonce)
+            if(!cryptoManager.checkNonce(envelopeResponse.getResponse().getPublicKey(), envelopeResponse.getResponse().getNonce())){
+                throw new FreshnessException(errorMessage);
+            }
+            // Verify message integrity
+            if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serverKey)){
+                throw new IntegrityException(errorMessage);
+            }
+            ResponseChecker.checkPost(envelopeResponse.getResponse());
+            // On success, return 1
+            return 1;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
+        }
+        return 0;
+    }
+
+
 
 
     //////////////////////////////////////////////////
@@ -554,86 +690,90 @@ public class ClientEndpoint {
 	//////////////////////////////////////////////////
     
     public JSONObject readGeneral(int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-        int responses = 0;
-        int counter = 0;
-        int port = PORT;
-
-        Response[] results = new Response[(nFaults * 3 + 1) / 2 + 1];
-
-        CompletableFuture<Response>[] tasks = new CompletableFuture[nFaults * 3 + 1];
-
-        for (int i = 0; i < tasks.length; i++) {
-
-            int finalPort = port;
-
-            tasks[i] = CompletableFuture.supplyAsync(() -> readGeneralMethod(number, finalPort));
-            port++;
+        ridG += 1;
+        Listener listener = null;
+        ServerSocket listenerSocket = null;
+        try {
+            listenerSocket = new ServerSocket(getClientPort());
+            listener = new Listener(listenerSocket, nQuorum, username, getPublicKey(), serversPorts);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        while (responses < nFaults * 3 + 1 / 2) {
-            for (int i = 0; i < tasks.length; i++) {
-
-                if (tasks[i].isDone()) {
-
-                    responses++;
-
-                    try {
-                        results[counter++] = tasks[i].get();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
-                    }
-                    if (responses > nQuorum)
-                        break;
+        // Threads that will make the requests to the server
+        Thread[] tasksRead = new Thread[nServers];
+        // Send read to all servers
+        for (PublicKey serverKey : serversPorts.keySet()) {
+            tasksRead[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+                public void run() {
+                    readGeneralMethod(number, serverKey, rid);
                 }
-                if (i == tasks.length - 1)
-                    i = 0;
+            });
+            tasksRead[serversPorts.get(serverKey) - PORT].start();
+        }
+        // Wait for listeners to get result
+        while(listener.getResultGeneral() == null) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
-        Response result = getQuorumResponse(results);
-        if(result.getSuccess()){
+
+        try {
+            listenerSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        JSONObject result = listener.getResultGeneral();
+        // Threads that will make the requests to the server
+        return result;
+        /*if(result.getSuccess()){
             return result.getJsonObject();
         }
         else{
             switch (result.getErrorCode()) {
                 case (-1):
-                    throw new UserNotRegisteredException("This user is not registered!");
+                    throw new UserNotRegisteredException("User not Registered");
+                case (-3):
+                    throw new UserNotRegisteredException("The user you're reading from is not registered!");  //OLD EXCEPTION FIX ME
                 case (-6):
-                    throw new InvalidPostsNumberException("Announcements referenced do not exist!");
+                    throw new InvalidPostsNumberException("Invalid announcements number to be read!");
                 case (-10):
                     throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
                 case (-11):
-                    throw new NonceTimeoutException("The operation was not possible, please try again!");
+                    throw new NonceTimeoutException("Nonce timeout");
                 case (-12):
                     throw new OperationTimeoutException("Operation timeout");
                 case (-13):
                     throw new FreshnessException("Freshness Exception");
                 case (-14):
                     throw new IntegrityException("Integrity Exception");
-
                 default:
                     break;
 
             }
-        }
-        return new JSONObject();
+        }*/
     }
 
-    public Response readGeneralMethod(int number, int port) {
-
-        /*try {
-            startHandshake(port);
-        } catch (NonceTimeoutException e) {
-            return new Response(false, -11, null);
-        }
-
-        Request request = new Request("READGENERAL", getPublicKey(), number, getServerNonce(publicKey), getClientNonce(port));
-    	
-    	Envelope envelopeRequest = new Envelope(request);
+    public Response readGeneralMethod(int number, PublicKey serverKey, int rid) {
 
         try {
-            Envelope envelopeResponse = sendReceive(envelopeRequest, port);
-            /***** SIMULATE ATTACKER: send replayed messages to the server *****/
+            //  -----> Handshake one way
+            byte[] serverNonce = startHandshake(serverKey, true);
+            //  -----> send read operation to server
+            Request request = new Request("READGENERAL", getPublicKey(), number, serverNonce, rid);
+            Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
+            send(envelopeRequest, serversPorts.get(serverKey));
+        } catch (ClassNotFoundException |
+                         NonceTimeoutException |
+                         IntegrityException |
+                         IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+
+
+        /***** SIMULATE ATTACKER: send replayed messages to the server *****/
         /*
         if(isReplayFlag()){
             	this.replayAttacker.sendReplays(new Envelope(request, null), 2);
@@ -656,15 +796,14 @@ public class ClientEndpoint {
         } catch (IOException e) {
             return new Response(false, -12, null);
         	//throw new OperationTimeoutException("There was a problem with the connection, please try again!");
-        }
-        */return null;
+        }*/
     }
     
 	//////////////////////////////////////////////////
 	//				   ASK FOR WTS
 	//////////////////////////////////////////////////
     
-    private int askForWts() throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
+    private int askForWts(boolean isGeneral) throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
         // Variables to store responses and their results
         int[] results = new int[nServers];
         // Threads that will make the requests to the server
@@ -674,7 +813,7 @@ public class ClientEndpoint {
         	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	try {
-                		results[serversPorts.get(serverKey) - PORT] = askForSingleWts(serverKey);
+                		results[serversPorts.get(serverKey) - PORT] = askForSingleWts(serverKey, isGeneral);
                 	} catch (UserNotRegisteredException e) {
                 		results[serversPorts.get(serverKey) - PORT] = -1;
                 	} catch (FreshnessException e) {
@@ -721,11 +860,15 @@ public class ClientEndpoint {
 	}
 
     
-	private int askForSingleWts(PublicKey serverKey) throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
+	private int askForSingleWts(PublicKey serverKey, boolean isGeneral) throws NonceTimeoutException, IntegrityException, OperationTimeoutException, FreshnessException, UserNotRegisteredException {
 		// Make handshake with server
 		byte[] serverNonce = startHandshake(serverKey, false);
         // Make wts Request sign it and send inside envelope
-        Request request = new Request("WTS", getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey));
+        String operation = "WTS";
+        if(isGeneral){
+            operation +="GENERAL";
+        }
+        Request request = new Request(operation, getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey));
     	Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
     	// Get wts inside a Response
     	int singleWts = -666;

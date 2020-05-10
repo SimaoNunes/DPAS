@@ -37,13 +37,13 @@ public class ReplayResponseAttackTest extends BaseTest {
     @Test(expected = FreshnessException.class)
     public void Should_Ignore_Older_Replayed_Message_Post() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException,
     		OperationTimeoutException, FreshnessException, IntegrityException {
-        clientEndpoint1.post("entao vamos la", null, false);
+        clientEndpoint1.post("entao vamos la", null);
     }
 
     @Test(expected = FreshnessException.class)
     public void Should_Ignore_Older_Replayed_Message_Post_General() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException,
     		OperationTimeoutException, FreshnessException, IntegrityException{
-        clientEndpoint1.post("entao vamos la", null, true);
+        clientEndpoint1.postGeneral("entao vamos la", null);
     }
 
     @Test(expected = FreshnessException.class)

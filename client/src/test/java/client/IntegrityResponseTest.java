@@ -16,9 +16,9 @@ public class IntegrityResponseTest extends BaseTest{
                                                  FreshnessException, IntegrityException, MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException {
         clientEndpoint1.register();
         clientEndpoint2.register();
-        clientEndpoint1.post("message from user1", null, false);
-        clientEndpoint2.post("message from user2", null, false);
-        clientEndpoint2.post("message general just to populate", null, true);
+        clientEndpoint1.post("message from user1", null);
+        clientEndpoint2.post("message from user2", null);
+        clientEndpoint2.postGeneral("message general just to populate", null);
     }
 
     @After
@@ -31,7 +31,7 @@ public class IntegrityResponseTest extends BaseTest{
     public void Should_throw_Integrity_Exception_Post() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException {
         setIntegrityFlag(true);
 
-        clientEndpoint1.post("a resposta a esta mensagem vai ser alterada", null, false);
+        clientEndpoint1.post("a resposta a esta mensagem vai ser alterada", null);
 
     }
 
@@ -47,7 +47,7 @@ public class IntegrityResponseTest extends BaseTest{
     public void Should_throw_Integrity_Exception_PostGeneral() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
         setIntegrityFlag(true);
 
-        clientEndpoint1.post("a resposta vai ser alterada confiem", null, false);
+        clientEndpoint1.post("a resposta vai ser alterada confiem", null);
 
     }
 

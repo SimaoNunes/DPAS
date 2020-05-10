@@ -1,8 +1,11 @@
 package client;
 
 import library.Envelope;
+import library.Pair;
 import library.Request;
 import library.Response;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -10,6 +13,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.PublicKey;
+import java.util.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.HashMap;
@@ -20,21 +24,32 @@ public class Listener implements Runnable{
     private ServerSocket endpoint;
     private int nQuorum;
     private Envelope result = null;
+    private JSONObject resultGeneral = null;
     private CryptoManager cryptoManager = null;
     private Thread listenerThread;
     private PublicKey clientKey;
     private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Envelope>> answers = null;
+    private List<Pair<Integer, JSONArray>> readlist;
     private Map<PublicKey, Integer> serversPorts = null;
 
     public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key, Map<PublicKey, Integer> serversPortsFromEndpoint) {
 
         cryptoManager = new CryptoManager(userName);
         answers = new ConcurrentHashMap<>();
+        readlist = Collections.synchronizedList(new ArrayList<Pair<Integer, JSONArray>>());
         endpoint = ss;
         this.nQuorum = nQuorum;
         this.clientKey = key;
         newListener();
         serversPorts = serversPortsFromEndpoint;
+    }
+
+    public JSONObject getResultGeneral() {
+        return resultGeneral;
+    }
+
+    public void setResultGeneral(JSONObject resultGeneral) {
+        this.resultGeneral = resultGeneral;
     }
 
     public Envelope getResult() {
@@ -87,6 +102,14 @@ public class Listener implements Runnable{
 	                        }
             			}
             			break;
+                    case"VALUEGENERAL":
+                        if(cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), envelope.getRequest().getPublicKey())) {
+                            if (cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getClientNonce())) {
+                                resultGeneral = checkGeneralAnswer(envelope);
+                            }
+                        }
+                        break;
+
             		default:
             			break;
                 }
@@ -165,4 +188,34 @@ public class Listener implements Runnable{
         }
         return null;
     }
+
+
+    private JSONObject checkGeneralAnswer(Envelope envelope){
+        Request request = envelope.getRequest();
+        JSONArray array = (JSONArray) request.getJsonObject().get("announcementList");
+        for(Object o : array){
+            JSONObject json = (JSONObject) o;
+            if(cryptoManager.verifyMessage((JSONObject) json.get("message"), (byte[]) json.get("signature"))){
+                readlist.add(new Pair<>(request.getTs(), array));
+                if(readlist.size() > nQuorum){
+                    int max = 0;
+                    int index = 0;
+                    for(int i = 0; i < readlist.size(); i++){
+                        if(readlist.get(i).getFirst() > max){
+                            max = readlist.get(i).getFirst();
+                            index = i;
+                        }
+                    }
+                    JSONObject final_result = new JSONObject();
+                    final_result.put("announcementList", readlist.get(index).getSecond());
+                    return final_result;
+                }
+            }
+            else{
+                return null; // there is a message with the wrong signature, maybe send integrity exception?
+            }
+        }
+        return null;
+    }
+
 }

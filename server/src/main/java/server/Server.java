@@ -3,6 +3,7 @@ package server;
 import exceptions.IntegrityException;
 import exceptions.NonceTimeoutException;
 import library.Envelope;
+import library.Pair;
 import library.Request;
 import library.Response;
 
@@ -17,6 +18,7 @@ import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -52,6 +54,9 @@ public class Server implements Runnable {
     private Envelope oldEnvelope;
     
     /**************************************************/
+    /********************** Regular Register **********************/
+
+    private Pair<Integer, GeneralBoard> generalBoard;
 
     
     /***************** Atomic Register variables ******************/
@@ -82,6 +87,7 @@ public class Server implements Runnable {
         File gb = new File(generalBoardPath);
         gb.mkdirs();
 
+        generalBoard = new Pair<>(0, new GeneralBoard());
         listening = new ConcurrentHashMap<>();
         
         System.out.println("SERVER ON PORT " + this.serverPort + ": Up and running.");
@@ -162,7 +168,7 @@ public class Server implements Runnable {
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10}))
                         	{
-                            readGeneral(envelope.getRequest(), outStream);
+                            readGeneral(envelope.getRequest());
                         }
                         break;
                     case "READCOMPLETE":
@@ -192,9 +198,19 @@ public class Server implements Runnable {
                         	cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                             cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
                         	{
-                            wtsRequest(envelope.getRequest(), outStream);
+                            wtsRequest(envelope.getRequest(), false,  outStream);
                         }
                     	break;
+                    case "WTSGENERAL":
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) &&
+                                   cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
+                                   cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
+                                   checkExceptions(envelope.getRequest(), outStream, new int[] {-1}))
+                        {
+                            wtsRequest(envelope.getRequest(), true, outStream);
+                        }
+                        break;
+
                     case "DELETEALL":
                         deleteUsers();
                         break;
@@ -350,41 +366,49 @@ public class Server implements Runnable {
     //////////////////////////////////////////////////
     @SuppressWarnings("unchecked")
 	private void writeGeneral(Request request, ObjectOutputStream outStream) {
-        // Get userName from keystore
-        String username = userIdMap.get(request.getPublicKey());
-        String path = announcementBoardsPath + username + "/";
-        // Write to file
-        JSONObject announcementObject =  new JSONObject();
-        announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
-        announcementObject.put("user", username);
-        announcementObject.put("message", request.getMessage());
 
-        Date dNow = new Date();
-        SimpleDateFormat ft = new SimpleDateFormat ("dd-MM-yyyy 'at' HH:mm");
-        announcementObject.put("date", ft.format(dNow).toString());
+        if(request.getTs() > generalBoard.getFirst()){
+            generalBoard.setFirst(request.getTs());
 
-        int[] refAnnouncements = request.getAnnouncements();
+            // Get userName from keystore
+            String username = userIdMap.get(request.getPublicKey());
+            String path = announcementBoardsPath + username + "/";
+            // Write to file
+            JSONObject announcementObject =  new JSONObject();
+            announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
+            announcementObject.put("user", username);
+            announcementObject.put("message", request.getMessage());
 
-        if(refAnnouncements != null){
-            JSONArray annoucementsList = new JSONArray();
-            for(int i = 0; i < refAnnouncements.length; i++){
-                annoucementsList.add(Integer.toString(refAnnouncements[i]));
+            Date dNow = new Date();
+            SimpleDateFormat ft = new SimpleDateFormat ("dd-MM-yyyy 'at' HH:mm");
+            announcementObject.put("date", ft.format(dNow).toString());
+
+            int[] refAnnouncements = request.getAnnouncements();
+
+            if(refAnnouncements != null){
+                JSONArray annoucementsList = new JSONArray();
+                for(int i = 0; i < refAnnouncements.length; i++){
+                    annoucementsList.add(Integer.toString(refAnnouncements[i]));
+                }
+                announcementObject.put("ref_announcements", annoucementsList);
             }
-            announcementObject.put("ref_announcements", annoucementsList);
+
+            generalBoard.getSecond().addAnnouncement(announcementObject, request.getSignature());
+
+            path = generalBoardPath;
+
+            try {
+                saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
+            } catch (IOException e) {
+                sendResponse(new Response(false, -9, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
+            }
+
+            incrementTotalAnnouncs();
+            saveTotalAnnouncements();
         }
 
-        path = generalBoardPath;
-
-        try {
-            saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString()); //GeneralBoard
-        } catch (IOException e) {
-            sendResponse(new Response(false, -9, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
-        }
-
-        incrementTotalAnnouncs();
-        saveTotalAnnouncements();
         if(!dropOperationFlag) {
-            sendResponse(new Response(true, request.getClientNonce()), outStream);
+            sendResponse(new Response(true, request.getClientNonce(), generalBoard.getFirst(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         } else {
             System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED POST");
         }
@@ -459,10 +483,7 @@ public class Server implements Runnable {
     //				   READ GENERAL
     //////////////////////////////////////////////////
     @SuppressWarnings("unchecked")
-	private void readGeneral(Request request, ObjectOutputStream outStream) {
-
-        String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
-        int directorySize = directoryList.length;
+	private void readGeneral(Request request) {
 
         String path = "";
         System.out.println("SERVER ON PORT " + this.serverPort + ": READGENERAL method");
@@ -470,11 +491,31 @@ public class Server implements Runnable {
 
         int total;
         if(request.getNumber() == 0) { //all posts
-            total = directorySize;
+            total = generalBoard.getSecond().size();    //directorySize
         } else {
             total = request.getNumber();
         }
 
+        JSONObject  announcementsToSend = generalBoard.getSecond().getAnnouncements(total);
+
+        try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", getClientPort(userIdMap.get(request.getPublicKey()))).getOutputStream())) {
+            if(!dropOperationFlag) {
+                byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
+                sendRequest(new Request("VALUEGENERAL", request.getRid(), generalBoard.getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
+            } else {
+                System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED READ GENERAL");
+            }
+
+        } catch (UnknownHostException e1) {
+            e1.printStackTrace();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        } catch (IntegrityException e) {
+            e.printStackTrace();
+        } catch (NonceTimeoutException e) {
+            e.printStackTrace();
+        }
+        /*
         Arrays.sort(directoryList);
         JSONParser parser = new JSONParser();
         try {
@@ -497,8 +538,7 @@ public class Server implements Runnable {
 			}
 		} catch (IOException | ParseException e) {
 			sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
-		}
-        
+		}*/
     }
 
     private void readComplete(Request request){
@@ -512,9 +552,15 @@ public class Server implements Runnable {
     //				   SEND WTS
     //////////////////////////////////////////////
     
-    private void wtsRequest(Request request, ObjectOutputStream outStream) {
+    private void wtsRequest(Request request, boolean isGeneral, ObjectOutputStream outStream) {
     	System.out.println("SERVER ON PORT " + this.serverPort + ": WTS METHOD");
-    	int wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst();
+    	int wts = 0;
+    	if(isGeneral){
+            wts = usersBoards.get(userIdMap.get(request.getPublicKey())).getFirst();
+        }
+    	else{
+    	    wts = generalBoard.getFirst();
+        }
     	sendResponse(new Response(true, request.getClientNonce(), wts, cryptoManager.getPublicKeyFromKs("server")), outStream);
     }
     

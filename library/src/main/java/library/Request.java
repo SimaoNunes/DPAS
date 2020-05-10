@@ -19,6 +19,7 @@ public class Request implements Serializable {
     private int rid;
     private JSONObject jsonObject = null;
     private String username;
+    private byte[] signature = null;
     
     ////////////////////////////////////////////////////////////////
     //				                                         	  //
@@ -30,6 +31,8 @@ public class Request implements Serializable {
         this.operation = operation;
     }
 
+
+    //POST
     public Request(String operation, PublicKey key, String message, int[] announcs, byte[] serverNonce, byte[] clientNonce, int ts) {
         this.operation = operation;
         this.publicKey = key;
@@ -38,6 +41,18 @@ public class Request implements Serializable {
         this.serverNonce = serverNonce;
         this.clientNonce = clientNonce;
         this.ts = ts;
+    }
+
+    //POSTGENERAL
+    public Request(String operation, PublicKey key, String message, int[] announcs, byte[] serverNonce, byte[] clientNonce, int ts, byte[] signature) {
+        this.operation = operation;
+        this.publicKey = key;
+        this.message = message;
+        this.announcements = announcs;
+        this.serverNonce = serverNonce;
+        this.clientNonce = clientNonce;
+        this.ts = ts;
+        this.signature = signature;
     }
 
     // Register
@@ -79,6 +94,15 @@ public class Request implements Serializable {
         this.rid = rid;
     }
 
+    // When the CLIENT requests for a readGeneral operation - now we don't need the client's nounce
+    public Request(String operation, PublicKey key, int number, byte[] serverNonce, int rid) {
+        this.operation = operation;
+        this.publicKey = key;
+        this.number = number;
+        this.serverNonce = serverNonce;
+        this.rid = rid;
+    }
+
     // When the CLIENT sends a read complete operation
     public Request(String operation, PublicKey key, PublicKey publicKeyToReadFrom, byte[] serverNonce, int rid) {
     	this.operation = operation;
@@ -105,6 +129,14 @@ public class Request implements Serializable {
         this.rid = rid;
         this.ts = ts;
         this.publicKey = key;
+    }
+
+    public byte[] getSignature() {
+        return signature;
+    }
+
+    public void setSignature(byte[] signature) {
+        this.signature = signature;
     }
 
     public JSONObject getJsonObject() {
