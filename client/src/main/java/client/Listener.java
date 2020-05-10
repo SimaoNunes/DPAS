@@ -114,7 +114,6 @@ public class Listener implements Runnable{
             			break;
                 }
             } else {
-                System.out.println(envelope.getResponse().getErrorCode());
                 result = checkAnswer(envelope);
             }
             outputStream.close();
