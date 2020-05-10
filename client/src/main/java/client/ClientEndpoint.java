@@ -554,6 +554,7 @@ public class ClientEndpoint {
             });
         	tasksRead[serversPorts.get(serverKey) - PORT].start();
         }
+        
         // Wait for listeners to get result
         while(listener.getResult() == null) {
             try {
@@ -568,6 +569,7 @@ public class ClientEndpoint {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         Envelope result = listener.getResult();
 
         if(result.getRequest() != null){
@@ -577,7 +579,6 @@ public class ClientEndpoint {
             System.out.println("Recebi uma response como resposta:");
             System.out.println(result.getResponse().toString());
         }
-
 
         // Threads that will make the requests to the server
         Thread[] tasksReadComplete = new Thread[nServers];
@@ -590,29 +591,7 @@ public class ClientEndpoint {
             });
         	tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
         }
-        // FIXME está a espera que todas as threads acabem!!!
-        // Kill remaining read threads
-        boolean stillAlive = true;
-        while(stillAlive) {
-        	stillAlive = false;
-            for (PublicKey serverKey : serversPorts.keySet()) {
-            	if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
-            		stillAlive = true;
-            		break;
-            	}
-            }
-        }
-        // Kill remaining read complete threads
-        stillAlive = true;
-        while(stillAlive) {
-        	stillAlive = false;
-            for (PublicKey serverKey : serversPorts.keySet()) {
-            	if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
-            		stillAlive = true;
-            		break;
-            	}
-            }
-        }
+
         /*if(result.getSuccess()){
             return result.getJsonObject();
         }
