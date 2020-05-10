@@ -14,9 +14,9 @@ import java.net.Socket;
 import java.security.*;
 
 ////////////////////////////////////////////////////////////////////
-//															      //
-//   WARNING: Server must be running in order to run these tests  //
-//															      //
+//
+//   WARNING: Server must be running in order to run these tests
+//
 ////////////////////////////////////////////////////////////////////
 
 
@@ -70,7 +70,7 @@ public class BaseTest {
     public static void deleteUsers(){
         int port = PORT;
         int i = 0;
-        while( i < (faults*3) + 1){
+        while( i < (faults*3) + 1) {
             try(Socket socket = new Socket("localhost", port++)) {
                 ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
                 outputStream.writeObject(new Envelope(new Request("DELETEALL", null)));
@@ -79,7 +79,6 @@ public class BaseTest {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
     }
 

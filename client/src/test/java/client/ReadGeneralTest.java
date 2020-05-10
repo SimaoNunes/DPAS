@@ -9,9 +9,9 @@ import org.json.simple.JSONObject;
 import static org.junit.Assert.assertEquals;
 
 ////////////////////////////////////////////////////////////////////
-//																  //
-//   WARNING: Server must be running in order to run these tests  //
-//																  //
+//
+//   WARNING: Server must be running in order to run these tests
+//
 ////////////////////////////////////////////////////////////////////
 
 public class ReadGeneralTest extends BaseTest {
@@ -25,22 +25,22 @@ public class ReadGeneralTest extends BaseTest {
     
         // some private posts first, to test order of posting
         //user 1      
-		clientEndpoint1.post("private post1 from user1", null, false); // id = 0
-		clientEndpoint1.post("private post2 from user1", null, false); // id = 1
+		clientEndpoint1.post("private post1 from user1", null); // id = 0
+		clientEndpoint1.post("private post2 from user1", null); // id = 1
         //user 2
-        clientEndpoint2.post("private post1 from user2", null, false); // id = 2
-		clientEndpoint2.post("private post2 from user2", null, false); // id = 3
+        clientEndpoint2.post("private post1 from user2", null); // id = 2
+		clientEndpoint2.post("private post2 from user2", null); // id = 3
 
         // public posts now
         //user 1
-        clientEndpoint1.post("public post1 from user1", null, true); // id = 4
-		clientEndpoint1.post("public post2 from user1", null, true); // id = 5
+        clientEndpoint1.postGeneral("public post1 from user1", null); // id = 4
+		clientEndpoint1.postGeneral("public post2 from user1", null); // id = 5
         //user 2      
-		clientEndpoint2.post("public post1 from user2", null, true); // id = 6
-        clientEndpoint2.post("public post2 from user2", null, true); // id = 7
+		clientEndpoint2.postGeneral("public post1 from user2", null); // id = 6
+        clientEndpoint2.postGeneral("public post2 from user2", null); // id = 7
 
         int[] announcs  = {0,3};
-		clientEndpoint1.post("message with references from user1", announcs, true); // id = 8
+		clientEndpoint1.postGeneral("message with references from user1", announcs); // id = 8
     }
     
     

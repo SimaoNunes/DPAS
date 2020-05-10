@@ -8,7 +8,7 @@ import static junit.framework.TestCase.assertEquals;
 
 public class PersistenceTest extends BaseTest {
 
-    @BeforeClass
+    /*@BeforeClass
     public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         clientEndpoint1.register();
     }
@@ -58,5 +58,5 @@ public class PersistenceTest extends BaseTest {
 
         assertEquals(result[0], "general3 user3");
         assertEquals(result[1], "general2 user2");
-    }
+    }*/
 }

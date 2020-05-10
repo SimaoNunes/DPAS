@@ -22,13 +22,14 @@ public class ClientEndpoint {
     private String serverAddress = null;
 
     private PublicKey publicKey  = null;
-    private String userName = null;
+    private String username = null;
     private CryptoManager cryptoManager = null;
 
     /********** Atomic Register Variables ************/
     int wts = -1; // -1 means we must ask server for the current wts
     int wtsG = -1;
     int rid = 0;
+    int ridG = 0;
 
     /************ Replication variables *************/
     private static final int PORT = 9000;
@@ -44,50 +45,19 @@ public class ClientEndpoint {
     private ReplayAttacker replayAttacker = null;
     private boolean replayFlag = false;
     private boolean integrityFlag = false;
-
-    /************************************************/
+    
+    
+//////////////////////////////////////////
+//										//
+//	 Constructor, Getters and Setters	//
+//										//
+//////////////////////////////////////////
 
     public ClientEndpoint(String username) {
     	cryptoManager = new CryptoManager(username);
         setPublicKey(cryptoManager.getPublicKeyFromKs(username));
-        setUsername(username);
+        this.username = username;
         serversPorts = initiateServersPorts();
-    }
-
-    public int getWts() {
-        return wts;
-    }
-
-    public void setWts(int wts) {
-        this.wts = wts;
-    }
-
-    public int getRid() {
-        return rid;
-    }
-
-    public void setRid(int rid) {
-        this.rid = rid;
-    }
-
-    public int getNFaults() {
-        return nFaults;
-    }
-
-    public void setNFaults(int nFaults) {
-        this.nFaults = nFaults;
-    }
-
-    public String getServerAddress() {
-        return serverAddress;
-    }
-
-    public void setServerAddress(String serverAddress) {
-        this.serverAddress = serverAddress;
-    }
-    
-    public void instantiateReplayAttacker() {
-    	this.replayAttacker = new ReplayAttacker(this.serverAddress);
     }
 
     public boolean isReplayFlag() {
@@ -97,7 +67,7 @@ public class ClientEndpoint {
     public void setReplayFlag(boolean replayFlag) {
         this.replayFlag = replayFlag;
         if(replayFlag)
-        	this.instantiateReplayAttacker();
+        	this.replayAttacker = new ReplayAttacker(this.serverAddress);
     }
 
     public boolean isIntegrityFlag() {
@@ -108,14 +78,6 @@ public class ClientEndpoint {
 		this.integrityFlag = integrityFlag;
 	}
 
-	public String getUsername() {
-        return userName;
-    }
-
-    public void setUsername(String userName) {
-        this.userName = userName;
-    }
-
     public PublicKey getPublicKey() {
         return publicKey;
     }
@@ -124,8 +86,15 @@ public class ClientEndpoint {
         this.publicKey = publicKey;
     }
 
+    
+//////////////////////////////////////////
+//										//
+//	Communication with Server methods	//
+//										//
+//////////////////////////////////////////
+    
     private Socket createSocket(int port) throws IOException {
-        return new Socket(getServerAddress(), port);
+        return new Socket(serverAddress, port);
     }
 
     private ObjectOutputStream createOutputStream(Socket socket) throws IOException {
@@ -169,7 +138,7 @@ public class ClientEndpoint {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
+            throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE); //IOException apanha tudo
         }
         return null;
     }
@@ -182,7 +151,7 @@ public class ClientEndpoint {
     		}
             return nonceEnvelope.getResponse().getNonce();
         } else {
-    		throw new IntegrityException("Integrity Exception");
+    		throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
         }
     }
 
@@ -204,12 +173,6 @@ public class ClientEndpoint {
         Thread[] tasks = new Thread[nServers];
         // Register to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-        	// Create a uncaught exception handler
-        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-        	    public void uncaughtException(Thread th, Throwable ex) {
-        	        System.out.println("Uncaught exception: " + ex);
-        	    }
-        	};
         	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	try {
@@ -229,7 +192,6 @@ public class ClientEndpoint {
     				}
                 }
             });
-        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
         	tasks[serversPorts.get(serverKey) - PORT].start();
         }
         // FIXME está a espera que todas as threads acabem!!!
@@ -246,16 +208,18 @@ public class ClientEndpoint {
         // Get Quorum from the result to make a decision regarding the responses
         int result = getMajorityOfQuorumInt(results);
         switch (result) {
+        	case (-7):
+        		throw new UnknownPublicKeyException(ExceptionsMessages.UNKNOWN_KEY);
             case (-2):
-                throw new AlreadyRegisteredException("This user is already registered!");
+                throw new AlreadyRegisteredException(ExceptionsMessages.ALREADY_REGISTERED);
             case (-11):
-                throw new NonceTimeoutException("Nonce timeout");
+                throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             case (-12):
-                throw new OperationTimeoutException("Operation timeout");
+                throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_REGISTER);
             case (-13):
-                throw new FreshnessException("Freshness Exception");
+                throw new FreshnessException(ExceptionsMessages.CANT_INFER_REGISTER);
             case (-14):
-                throw new IntegrityException("Integrity Exception");
+                throw new IntegrityException(ExceptionsMessages.CANT_INFER_REGISTER);
             default:
             	return result;
         }
@@ -266,7 +230,7 @@ public class ClientEndpoint {
     	// Ask server for a nonce and set a client nonce to send
         byte[] serverNonce = startHandshake(serverKey, false);
         // Create request and seal it up inside envelope
-        Request request = new Request("REGISTER", getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey), userName);
+        Request request = new Request("REGISTER", getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey), username);
 
         Envelope envelopeRequest = new Envelope(request);
         /***** SIMULATE ATTACKER: changing the userX key to userY pubKey [in this case user3] *****/
@@ -302,7 +266,7 @@ public class ClientEndpoint {
             e.printStackTrace();
             return 0;
         } catch(IOException e) {
-            throw new OperationTimeoutException("There was a problem in the connection we cannot infer precisely if the register was successful. Please try to log in");
+            throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_REGISTER);
         }
     }
 
@@ -311,23 +275,14 @@ public class ClientEndpoint {
     //					   POST  					//
     //////////////////////////////////////////////////
     
-    public int post(String message, int[] announcs, boolean isGeneral) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int post(String message, int[] announcs) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         // Ask Servers for actual wts in case we don't have it in memory
-        int ts = 0;
-        if(isGeneral){
-            if(wtsG == -1){
-                wtsG = askForWts(isGeneral);
-                wtsG = wtsG + 1;
-                ts = wtsG;
-            }
+
+        if(wts == -1){
+            wts = askForWts(false);
         }
-        else{
-            if(wts == -1){
-                wts = askForWts(isGeneral);
-                wts = wts + 1;
-                ts = wts;
-            }
-        }
+
+        wts = wts + 1;
 
         // Variables to store responses and their results
         int[] results = new int[nServers];
@@ -341,11 +296,10 @@ public class ClientEndpoint {
         	        System.out.println("Uncaught exception: " + ex);
         	    }
         	};
-            int finalTs = ts;
             tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	try {
-                		results[serversPorts.get(serverKey) - PORT] = postMethod(message, announcs, isGeneral, serverKey, finalTs);
+                		results[serversPorts.get(serverKey) - PORT] = postMethod(message, announcs, serverKey, wts);
                 	} catch (UserNotRegisteredException e) {
                 		results[serversPorts.get(serverKey) - PORT] = -1;              		
     				} catch (InvalidAnnouncementException e) {
@@ -363,7 +317,6 @@ public class ClientEndpoint {
     				}
                 }
             });
-        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
         	tasks[serversPorts.get(serverKey) - PORT].start();
         }
         // FIXME está a espera que todas as threads acabem!!!
@@ -381,37 +334,33 @@ public class ClientEndpoint {
         int result = getQuorumInt(results);
         switch (result) {
             case (-1):
-                throw new UserNotRegisteredException("User not Registered");
+                throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
             case (-4):
-                throw new MessageTooBigException("Message Too Big");
+                throw new MessageTooBigException(ExceptionsMessages.MESSAGE_TOO_BIG);
             case (-5):
-                throw new InvalidAnnouncementException("Invalid announcement");
+                throw new InvalidAnnouncementException(ExceptionsMessages.INVALID_ANNOUNCEMENTS);
             case (-11):
-                throw new NonceTimeoutException("Nonce timeout");
+                throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             case (-12):
-                throw new OperationTimeoutException("Operation timeout");
+                throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
             case (-13):
-                throw new FreshnessException("Freshness Exception");
+                throw new FreshnessException(ExceptionsMessages.CANT_INFER_POST);
             case (-14):
-                throw new IntegrityException("Integrity Exception");
+                throw new IntegrityException(ExceptionsMessages.CANT_INFER_POST);
         }
         return result;
     }
 
-    public int postMethod(String message, int[] announcs, boolean isGeneral, PublicKey serverKey, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+    public int postMethod(String message, int[] announcs, PublicKey serverKey, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         byte[] serverNonce = startHandshake(serverKey, false);
-        return write(getPublicKey(), message, announcs, isGeneral, serverNonce, cryptoManager.getNonce(serverKey), serverKey, ts);
+        return write(getPublicKey(), message, announcs, serverNonce, cryptoManager.getNonce(serverKey), serverKey, ts);
     }
 
-	public int write(PublicKey clientKey, String message, int[] announcs, boolean isGeneral, byte[] serverNonce, byte[] clientNonce, PublicKey serverKey, int ts) throws InvalidAnnouncementException,
+	public int write(PublicKey clientKey, String message, int[] announcs, byte[] serverNonce, byte[] clientNonce, PublicKey serverKey, int ts) throws InvalidAnnouncementException,
                                                                                                                                                                        UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
-        if(isGeneral){
-            request = new Request("POSTGENERAL", clientKey, message, announcs, serverNonce, clientNonce, ts);
-        }
-        else{
-            request = new Request("POST", clientKey, message, announcs, serverNonce, clientNonce, ts);
-        }
+
+        request = new Request("POST", clientKey, message, announcs, serverNonce, clientNonce, ts);
 
         Envelope envelopeRequest = new Envelope(request);
 
@@ -443,10 +392,139 @@ public class ClientEndpoint {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
+            throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
         }
         return 0;
     }
+
+
+    //////////////////////////////////////////////////
+    //					POSTGENERAL
+    //////////////////////////////////////////////////
+
+    public int postGeneral(String message, int[] announcs) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+        // Ask Servers for actual wts in case we don't have it in memory
+        if(wtsG == -1){
+            wtsG = askForWts(true);
+        }
+        wtsG = wtsG + 1;
+
+        // Variables to store responses and their results
+        int[] results = new int[nServers];
+        // Threads that will make the requests to the server
+        Thread[] tasks = new Thread[nServers];
+        // Post to all servers
+        for (PublicKey serverKey : serversPorts.keySet()) {
+            // Create a uncaught exception handler
+            Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
+                public void uncaughtException(Thread th, Throwable ex) {
+                    System.out.println("Uncaught exception: " + ex);
+                }
+            };
+            tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        results[serversPorts.get(serverKey) - PORT] = postGeneralMethod(message, announcs, serverKey, wtsG);
+                    } catch (UserNotRegisteredException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -1;
+                    } catch (InvalidAnnouncementException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -5;
+                    } catch (MessageTooBigException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -4;
+                    } catch (FreshnessException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -13;
+                    } catch (NonceTimeoutException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -11;
+                    } catch (IntegrityException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -14;
+                    } catch (OperationTimeoutException e) {
+                        results[serversPorts.get(serverKey) - PORT] = -12;
+                    }
+                }
+            });
+            tasks[serversPorts.get(serverKey) - PORT].start();
+        }
+        // FIXME está a espera que todas as threads acabem!!!
+        boolean stillAlive = true;
+        while(stillAlive) {
+            stillAlive = false;
+            for (PublicKey serverKey : serversPorts.keySet()) {
+                if(tasks[serversPorts.get(serverKey) - PORT].isAlive()) {
+                    stillAlive = true;
+                    break;
+                }
+            }
+        }
+        // Get Quorum from the result to make a decision regarding the responses
+        int result = getQuorumInt(results);
+        switch (result) {
+            case (-1):
+                throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
+            case (-4):
+                throw new MessageTooBigException(ExceptionsMessages.MESSAGE_TOO_BIG);
+            case (-5):
+                throw new InvalidAnnouncementException(ExceptionsMessages.INVALID_ANNOUNCEMENTS);
+            case (-11):
+                throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+            case (-12):
+                throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
+            case (-13):
+                throw new FreshnessException(ExceptionsMessages.CANT_INFER_POST);
+            case (-14):
+                throw new IntegrityException(ExceptionsMessages.CANT_INFER_POST);
+        }
+        return result;
+    }
+
+    public int postGeneralMethod(String message, int[] announcs, PublicKey serverKey, int ts) throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+        byte[] serverNonce = startHandshake(serverKey, false);
+        return writeGeneral(getPublicKey(), message, announcs, serverNonce, cryptoManager.getNonce(serverKey), serverKey, ts);
+    }
+
+    public int writeGeneral(PublicKey clientKey, String message, int[] announcs, byte[] serverNonce, byte[] clientNonce, PublicKey serverKey, int ts) throws InvalidAnnouncementException,
+                                                                                                                                                                                 UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
+        Request request;
+
+        byte[] signature = cryptoManager.signMessage(message);
+
+        request = new Request("POSTGENERAL", clientKey, message, announcs, serverNonce, clientNonce, ts, signature);
+
+        Envelope envelopeRequest = new Envelope(request);
+
+        /***** SIMULATE ATTACKER: changing the message (tamper) *****/
+        if(isIntegrityFlag()) {
+            envelopeRequest.getRequest().setMessage("Olá, eu odeio-te");
+        }
+        /************************************************************/
+        try {
+
+            Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(serverKey));
+
+            /***** SIMULATE ATTACKER: replay register *****/
+            if(isReplayFlag()){
+                this.replayAttacker.sendReplays(envelopeRequest, 2);
+            }
+            /**********************************************/
+            // Verify freshness of message (by checking if the request contains a fresh nonce)
+            if(!cryptoManager.checkNonce(envelopeResponse.getResponse().getPublicKey(), envelopeResponse.getResponse().getNonce())){
+                throw new FreshnessException(errorMessage);
+            }
+            // Verify message integrity
+            if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), serverKey)){
+                throw new IntegrityException(errorMessage);
+            }
+            ResponseChecker.checkPost(envelopeResponse.getResponse());
+            // On success, return 1
+            return 1;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
+        }
+        return 0;
+    }
+
+
 
 
     //////////////////////////////////////////////////
@@ -460,27 +538,20 @@ public class ClientEndpoint {
         ServerSocket listenerSocket = null;
         try {
             listenerSocket = new ServerSocket(getClientPort());
-            listener = new Listener(listenerSocket, nQuorum, getUsername(), getPublicKey());
+            listener = new Listener(listenerSocket, nQuorum, username, getPublicKey());
         } catch (IOException e) {
             e.printStackTrace();
         }
         // Threads that will make the requests to the server
-        Thread[] tasks = new Thread[nServers];
+        Thread[] tasksRead = new Thread[nServers];
         // Send read to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-        	// Create a uncaught exception handler
-        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-        	    public void uncaughtException(Thread th, Throwable ex) {
-        	        System.out.println("Uncaught exception: " + ex);
-        	    }
-        	};
-        	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+        	tasksRead[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	readMethod(announcUserName, number, serverKey, rid);
                 }
             });
-        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
-        	tasks[serversPorts.get(serverKey) - PORT].start();
+        	tasksRead[serversPorts.get(serverKey) - PORT].start();
         }
         // Wait for listeners to get result
         while(listener.getResult() == null) {
@@ -498,29 +569,34 @@ public class ClientEndpoint {
         }
         Request result = listener.getResult();
         // Threads that will make the requests to the server
-        tasks = new Thread[nServers];
+        Thread[] tasksReadComplete = new Thread[nServers];
         // Send 'read complete' to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-        	// Create a uncaught exception handler
-        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-        	    public void uncaughtException(Thread th, Throwable ex) {
-        	        System.out.println("Uncaught exception: " + ex);
-        	    }
-        	};
-        	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+        	tasksReadComplete[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	readComplete(announcUserName, serverKey, rid);
                 }
             });
-        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
-        	tasks[serversPorts.get(serverKey) - PORT].start();
+        	tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
         }
         // FIXME está a espera que todas as threads acabem!!!
+        // Kill remaining read threads
         boolean stillAlive = true;
         while(stillAlive) {
         	stillAlive = false;
             for (PublicKey serverKey : serversPorts.keySet()) {
-            	if(tasks[serversPorts.get(serverKey) - PORT].isAlive()) {
+            	if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
+            		stillAlive = true;
+            		break;
+            	}
+            }
+        }
+        // Kill remaining read complete threads
+        stillAlive = true;
+        while(stillAlive) {
+        	stillAlive = false;
+            for (PublicKey serverKey : serversPorts.keySet()) {
+            	if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
             		stillAlive = true;
             		break;
             	}
@@ -557,24 +633,20 @@ public class ClientEndpoint {
 
     public void readMethod(String announcUserName, int number, PublicKey serverKey, int rid) {
         try {
-            //  -----> Handshake one way
-            byte[] serverNonce = startHandshake(serverKey, true);
-            //  -----> get public key to read from
-            PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
-            //  -----> send read operation to server
-            Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, serverNonce, rid);
-            Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
-            send(envelopeRequest, serversPorts.get(serverKey));
-
-
-        } catch (ClassNotFoundException |
-                NonceTimeoutException   |
-                IOException             |
-                IntegrityException   e) {
-                e.printStackTrace();
-                //Impossible to know if fault from the server when doing handshake or drop attack
-                //throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
-        }
+			//  -----> Handshake one way
+			byte[] serverNonce = startHandshake(serverKey, true);
+			//  -----> get public key to read from
+			PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
+			//  -----> send read operation to server
+			Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, serverNonce, rid);
+			Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
+			send(envelopeRequest, serversPorts.get(serverKey));
+		} catch (ClassNotFoundException |
+				NonceTimeoutException   |
+				IntegrityException 	 	|
+				IOException e) {
+			e.printStackTrace();
+		}
     }
 
     private void readComplete(String announcUserName, PublicKey serverKey, int rid){
@@ -607,50 +679,52 @@ public class ClientEndpoint {
 	//////////////////////////////////////////////////
     
     public JSONObject readGeneral(int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-        int responses = 0;
-        int counter = 0;
-        int port = PORT;
-
-        Response[] results = new Response[(getNFaults() * 3 + 1) / 2 + 1];
-
-        CompletableFuture<Response>[] tasks = new CompletableFuture[getNFaults() * 3 + 1];
-
-        for (int i = 0; i < tasks.length; i++) {
-
-            int finalPort = port;
-
-            tasks[i] = CompletableFuture.supplyAsync(() -> readGeneralMethod(number, finalPort));
-            port++;
+        ridG += 1;
+        Listener listener = null;
+        ServerSocket listenerSocket = null;
+        try {
+            listenerSocket = new ServerSocket(getClientPort());
+            listener = new Listener(listenerSocket, nQuorum, username, getPublicKey());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        while (responses < getNFaults()*3 + 1 / 2) {
-            for (int i = 0; i < tasks.length; i++) {
-
-                if (tasks[i].isDone()) {
-
-                    responses++;
-
-                    try {
-                        results[counter++] = tasks[i].get();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
-                    }
-                    if (responses > nQuorum)
-                        break;
+        // Threads that will make the requests to the server
+        Thread[] tasksRead = new Thread[nServers];
+        // Send read to all servers
+        for (PublicKey serverKey : serversPorts.keySet()) {
+            tasksRead[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+                public void run() {
+                    readGeneralMethod(number, serverKey, rid);
                 }
-                if (i == tasks.length - 1)
-                    i = 0;
+            });
+            tasksRead[serversPorts.get(serverKey) - PORT].start();
+        }
+        // Wait for listeners to get result
+        while(listener.getResultGeneral() == null) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
-        Response result = getQuorumResponse(results);
-        if(result.getSuccess()){
+
+        try {
+            listenerSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        JSONObject result = listener.getResultGeneral();
+        // Threads that will make the requests to the server
+        return result;
+        /*if(result.getSuccess()){
             return result.getJsonObject();
         }
         else{
             switch (result.getErrorCode()) {
                 case (-1):
                     throw new UserNotRegisteredException("User not Registered");
+                case (-3):
+                    throw new UserNotRegisteredException("The user you're reading from is not registered!");  //OLD EXCEPTION FIX ME
                 case (-6):
                     throw new InvalidPostsNumberException("Invalid announcements number to be read!");
                 case (-10):
@@ -663,30 +737,32 @@ public class ClientEndpoint {
                     throw new FreshnessException("Freshness Exception");
                 case (-14):
                     throw new IntegrityException("Integrity Exception");
-
                 default:
                     break;
 
             }
-        }
-        return new JSONObject();
+        }*/
     }
 
-    public Response readGeneralMethod(int number, int port) {
-
-        /*try {
-            startHandshake(port);
-        } catch (NonceTimeoutException e) {
-            return new Response(false, -11, null);
-        }
-
-        Request request = new Request("READGENERAL", getPublicKey(), number, getServerNonce(publicKey), getClientNonce(port));
-    	
-    	Envelope envelopeRequest = new Envelope(request);
+    public Response readGeneralMethod(int number, PublicKey serverKey, int rid) {
 
         try {
-            Envelope envelopeResponse = sendReceive(envelopeRequest, port);
-            /***** SIMULATE ATTACKER: send replayed messages to the server *****/
+            //  -----> Handshake one way
+            byte[] serverNonce = startHandshake(serverKey, true);
+            //  -----> send read operation to server
+            Request request = new Request("READGENERAL", getPublicKey(), number, serverNonce, rid);
+            Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
+            send(envelopeRequest, serversPorts.get(serverKey));
+        } catch (ClassNotFoundException |
+                         NonceTimeoutException |
+                         IntegrityException |
+                         IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+
+
+        /***** SIMULATE ATTACKER: send replayed messages to the server *****/
         /*
         if(isReplayFlag()){
             	this.replayAttacker.sendReplays(new Envelope(request, null), 2);
@@ -709,8 +785,7 @@ public class ClientEndpoint {
         } catch (IOException e) {
             return new Response(false, -12, null);
         	//throw new OperationTimeoutException("There was a problem with the connection, please try again!");
-        }
-        */return null;
+        }*/
     }
     
 	//////////////////////////////////////////////////
@@ -724,12 +799,6 @@ public class ClientEndpoint {
         Thread[] tasks = new Thread[nServers];
         // Register to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-        	// Create a uncaught exception handler
-        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-        	    public void uncaughtException(Thread th, Throwable ex) {
-        	        System.out.println("Uncaught exception: " + ex);
-        	    }
-        	};
         	tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	try {
@@ -747,7 +816,6 @@ public class ClientEndpoint {
     				}
                 }
             });
-        	tasks[serversPorts.get(serverKey) - PORT].setUncaughtExceptionHandler(handler);
         	tasks[serversPorts.get(serverKey) - PORT].start();
         }
         // FIXME está a espera que todas as threads acabem!!!
@@ -765,15 +833,15 @@ public class ClientEndpoint {
         int result = getMajorityOfQuorumInt(results);
         switch (result) {
             case (-1):
-                throw new UserNotRegisteredException("User not Registered");
+                throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
             case (-11):
-                throw new NonceTimeoutException("Nonce timeout");
+                throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             case (-12):
-                throw new OperationTimeoutException("Operation timeout");
+                throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             case (-13):
-                throw new FreshnessException("Freshness Exception");
+                throw new FreshnessException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             case (-14):
-                throw new IntegrityException("Integrity Exception");
+                throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             default:
             	return result;
         }
@@ -812,7 +880,7 @@ public class ClientEndpoint {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			throw new OperationTimeoutException("Operation timeout");
+			throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
 		}
         return singleWts;
 	}
@@ -871,7 +939,7 @@ public class ClientEndpoint {
             String line;
             while((line = reader.readLine()) != null){
                 String[] splitted = line.split(":");
-                if(splitted[0].equals(userName)){
+                if(splitted[0].equals(username)){
                     return Integer.parseInt(splitted[2]);
                 }
             }

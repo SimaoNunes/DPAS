@@ -20,8 +20,8 @@ public class ReplayRequestAttackTest extends BaseTest {
     public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException,
     		FreshnessException, IntegrityException, MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException {
         clientEndpoint1.register();
-        clientEndpoint1.post("USER1 ANNOUNC MESSAGE1", null, false);
-        clientEndpoint1.post("USER1 GENERAL MESSAGE1", null, true);
+        clientEndpoint1.post("USER1 ANNOUNC MESSAGE1", null);
+        clientEndpoint1.postGeneral("USER1 GENERAL MESSAGE1", null);
     }
     
     @Before
@@ -38,7 +38,7 @@ public class ReplayRequestAttackTest extends BaseTest {
     public void Should_not_Post_More_Than_One() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException,
     		IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
 
-        clientEndpoint1.post("USER1 ANNOUNC MESSAGE2", null, false);
+        clientEndpoint1.post("USER1 ANNOUNC MESSAGE2", null);
         clientEndpoint1.read("user1", 3); //se o replay for bem sucedido, ha 3 posts no server
     }
 
@@ -46,7 +46,7 @@ public class ReplayRequestAttackTest extends BaseTest {
     public void Should_not_Post_More_Than_One_General() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException,
     		IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
 
-        clientEndpoint1.post("USER1 GENERAL MESSAGE2", null, true);
+        clientEndpoint1.postGeneral("USER1 GENERAL MESSAGE2", null);
         clientEndpoint1.readGeneral(3); // se o replay for bem sucedido, ha 3 posts no server
     }
 

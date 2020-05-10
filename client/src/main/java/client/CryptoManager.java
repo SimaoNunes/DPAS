@@ -21,6 +21,7 @@ import java.util.HashMap;
 
 import library.Request;
 import library.Response;
+import org.json.simple.JSONObject;
 
 public class CryptoManager {
 	
@@ -37,7 +38,7 @@ public class CryptoManager {
 //	 		Sign Methods  		   //
 //	   							   //
 /////////////////////////////////////
-	
+
 	byte[] signRequest(Request request) {
 		try {
 			PrivateKey key = getPrivateKeyFromKs();
@@ -61,6 +62,60 @@ public class CryptoManager {
 			e.printStackTrace();
 		}
 		return new byte[0];
+	}
+
+	byte[] signMessage(String message){
+    	try{
+			PrivateKey key = getPrivateKeyFromKs();
+			// Initialize needed structures
+			Signature signature = Signature.getInstance("SHA256withRSA");
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream out = new ObjectOutputStream(bos);
+			out.writeObject(message);
+			out.flush();
+			byte[] objectBytes = bos.toByteArray();
+			// Sign with private key
+			signature.initSign(key);
+			signature.update(objectBytes);
+			return signature.sign();
+		} catch (
+			 InvalidKeyException		 |
+			 NoSuchAlgorithmException |
+			 SignatureException		 |
+			 IOException e) {
+			 e.printStackTrace();
+		}
+    	return new byte[0];
+	}
+
+	boolean verifyMessage(JSONObject object, byte[] signature){
+
+		String message = (String) object.get("message");
+
+		PublicKey keyFrom = getPublicKeyFromKs((String) object.get("user"));
+
+		try {
+			// Initialize needed structures
+			Signature verifySignature = Signature.getInstance("SHA256withRSA");
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream out = new ObjectOutputStream(bos);
+			// Convert response to byteArray
+			out.writeObject(message);
+			out.flush();
+			byte[] messageBytes = bos.toByteArray();
+			// Verify signature
+			verifySignature.initVerify(keyFrom);
+			verifySignature.update(messageBytes);
+			return verifySignature.verify(signature);
+		} catch (
+				  InvalidKeyException 	 |
+						  NoSuchAlgorithmException |
+						  SignatureException 		 |
+						  IOException e) {
+			e.printStackTrace();
+		}
+		return false;
+
 	}
 
 	byte[] signResponse(Response response) {
@@ -135,6 +190,8 @@ public class CryptoManager {
 		}
 		return false;
 	}
+
+
     
     
 /////////////////////////////////////////////////////////

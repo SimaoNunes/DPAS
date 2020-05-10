@@ -1,24 +1,29 @@
 package server;
 
+import library.Pair;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 public class GeneralBoard implements Serializable {
 
-    private JSONArray annoucements;
+    private ArrayList<Pair<JSONObject, byte[]>> annoucements;
 
-    protected GeneralBoard(JSONArray list) {
+    protected GeneralBoard(ArrayList<Pair<JSONObject, byte[]>> list) {
+
         this.annoucements = list;
     }
 
     protected GeneralBoard() {
-        this.annoucements = new JSONArray();
+
+        this.annoucements = new ArrayList<>();
     }
 
-    public void addAnnouncement(JSONObject object) {
-        this.annoucements.add(object);
+    public void addAnnouncement(JSONObject object, byte[] signature) {
+
+        this.annoucements.add(new Pair<>(object, signature));
     }
 
     public JSONObject getAnnouncements(int number){
@@ -30,7 +35,10 @@ public class GeneralBoard implements Serializable {
         else{
             int i = 0;
             while (i < number){
-                annoucementsList.add(annoucementsList.get(annoucementsList.size() - i));
+                JSONObject object = new JSONObject();
+                object.put("message", annoucements.get(annoucements.size() - i).getFirst());
+                object.put("signature", annoucements.get(annoucements.size() - i).getSecond());
+                annoucementsList.add(object);
                 i++;
             }
         }
@@ -44,6 +52,17 @@ public class GeneralBoard implements Serializable {
     }
 
     public JSONArray getAnnoucements() {
-        return annoucements;
+        JSONArray array = new JSONArray();
+        for(int i = 0; i < annoucements.size(); i++){
+            JSONObject object = new JSONObject();
+            object.put("message", annoucements.get(i).getFirst());
+            object.put("signature", annoucements.get(i).getSecond());
+            array.add(object);
+        }
+        return array;
+    }
+
+    public int size(){
+        return this.annoucements.size();
     }
 }
