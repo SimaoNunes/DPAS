@@ -592,11 +592,11 @@ public class ClientEndpoint {
         	tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
         }
 
-        /*if(result.getSuccess()){
-            return result.getJsonObject();
+        if(result.getRequest() != null){
+            return result.getRequest().getJsonObject();
         }
         else{
-            switch (result.getErrorCode()) {
+            switch (result.getResponse().getErrorCode()) {
                 case (-1):
                     throw new UserNotRegisteredException("User not Registered");
                 case (-3):
@@ -615,10 +615,9 @@ public class ClientEndpoint {
                     throw new IntegrityException("Integrity Exception");
                 default:
                     break;
-
             }
-        }*/
-        return null;
+            return null;
+        }
     }
 
     public void readMethod(String announcUserName, int number, PublicKey serverKey, int rid) {
