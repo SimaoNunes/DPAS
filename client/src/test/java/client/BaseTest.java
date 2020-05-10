@@ -14,9 +14,9 @@ import java.net.Socket;
 import java.security.*;
 
 ////////////////////////////////////////////////////////////////////
-//															      //
-//   WARNING: Server must be running in order to run these tests  //
-//															      //
+//
+//   WARNING: Server must be running in order to run these tests
+//
 ////////////////////////////////////////////////////////////////////
 
 

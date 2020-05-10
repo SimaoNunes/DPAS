@@ -9,8 +9,8 @@ public class DropAttackTest extends BaseTest {
     @BeforeClass
     public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException, UserNotRegisteredException, InvalidAnnouncementException, MessageTooBigException {
         clientEndpoint1.register();
-        clientEndpoint1.post("USER1 ANNOUNC MESSAGE1", null, false);
-        clientEndpoint1.post("USER1 GENERAL MESSAGE1", null, true);
+        clientEndpoint1.post("user1 announc message1", null, false);
+        clientEndpoint1.post("user1 general message1", null, true);
     }
 
     @Test(expected = NonceTimeoutException.class)
@@ -18,7 +18,7 @@ public class DropAttackTest extends BaseTest {
     		NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
     	setDropOperationFlag(false);
         setDropNonceFlag(true);
-        clientEndpoint1.post("USER1 ANNOUNC MESSAGE2", null, false);
+        clientEndpoint1.post("user1 announc message2", null, false);
     }
 
     @Test(expected = NonceTimeoutException.class)
@@ -34,7 +34,7 @@ public class DropAttackTest extends BaseTest {
     		NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
     	setDropOperationFlag(false);
     	setDropNonceFlag(true);
-        clientEndpoint1.post("USER1 GENERAL MESSAGE2", null, true);
+        clientEndpoint1.post("user1 general message2", null, true);
     }
 
     @Test(expected = NonceTimeoutException.class)
@@ -49,7 +49,7 @@ public class DropAttackTest extends BaseTest {
     public void When_ServerResponseIsDropped_write() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, InterruptedException, UnknownPublicKeyException, AlreadyRegisteredException {
     	setDropOperationFlag(true);
     	setDropNonceFlag(false);
-        clientEndpoint1.post("USER1 ANNOUNC MESSAGE3", null, false);
+        clientEndpoint1.post("user1 announc message3", null, false);
     }
 
     @Test(expected = OperationTimeoutException.class)
@@ -63,7 +63,7 @@ public class DropAttackTest extends BaseTest {
     public void When_ServerResponseIsDropped_writeGeneral() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, InterruptedException, UnknownPublicKeyException, AlreadyRegisteredException {
     	setDropOperationFlag(true);
     	setDropNonceFlag(false);
-        clientEndpoint1.post("USER1 GENERAL MESSAGE3", null, true);
+        clientEndpoint1.post("user1 general message3", null, true);
     }
 
     @Test(expected = OperationTimeoutException.class)

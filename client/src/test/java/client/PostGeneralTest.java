@@ -8,9 +8,9 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 ////////////////////////////////////////////////////////////////////
-//																  //
-//   WARNING: Server must be running in order to run these tests  //
-//																  //
+//
+//   WARNING: Server must be running in order to run these tests
+//
 ////////////////////////////////////////////////////////////////////
 
 public class PostGeneralTest extends BaseTest {

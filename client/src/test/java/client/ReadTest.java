@@ -9,9 +9,9 @@ import static org.junit.Assert.assertEquals;
 import org.json.simple.JSONObject;
 
 ////////////////////////////////////////////////////////////////////
-//																  //
-//   WARNING: Server must be running in order to run these tests  //
-//																  //
+//
+//   WARNING: Server must be running in order to run these tests
+//
 ////////////////////////////////////////////////////////////////////
 
 public class ReadTest extends BaseTest{

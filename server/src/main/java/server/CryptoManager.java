@@ -39,9 +39,9 @@ public class CryptoManager {
     
     
 /////////////////////////////////////
-//								   //
-//			Sign Methods  		   //
-//	  							   //
+//
+//			Sign Methods
+//
 /////////////////////////////////////
     
     byte[] signRequest(Request request) {
@@ -94,10 +94,10 @@ public class CryptoManager {
 		return new byte[0];
     }
 
-	boolean verifyRequest(Request request, byte[] signature, String from) {
+	boolean verifyRequest(Request request, byte[] signature, PublicKey keyFrom) {
 		try {
+			System.out.println("OLHA EU A VERIFICAR");
 			// Initialize needed structures
-			PublicKey keyFrom = getPublicKeyFromKs(from);
 			Signature verifySignature = Signature.getInstance("SHA256withRSA");
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);
@@ -146,12 +146,12 @@ public class CryptoManager {
     
 	
 //////////////////////////////////////////
-//										//
-//           Get Alias By Key           //
-//    									//
+//
+//           Get Alias By Key
+//
 //////////////////////////////////////////
 
-    public String checkKey(PublicKey publicKey){
+    public String checkKey(PublicKey publicKey) {
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
         try {
@@ -181,13 +181,14 @@ public class CryptoManager {
         return "";
     }
 
+    
 /////////////////////////////////////////////////////////
-//										               //
-//            Nonce Manipulation Methods               //
-//										               //
+//
+//            Nonce Manipulation Methods
+//
 /////////////////////////////////////////////////////////
 
-	public byte[] getServerNonce(PublicKey clientKey){
+	public byte[] getServerNonce(PublicKey clientKey) {
 		return nonces.get(clientKey);
 	}
 
@@ -206,8 +207,7 @@ public class CryptoManager {
         nonces.put(clientKey, nonce);
     }
 
-
-	// este metodo é para os testes do old envelope ou o crl
+	// este metodo é para os testes do old envelope acho eu
     public byte[] generateRandomNonce() {
         SecureRandom random = new SecureRandom();
         byte[] nonce = new byte[16];
@@ -217,12 +217,12 @@ public class CryptoManager {
     
 	
 ///////////////////////////////////////////
-//   									 //
-//	 Methods to get Keys from Keystore   //
-//   									 //
+//
+//	 Methods to get Keys from Keystore
+//
 ///////////////////////////////////////////
     
-    public PrivateKey getPrivateKeyFromKs(){
+    public PrivateKey getPrivateKeyFromKs() {
         char[] passphrase = "changeit".toCharArray();
         KeyStore ks = null;
         PrivateKey key = null;
@@ -259,6 +259,5 @@ public class CryptoManager {
         }
         return null;
     }
-    
     
 }
