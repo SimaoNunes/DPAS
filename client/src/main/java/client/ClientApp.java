@@ -343,7 +343,13 @@ public class ClientApp {
             String user = "";
             String result = "";
 
-            JSONObject obj = (JSONObject) array_obj;
+            JSONObject obj;
+            if(isGeneral){
+				obj = (JSONObject) ((JSONObject) array_obj).get("message");
+			}
+            else{
+				obj = (JSONObject)  array_obj;
+			}
             result = "\n" + i++ + ")";
             if(isGeneral){
                 user = (String) obj.get("user");
