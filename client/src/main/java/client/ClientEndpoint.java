@@ -168,7 +168,7 @@ public class ClientEndpoint {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
+            throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE); //IOException apanha tudo
         }
         return null;
     }
@@ -181,7 +181,7 @@ public class ClientEndpoint {
     		}
             return nonceEnvelope.getResponse().getNonce();
         } else {
-    		throw new IntegrityException("Integrity Exception");
+    		throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
         }
     }
 
@@ -239,15 +239,15 @@ public class ClientEndpoint {
         int result = getMajorityOfQuorumInt(results);
         switch (result) {
             case (-2):
-                throw new AlreadyRegisteredException("User with that public key already registered in the DPAS!");
+                throw new AlreadyRegisteredException(ExceptionsMessages.ALREADY_REGISTERED);
             case (-11):
-                throw new NonceTimeoutException("Nonce timeout");
+                throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             case (-12):
-                throw new OperationTimeoutException("Operation timeout");
+                throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_REGISTER);
             case (-13):
-                throw new FreshnessException("Freshness Exception");
+                throw new FreshnessException(ExceptionsMessages.CANT_INFER_REGISTER);
             case (-14):
-                throw new IntegrityException("Integrity Exception");
+                throw new IntegrityException(ExceptionsMessages.CANT_INFER_REGISTER);
             default:
             	return result;
         }
@@ -294,7 +294,7 @@ public class ClientEndpoint {
             e.printStackTrace();
             return 0;
         } catch(IOException e) {
-            throw new OperationTimeoutException("There was a problem in the connection we cannot infer precisely if the register was successful. Please try to log in");
+            throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_REGISTER);
         }
     }
 
@@ -353,19 +353,19 @@ public class ClientEndpoint {
         int result = getQuorumInt(results);
         switch (result) {
             case (-1):
-                throw new UserNotRegisteredException("This user is not registered!");
+                throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
             case (-4):
-                throw new MessageTooBigException("Message cannot exceed 255 characters!");
+                throw new MessageTooBigException(ExceptionsMessages.MESSAGE_TOO_BIG);
             case (-5):
-                throw new InvalidAnnouncementException("Announcements referenced do not exist!");
+                throw new InvalidAnnouncementException(ExceptionsMessages.INVALID_ANNOUNCEMENTS);
             case (-11):
-                throw new NonceTimeoutException("Nonce timeout");
+                throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             case (-12):
-                throw new OperationTimeoutException("Operation timeout");
+                throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
             case (-13):
-                throw new FreshnessException("Freshness Exception");
+                throw new FreshnessException(ExceptionsMessages.CANT_INFER_POST);
             case (-14):
-                throw new IntegrityException("Integrity Exception");
+                throw new IntegrityException(ExceptionsMessages.CANT_INFER_POST);
         }
         return result;
     }
@@ -415,7 +415,7 @@ public class ClientEndpoint {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
+            throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
         }
         return 0;
     }
@@ -527,24 +527,20 @@ public class ClientEndpoint {
 
     public void readMethod(String announcUserName, int number, PublicKey serverKey, int rid) {
         try {
-            //  -----> Handshake one way
-            byte[] serverNonce = startHandshake(serverKey, true);
-            //  -----> get public key to read from
-            PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
-            //  -----> send read operation to server
-            Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, serverNonce, rid);
-            Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
-            send(envelopeRequest, serversPorts.get(serverKey));
-
-
-        } catch (ClassNotFoundException |
-                NonceTimeoutException   |
-                IOException             |
-                IntegrityException   e) {
-                e.printStackTrace();
-                //Impossible to know if fault from the server when doing handshake or drop attack
-                //throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
-        }
+			//  -----> Handshake one way
+			byte[] serverNonce = startHandshake(serverKey, true);
+			//  -----> get public key to read from
+			PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
+			//  -----> send read operation to server
+			Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, serverNonce, rid);
+			Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
+			send(envelopeRequest, serversPorts.get(serverKey));
+		} catch (ClassNotFoundException |
+				NonceTimeoutException   |
+				IntegrityException 	 	|
+				IOException e) {
+			e.printStackTrace();
+		}
     }
 
     private void readComplete(String announcUserName, PublicKey serverKey, int rid){
@@ -620,13 +616,13 @@ public class ClientEndpoint {
         else{
             switch (result.getErrorCode()) {
                 case (-1):
-                    throw new UserNotRegisteredException("User not Registered");
+                    throw new UserNotRegisteredException("This user is not registered!");
                 case (-6):
-                    throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+                    throw new InvalidPostsNumberException("Announcements referenced do not exist!");
                 case (-10):
                     throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
                 case (-11):
-                    throw new NonceTimeoutException("Nonce timeout");
+                    throw new NonceTimeoutException("The operation was not possible, please try again!");
                 case (-12):
                     throw new OperationTimeoutException("Operation timeout");
                 case (-13):
@@ -728,15 +724,15 @@ public class ClientEndpoint {
         int result = getMajorityOfQuorumInt(results);
         switch (result) {
             case (-1):
-                throw new UserNotRegisteredException("This user is not registered!");
+                throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
             case (-11):
-                throw new NonceTimeoutException("Nonce timeout");
+                throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             case (-12):
-                throw new OperationTimeoutException("Operation timeout");
+                throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             case (-13):
-                throw new FreshnessException("Freshness Exception");
+                throw new FreshnessException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             case (-14):
-                throw new IntegrityException("Integrity Exception");
+                throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             default:
             	return result;
         }
@@ -771,7 +767,7 @@ public class ClientEndpoint {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			throw new OperationTimeoutException("Operation timeout");
+			throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
 		}
         return singleWts;
 	}
