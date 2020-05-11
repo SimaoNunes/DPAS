@@ -26,16 +26,18 @@ public class AnnouncementBoard implements Serializable{
     public JSONArray getAnnouncements(int number){
         JSONArray announcementsList = new JSONArray();
 
-        if(number == 0){
-            announcementsList = getAnnouncements();
+        int totalRead = number;
+
+        if(totalRead == 0){
+            totalRead = getAnnouncements().size();
         }
-        else{
-            int i = 0;
-            while (i < number){
-                announcementsList.add(announcements.get(announcements.size() - 1 - i));
-                i++;
-            }
+
+        int i = 0;
+        while (i < totalRead){
+            announcementsList.add(announcements.get(announcements.size() - 1 - i));
+            i++;
         }
+
         return announcementsList;
     }
 
