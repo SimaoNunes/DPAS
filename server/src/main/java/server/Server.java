@@ -400,6 +400,9 @@ public class Server implements Runnable {
 
             saveGeneralBoard();
 
+            incrementTotalAnnouncs();
+            saveTotalAnnouncements();
+
         }
 
         if(!dropOperationFlag) {
