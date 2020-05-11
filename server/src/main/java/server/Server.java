@@ -54,11 +54,11 @@ public class Server implements Runnable {
     private Envelope oldEnvelope;
     
     /**************************************************/
+    
     /********************** Regular Register **********************/
 
     private Pair<Integer, GeneralBoard> generalBoard;
 
-    
     /***************** Atomic Register variables ******************/
     
     private ConcurrentHashMap<PublicKey, Pair<Integer, AnnouncementBoard>> usersBoards = null;
@@ -69,8 +69,8 @@ public class Server implements Runnable {
 
     protected Server(ServerSocket ss, int port) {
 
-        server            = ss;
-        serverPort		  = port + "";  //adding "" converts int to string
+        server = ss;
+        serverPort = port + "";  //adding "" converts int to string
 
         cryptoManager = new CryptoManager(port);
         oldResponse   = new Response(cryptoManager.generateRandomNonce());
@@ -82,13 +82,18 @@ public class Server implements Runnable {
         userMapPathCopy			   = storagePath + "UserIdMap_copy.ser";
         totalAnnouncementsPath	   = storagePath + "TotalAnnouncements.ser";
         totalAnnouncementsPathCopy = storagePath + "TotalAnnouncements_copy.ser";
-        announcementBoardsPath     = storagePath + "announcementBoards.ser";
-        announcementBoardsPathCopy = storagePath + "announcementBoards_copy.ser";
-        generalBoardPath           = storagePath + "generalBoard.ser";
-        generalBoardPathCopy	   = storagePath + "generalBoard_copy.ser";
+        announcementBoardsPath     = storagePath + "AnnouncementBoards.ser";
+        announcementBoardsPathCopy = storagePath + "AnnouncementBoards_copy.ser";
+        generalBoardPath           = storagePath + "GeneralBoard.ser";
+        generalBoardPathCopy	   = storagePath + "GeneralBoard_copy.ser";
 
+        File storage = new File(storagePath);
+        storage.mkdirs();
+        
         getGeneralBoard();
+        
         getUsersBoards();
+        
         listening = new ConcurrentHashMap<>();
 
         getUserIdMap();
@@ -269,7 +274,6 @@ public class Server implements Runnable {
         userIdMap.put(request.getPublicKey(), username);
         saveUserIdMap();
         usersBoards.put(request.getPublicKey(), new Pair<>(0, new AnnouncementBoard(request.getUsername())));
-        saveUsersBoards();
         if(!dropOperationFlag) {
             sendResponse(new Response(true, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         } else {
@@ -445,7 +449,7 @@ public class Server implements Runnable {
     @SuppressWarnings("unchecked")
 	private void readGeneral(Request request) {
 
-        System.out.println("SERVER ON PORT " + this.serverPort + ": READGENERAL method");
+        System.out.println("SERVER ON PORT " + this.serverPort + ": READ GENERAL method");
 
         int total;
         if(request.getNumber() == 0) { //all posts
@@ -486,12 +490,10 @@ public class Server implements Runnable {
     
     private void wtsRequest(Request request, boolean isGeneral, ObjectOutputStream outStream) {
     	int wts = 0;
-    	if(isGeneral){
-    		System.out.println("SERVER ON PORT " + this.serverPort + ": WTS GENERAL METHOD");
+    	if(isGeneral) {
             wts = generalBoard.getFirst();
         }
-    	else{
-    		System.out.println("SERVER ON PORT " + this.serverPort + ": WTS METHOD");
+    	else {
             wts = usersBoards.get(request.getPublicKey()).getFirst();
         }
         sendResponse(new Response(true, request.getClientNonce(), wts, cryptoManager.getPublicKeyFromKs("server")), outStream);
@@ -594,16 +596,10 @@ public class Server implements Runnable {
         userIdMap.clear();
         saveUserIdMap();
 
-        String path = announcementBoardsPath;
+        String path = storagePath;
 
         FileUtils.deleteDirectory(new File(path));
         File files = new File(path);
-        files.mkdirs();
-
-        path = generalBoardPath;
-
-        FileUtils.deleteDirectory(new File(path));
-        files = new File(path);
         files.mkdirs();
 
         setTotalAnnouncements(0);
@@ -761,25 +757,20 @@ public class Server implements Runnable {
             System.out.println("SERVER ON PORT " + this.serverPort + ": Pair<Integer, GeneralBoard> class not found");
             c.printStackTrace();
             return;
-        }
-        catch(FileNotFoundException e){
-            generalBoard = new Pair<>(0, new GeneralBoard());
+        } catch(FileNotFoundException e) {
+            generalBoard = new Pair<Integer, GeneralBoard>(0, new GeneralBoard());
             createOriginalGeneralBoard();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void createOriginalGeneralBoard() {
-
         try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(generalBoardPath))) {
             out.writeObject(generalBoard);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
 

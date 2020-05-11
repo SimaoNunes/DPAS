@@ -205,6 +205,7 @@ public class ClientEndpoint {
         }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getMajorityOfQuorumInt(results);
+        System.out.println(results);
         switch (result) {
         	case (-7):
         		throw new UnknownPublicKeyException(ExceptionsMessages.UNKNOWN_KEY);
@@ -876,7 +877,7 @@ public class ClientEndpoint {
     }
     
     private int getMajorityOfQuorumInt(int[] results) {
-        HashMap<Integer, Integer> map = new HashMap<>();
+        HashMap<Integer,Integer> map = new HashMap<Integer,Integer>();
         for(int i = 0; i < results.length; i++) {
             if (!map.containsKey(results[i])) {
                 map.put(results[i], 1);

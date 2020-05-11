@@ -36,7 +36,6 @@ public class AnnouncementBoard implements Serializable{
                 i++;
             }
         }
-        System.out.println(announcementsList.toJSONString());
         return announcementsList;
     }
 
