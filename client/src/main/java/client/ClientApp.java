@@ -203,9 +203,9 @@ public class ClientApp {
 		Boolean end = false;
 		String announcId;
 		List<Integer> announcsList  = new ArrayList<Integer>();
-		System.out.print("\nType the Ids of the Announcements you want to reference, and press Enter in between them."
-						 + "When you're finished, press Enter again."
-						 + "If you don't want to reference any Announcement, just press Enter.\n>>");
+		System.out.print("\nType the Ids of the Announcements you want to reference, and press \'Enter\' in between them. "
+						 + "When you're finished, press \'Enter\' again. "
+						 + "If you don't want to reference any Announcement, just press \'Enter\'.\n>>");
 		while(!end) {
 			System.out.print(" ");
 			announcId = scanner.nextLine();
@@ -336,6 +336,7 @@ public class ClientApp {
 	private static void printAnnouncements(JSONObject jsonAnnouncs, Boolean isGeneral) {
 		// Get array of announcements in JSON format, iterate over them and print them
         JSONArray array = (JSONArray) jsonAnnouncs.get("announcementList");
+        System.out.println(array.toJSONString());
         int i = 1;
         // ReadGeneral
         for (Object array_obj : array) {

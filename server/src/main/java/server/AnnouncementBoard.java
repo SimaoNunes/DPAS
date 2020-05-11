@@ -7,46 +7,45 @@ import org.json.simple.JSONObject;
 public class AnnouncementBoard implements Serializable{
     
     private String user;
-    private JSONArray annoucements;
+    private JSONArray announcements;
 
     protected AnnouncementBoard(String user, JSONArray list) {
-        this.annoucements = list;
+        this.announcements = list;
         this.user = user;
     }
 
     protected AnnouncementBoard(String user) {
         this.user = user;
-        this.annoucements = new JSONArray();
+        this.announcements = new JSONArray();
     }
 
     public void addAnnouncement(JSONObject object) {
-        this.annoucements.add(object);
+        this.announcements.add(object);
     }
 
-    public JSONObject getAnnouncements(int number){
-        JSONArray annoucementsList = new JSONArray();
+    public JSONArray getAnnouncements(int number){
+        JSONArray announcementsList = new JSONArray();
 
         if(number == 0){
-            annoucementsList = getAnnoucements();
+            announcementsList = getAnnouncements();
         }
         else{
             int i = 0;
             while (i < number){
-                annoucementsList.add(annoucementsList.get(annoucementsList.size() - i));
+                announcementsList.add(announcements.get(announcements.size() - 1 - i));
                 i++;
             }
         }
-        JSONObject announcementsToSend =  new JSONObject();
-        announcementsToSend.put("announcementList", annoucementsList);
-        return announcementsToSend;
+        System.out.println(announcementsList.toJSONString());
+        return announcementsList;
     }
 
-    public void setAnnoucements(JSONArray annoucements) {
-        this.annoucements = annoucements;
+    public void setAnnoucements(JSONArray announcements) {
+        this.announcements = announcements;
     }
 
-    public JSONArray getAnnoucements() {
-        return annoucements;
+    public JSONArray getAnnouncements() {
+        return announcements;
     }
 
     public void setUser(String user) {
@@ -55,5 +54,9 @@ public class AnnouncementBoard implements Serializable{
 
     public String getUser() {
         return user;
+    }
+    
+    public int size() {
+    	return this.announcements.size();
     }
 }

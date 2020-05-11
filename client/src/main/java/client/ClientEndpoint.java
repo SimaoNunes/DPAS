@@ -13,8 +13,6 @@ import java.net.Socket;
 import java.security.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public class ClientEndpoint {
 
@@ -291,12 +289,6 @@ public class ClientEndpoint {
         Thread[] tasks = new Thread[nServers];
         // Post to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-        	// Create a uncaught exception handler
-        	Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-        	    public void uncaughtException(Thread th, Throwable ex) {
-        	        System.out.println("Uncaught exception: " + ex);
-        	    }
-        	};
             tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                 	try {
@@ -409,19 +401,12 @@ public class ClientEndpoint {
             wtsG = askForWts(true);
         }
         wtsG = wtsG + 1;
-
         // Variables to store responses and their results
         int[] results = new int[nServers];
         // Threads that will make the requests to the server
         Thread[] tasks = new Thread[nServers];
         // Post to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
-            // Create a uncaught exception handler
-            Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
-                public void uncaughtException(Thread th, Throwable ex) {
-                    System.out.println("Uncaught exception: " + ex);
-                }
-            };
             tasks[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
                     try {
@@ -527,7 +512,6 @@ public class ClientEndpoint {
 
 
 
-
     //////////////////////////////////////////////////
     //				      READ
     //////////////////////////////////////////////////
@@ -554,7 +538,6 @@ public class ClientEndpoint {
             });
         	tasksRead[serversPorts.get(serverKey) - PORT].start();
         }
-        
         // Wait for listeners to get result
         while(listener.getResult() == null) {
             try {
@@ -563,15 +546,14 @@ public class ClientEndpoint {
                 e.printStackTrace();
             }
         }
-        
+        // Close Listener socket when we get its result
         try {
             listenerSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        // Get result from Listener
         Envelope result = listener.getResult();
-        
         // Threads that will make the requests to the server
         Thread[] tasksReadComplete = new Thread[nServers];
         // Send 'read complete' to all servers
@@ -583,7 +565,6 @@ public class ClientEndpoint {
             });
         	tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
         }
-
         if(result.getRequest() != null){
             return result.getRequest().getJsonObject();
         }
@@ -630,20 +611,16 @@ public class ClientEndpoint {
 		}
     }
 
-    private void readComplete(String announcUserName, PublicKey serverKey, int rid){
-
+    private void readComplete(String announcUserName, PublicKey serverKey, int rid) {
         try {
             //  -----> Handshake one way
-        byte[] serverNonce = startHandshake(serverKey, true);
-
-        //  -----> get public key to read from
+        	byte[] serverNonce = startHandshake(serverKey, true);
+        	//  -----> get public key to read from
             PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
-
             //  -----> send read complete operation to server
             Request request = new Request("READCOMPLETE", getPublicKey(), pubKeyToReadFrom, serverNonce, rid);
             Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
             send(envelopeRequest, serversPorts.get(serverKey));
-
         } catch (ClassNotFoundException |
                 NonceTimeoutException   |
                 IOException             |
@@ -836,7 +813,7 @@ public class ClientEndpoint {
         // Make wts Request sign it and send inside envelope
         String operation = "WTS";
         if(isGeneral){
-            operation +="GENERAL";
+            operation += "GENERAL";
         }
         Request request = new Request(operation, getPublicKey(), serverNonce, cryptoManager.getNonce(serverKey));
     	Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
