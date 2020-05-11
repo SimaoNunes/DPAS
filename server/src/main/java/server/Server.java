@@ -105,9 +105,8 @@ public class Server implements Runnable {
 
         System.out.println("SERVER ON PORT " + this.serverPort + ": Up and running.");
         getUserIdMap();
-        getTotalAnnouncementsFromFile();
 
-        //initUsersBoard();
+        getTotalAnnouncementsFromFile();
 
         newListener();
     }
@@ -277,9 +276,6 @@ public class Server implements Runnable {
     public void register(Request request, ObjectOutputStream outStream) {
         System.out.println("SERVER ON PORT " + this.serverPort + ": REGISTER METHOD");
         String username = cryptoManager.checkKey(request.getPublicKey());
-        String path = announcementBoardsPath + username;
-        File file = new File(path);
-        file.mkdirs();
         userIdMap.put(request.getPublicKey(), username);
         saveUserIdMap();
         usersBoards.put(request.getPublicKey(), new Pair<>(0, new AnnouncementBoard(request.getUsername())));
@@ -325,18 +321,12 @@ public class Server implements Runnable {
             System.out.println("aqui tou a guardar");
             usersBoards.get(request.getPublicKey()).getSecond().addAnnouncement(announcementObject); //update val with the new post
             saveUsersBoards();
-            System.out.println(usersBoards.get(request.getPublicKey()).getSecond().size());
-            /*try {
-                saveFile(path + Integer.toString(getTotalAnnouncements()), announcementObject.toJSONString());
-            } catch (IOException e) {
-                sendResponse(new Response(false, -9, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
-            }
 
             incrementTotalAnnouncs();
-            saveTotalAnnouncements();*/
+            saveTotalAnnouncements();
 
         }
-        if(listening.contains(userIdMap.get(request.getPublicKey()))){ // no one is reading from who is writing
+        if(listening.contains(request.getPublicKey())){ // no one is reading from who is writing
             for(Map.Entry<PublicKey, Pair<Integer, Integer>> entry : listening.get(request.getPublicKey()).entrySet()){  //for every listening[q]
                 byte[] nonce = null;
                 try {
@@ -410,16 +400,9 @@ public class Server implements Runnable {
 
             saveGeneralBoard();
 
-            /*String path = generalBoardPath;
-
-            try {
-                saveFile(path + request.getTs(), announcementObject.toJSONString()); //GeneralBoard
-            } catch (IOException e) {
-                sendResponse(new Response(false, -9, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
-            }
-
             incrementTotalAnnouncs();
-            saveTotalAnnouncements();*/
+            saveTotalAnnouncements();
+
         }
 
         if(!dropOperationFlag) {
@@ -444,37 +427,16 @@ public class Server implements Runnable {
             listening.get(request.getPublicKeyToReadFrom()).put(request.getPublicKey(), new Pair<>(request.getRid(), request.getNumber()));
         }
 
-        String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
-        //int directorySize = directoryList.length;
-
         System.out.println("SERVER ON PORT " + this.serverPort + ": READ METHOD");
         String username = userIdMap.get(request.getPublicKeyToReadFrom());
         String path = announcementBoardsPath + username + "/";
 
         int total = request.getNumber();
 
-        //Arrays.sort(directoryList);
-        //JSONParser parser = new JSONParser();
         try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", getClientPort(userIdMap.get(request.getPublicKey()))).getOutputStream())){
-            /*JSONArray annoucementsList = new JSONArray();
-            JSONObject announcement;
 
-            String fileToRead;
-            for (int i=0; i<total; i++) {
-                fileToRead = directoryList[directorySize-1];
-                announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
-                directorySize--;
-                annoucementsList.add(announcement);
-            }
-            */
             JSONObject announcementsToSend =  new JSONObject();
             announcementsToSend.put("announcementList", usersBoards.get(request.getPublicKeyToReadFrom()).getSecond().getAnnouncements(total));
-            // if(!dropOperationFlag) {
-            //     // -----> Handshake one way
-            //     //send(new Response(true, announcementsToSend, request.getNonceClient(), request.getRid()), outStream);
-            // } else {
-            // 	System.out.println("DROPPED READ");
-            // } 
 
             // Send response to client
             // ------> Handshake one way
@@ -495,9 +457,7 @@ public class Server implements Runnable {
     @SuppressWarnings("unchecked")
 	private void readGeneral(Request request) {
 
-        String path = "";
         System.out.println("SERVER ON PORT " + this.serverPort + ": READGENERAL method");
-        path = generalBoardPath;
 
         int total;
         if(request.getNumber() == 0) { //all posts
@@ -523,30 +483,6 @@ public class Server implements Runnable {
         } catch (NonceTimeoutException e) {
             e.printStackTrace();
         }
-        /*
-        Arrays.sort(directoryList);
-        JSONParser parser = new JSONParser();
-        try {
-			JSONArray annoucementsList = new JSONArray();
-			JSONObject announcement;
-
-			String fileToRead;
-			for (int i=0; i<total; i++) {
-			    fileToRead = directoryList[directorySize-1];
-			    announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
-			    directorySize--;
-			    annoucementsList.add(announcement);
-			}
-			JSONObject announcementsToSend =  new JSONObject();
-			announcementsToSend.put("announcementList", annoucementsList);
-			if(!dropOperationFlag) {
-			    // send(new Response(true, announcementsToSend, request.getNonceClient()), outStream);   FIXME-> enviar o rid?
-			} else {
-			    System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED READ GENERAL");
-			}
-		} catch (IOException | ParseException e) {
-			sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
-		}*/
     }
 
     private void readComplete(Request request) {
@@ -662,18 +598,6 @@ public class Server implements Runnable {
         return envelope; 
     }
 
-
-    private void saveFile(String completePath, String announcement) throws IOException {
-        byte[] bytesToStore = announcement.getBytes();
-        File file = new File(completePath);
-
-        try(FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(bytesToStore);
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
     
     private void newListener() {
         (new Thread(this)).start();
@@ -721,46 +645,8 @@ public class Server implements Runnable {
         }
     }
 
-    
-/////////////////////////////////////////////
-//
-//     Method to initialize user pairs
-//
-/////////////////////////////////////////////
-    /*
-    @SuppressWarnings("unchecked")
-	private void initUsersBoard() {
 
-        usersBoards = new ConcurrentHashMap<PublicKey, Pair<Integer, AnnouncementBoard>>();
 
-        String[] users = new File(announcementBoardsPath).list();
-        if(users != null){
-            for(String user : users){
-                String path = announcementBoardsPath + '/' + user;
-                String[] postsFromUser = new File(path).list();
-                try{
-
-                    JSONParser parser = new JSONParser();
-                    JSONArray annoucementsList = new JSONArray();
-
-                    for (String file : postsFromUser) {
-                        annoucementsList.add((JSONObject) parser.parse(new FileReader(path + '/' + file)));
-                    }
-
-                    int timestamp = postsFromUser.length;
-                    AnnouncementBoard ab = new AnnouncementBoard(user, annoucementsList);
-                    Pair<Integer, AnnouncementBoard> pair = new Pair<Integer, AnnouncementBoard>(timestamp, ab);
-                    usersBoards.put(user, pair);
-
-                } catch(Exception e) {
-                    System.out.println("OPAAAA");
-                }
-            }
-        }
-        
-    }*/
-    
-    
 /////////////////////////////////////////////
 //
 // Methods to save/get userIdMap from File
@@ -919,7 +805,7 @@ public class Server implements Runnable {
 
     }
 
-    
+
 /////////////////////////////////////////////////////////
 //
 // Methods to get/update total announcements from File
@@ -965,7 +851,7 @@ public class Server implements Runnable {
             totalAnnouncements = new AtomicInteger(0);
             createOriginalAnnouncs();
         } catch (
-            IOException | 
+            IOException |
             ClassNotFoundException e) {
             e.printStackTrace();
         }
