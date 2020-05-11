@@ -438,6 +438,7 @@ public class Server implements Runnable {
             e.printStackTrace();
             sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         }
+        
     }
     
 
