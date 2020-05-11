@@ -7,20 +7,20 @@ import org.json.simple.JSONObject;
 public class AnnouncementBoard implements Serializable{
     
     private String user;
-    private JSONArray annoucements;
+    private JSONArray announcements;
 
     protected AnnouncementBoard(String user, JSONArray list) {
-        this.annoucements = list;
+        this.announcements = list;
         this.user = user;
     }
 
     protected AnnouncementBoard(String user) {
         this.user = user;
-        this.annoucements = new JSONArray();
+        this.announcements = new JSONArray();
     }
 
     public void addAnnouncement(JSONObject object) {
-        this.annoucements.add(object);
+        this.announcements.add(object);
     }
 
     public JSONObject getAnnouncements(int number){
@@ -42,11 +42,11 @@ public class AnnouncementBoard implements Serializable{
     }
 
     public void setAnnoucements(JSONArray annoucements) {
-        this.annoucements = annoucements;
+        this.announcements = annoucements;
     }
 
     public JSONArray getAnnoucements() {
-        return annoucements;
+        return announcements;
     }
 
     public void setUser(String user) {
@@ -55,5 +55,9 @@ public class AnnouncementBoard implements Serializable{
 
     public String getUser() {
         return user;
+    }
+    
+    public int size() {
+    	return this.announcements.size();
     }
 }

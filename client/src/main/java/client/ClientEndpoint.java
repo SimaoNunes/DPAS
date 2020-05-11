@@ -512,7 +512,6 @@ public class ClientEndpoint {
 
 
 
-
     //////////////////////////////////////////////////
     //				      READ
     //////////////////////////////////////////////////
@@ -539,7 +538,6 @@ public class ClientEndpoint {
             });
         	tasksRead[serversPorts.get(serverKey) - PORT].start();
         }
-        
         // Wait for listeners to get result
         while(listener.getResult() == null) {
             try {
@@ -548,15 +546,14 @@ public class ClientEndpoint {
                 e.printStackTrace();
             }
         }
-        
+        // Close Listener socket when we get its result
         try {
             listenerSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        // Get result from Listener
         Envelope result = listener.getResult();
-
         // Threads that will make the requests to the server
         Thread[] tasksReadComplete = new Thread[nServers];
         // Send 'read complete' to all servers
@@ -614,20 +611,16 @@ public class ClientEndpoint {
 		}
     }
 
-    private void readComplete(String announcUserName, PublicKey serverKey, int rid){
-
+    private void readComplete(String announcUserName, PublicKey serverKey, int rid) {
         try {
             //  -----> Handshake one way
-        byte[] serverNonce = startHandshake(serverKey, true);
-
-        //  -----> get public key to read from
+        	byte[] serverNonce = startHandshake(serverKey, true);
+        	//  -----> get public key to read from
             PublicKey pubKeyToReadFrom = cryptoManager.getPublicKeyFromKs(announcUserName);
-
             //  -----> send read complete operation to server
             Request request = new Request("READCOMPLETE", getPublicKey(), pubKeyToReadFrom, serverNonce, rid);
             Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
             send(envelopeRequest, serversPorts.get(serverKey));
-
         } catch (ClassNotFoundException |
                 NonceTimeoutException   |
                 IOException             |

@@ -155,8 +155,7 @@ public class Server implements Runnable {
                     case "READ":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) && 
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
-                        		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
-                        		checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -6, -10}))
+                        		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
                         {
                             read(envelope.getRequest(), outStream);
                         }
@@ -176,7 +175,6 @@ public class Server implements Runnable {
                         		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                         		checkExceptions(envelope.getRequest(), outStream, new int[] {-3}))
                         {
-                        	System.out.println("SERVER ON PORT " + this.serverPort + ": READCOMPLETE METHOD");
                             readComplete(envelope.getRequest());
                         }
                         break;
@@ -418,60 +416,63 @@ public class Server implements Runnable {
     @SuppressWarnings("unchecked")
 	private void read(Request request, ObjectOutputStream outStream) {
 
-        if(listening.contains(userIdMap.get(request.getPublicKeyToReadFrom()))){  //someone is already reading that board
+        if(listening.contains(userIdMap.get(request.getPublicKeyToReadFrom()))) {	//someone is already reading that board
             listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).put(userIdMap.get(request.getPublicKey()), new Pair<>(request.getRid(), request.getNumber()));  //listening [p] := r ;
         }
-        else{
+        else {
             listening.put(userIdMap.get(request.getPublicKeyToReadFrom()), new ConcurrentHashMap<>()); //listening [p] := r ;
             listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).put(userIdMap.get(request.getPublicKey()), new Pair<>(request.getRid(), request.getNumber()));
         }
-
-        String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
-        int directorySize = directoryList.length;
-
-        System.out.println("SERVER ON PORT " + this.serverPort + ": READ METHOD");
-        String username = userIdMap.get(request.getPublicKeyToReadFrom());
-        String path = announcementBoardsPath + username + "/";
-
-        int total;
-        if(request.getNumber() == 0) { //all posts
-            total = directorySize;
-        } else {
-            total = request.getNumber();
-        }
-
-        Arrays.sort(directoryList);
-        JSONParser parser = new JSONParser();
-        try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", getClientPort(userIdMap.get(request.getPublicKey()))).getOutputStream())){
-            JSONArray annoucementsList = new JSONArray();
-            JSONObject announcement;
-
-            String fileToRead;
-            for (int i=0; i<total; i++) {
-                fileToRead = directoryList[directorySize-1];
-                announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
-                directorySize--;
-                annoucementsList.add(announcement);
-            }
-            JSONObject announcementsToSend =  new JSONObject();
-            announcementsToSend.put("announcementList", annoucementsList);
-
-            // if(!dropOperationFlag) {
-            //     // -----> Handshake one way
-            //     //send(new Response(true, announcementsToSend, request.getNonceClient(), request.getRid()), outStream);
-            // } else {
-            // 	System.out.println("DROPPED READ");
-            // } 
-
-            // Send response to client
-            // ------> Handshake one way
-            byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
-            
-            sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(userIdMap.get(request.getPublicKeyToReadFrom())).getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
-
-        } catch(Exception e) {
-            e.printStackTrace();
-            sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
+        
+        if(checkExceptions(request, outStream, new int[] {-3, -6, -10})) {
+	
+	        String[] directoryList = getDirectoryList(request.getPublicKeyToReadFrom());
+	        int directorySize = directoryList.length;
+	
+	        System.out.println("SERVER ON PORT " + this.serverPort + ": READ METHOD");
+	        String username = userIdMap.get(request.getPublicKeyToReadFrom());
+	        String path = announcementBoardsPath + username + "/";
+	
+	        int total;
+	        if(request.getNumber() == 0) { //all posts
+	            total = directorySize;
+	        } else {
+	            total = request.getNumber();
+	        }
+	
+	        Arrays.sort(directoryList);
+	        JSONParser parser = new JSONParser();
+	        try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", getClientPort(userIdMap.get(request.getPublicKey()))).getOutputStream())){
+	            JSONArray annoucementsList = new JSONArray();
+	            JSONObject announcement;
+	
+	            String fileToRead;
+	            for (int i=0; i<total; i++) {
+	                fileToRead = directoryList[directorySize-1];
+	                announcement = (JSONObject) parser.parse(new FileReader(path + fileToRead));
+	                directorySize--;
+	                annoucementsList.add(announcement);
+	            }
+	            JSONObject announcementsToSend =  new JSONObject();
+	            announcementsToSend.put("announcementList", annoucementsList);
+	
+	            // if(!dropOperationFlag) {
+	            //     // -----> Handshake one way
+	            //     //send(new Response(true, announcementsToSend, request.getNonceClient(), request.getRid()), outStream);
+	            // } else {
+	            // 	System.out.println("DROPPED READ");
+	            // } 
+	
+	            // Send response to client
+	            // ------> Handshake one way
+	            byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
+	            
+	            sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(userIdMap.get(request.getPublicKeyToReadFrom())).getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
+	
+	        } catch(Exception e) {
+	            e.printStackTrace();
+	            sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
+	        }
         }
     }
     
@@ -536,7 +537,7 @@ public class Server implements Runnable {
 		}*/
     }
 
-    private void readComplete(Request request){
+    private void readComplete(Request request) {
         if(request.getRid() == listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).get(userIdMap.get(request.getPublicKey())).getFirst()) {
             listening.get(userIdMap.get(request.getPublicKeyToReadFrom())).remove(userIdMap.get(request.getPublicKey()));
         }
@@ -926,7 +927,6 @@ public class Server implements Runnable {
                         return false;
                     }
                     break;
-
                 default:
                     break;
             }
