@@ -11,7 +11,6 @@ import org.apache.commons.io.FileUtils;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -40,11 +39,9 @@ public class Server implements Runnable {
     private String totalAnnouncementsPath = "";
     private String totalAnnouncementsPathCopy = "";
     private String announcementBoardsPath = "";
-    private String announcementBoardsFile = "";
-    private String announcementBoardsCopy = "";
+    private String announcementBoardsPathCopy = "";
     private String generalBoardPath = "";
-    private String generalBoardFile = "";
-    private String generalBoardCopy = "";
+    private String generalBoardPathCopy = "";
 
     /********** Simulated Attacks Variables ***********/
     
@@ -57,12 +54,11 @@ public class Server implements Runnable {
     private Envelope oldEnvelope;
     
     /**************************************************/
+    
     /********************** Regular Register **********************/
 
     private Pair<Integer, GeneralBoard> generalBoard;
-    private ConcurrentHashMap<PublicKey, Integer> writers = null;
 
-    
     /***************** Atomic Register variables ******************/
     
     private ConcurrentHashMap<PublicKey, Pair<Integer, AnnouncementBoard>> usersBoards = null;
@@ -73,8 +69,8 @@ public class Server implements Runnable {
 
     protected Server(ServerSocket ss, int port) {
 
-        server            = ss;
-        serverPort		  = port + "";  //adding "" converts int to string
+        server = ss;
+        serverPort = port + "";  //adding "" converts int to string
 
         cryptoManager = new CryptoManager(port);
         oldResponse   = new Response(cryptoManager.generateRandomNonce());
@@ -86,30 +82,25 @@ public class Server implements Runnable {
         userMapPathCopy			   = storagePath + "UserIdMap_copy.ser";
         totalAnnouncementsPath	   = storagePath + "TotalAnnouncements.ser";
         totalAnnouncementsPathCopy = storagePath + "TotalAnnouncements_copy.ser";
-        announcementBoardsPath	   = storagePath + "announcementboards/";
-        announcementBoardsFile     = announcementBoardsPath + "announcementBoards.ser";
-        announcementBoardsCopy     = announcementBoardsPath + "announcementBoards_copy.ser";
-        generalBoardPath		   = storagePath + "generalboard/";
-        generalBoardFile           = generalBoardPath + "generalBoard.ser";
-        generalBoardCopy           = generalBoardPath + "generalBoard_copy.ser";
+        announcementBoardsPath     = storagePath + "AnnouncementBoards.ser";
+        announcementBoardsPathCopy = storagePath + "AnnouncementBoards_copy.ser";
+        generalBoardPath           = storagePath + "GeneralBoard.ser";
+        generalBoardPathCopy	   = storagePath + "GeneralBoard_copy.ser";
 
-
-        File gb = new File(generalBoardPath);
-        gb.mkdirs();
-
-        File ab = new File(announcementBoardsPath);
-        ab.mkdirs();
-
+        File storage = new File(storagePath);
+        storage.mkdirs();
+        
         getGeneralBoard();
+        
         getUsersBoards();
 
         listening = new ConcurrentHashMap<>();
-        writers = new ConcurrentHashMap<>();
 
-        System.out.println("SERVER ON PORT " + this.serverPort + ": Up and running.");
         getUserIdMap();
 
         getTotalAnnouncementsFromFile();
+        
+        System.out.println("SERVER ON PORT " + this.serverPort + ": Up and running.");
 
         newListener();
     }
@@ -121,7 +112,7 @@ public class Server implements Runnable {
 //
 //////////////////////////////////////////
     @SuppressWarnings("all")
-    public void run(){
+    public void run() {
 
         Socket socket = null;
         ObjectOutputStream outStream;
@@ -171,7 +162,8 @@ public class Server implements Runnable {
                     case "READ":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) && 
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
-                        		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
+                                cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
+                                checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -10, -6}))
                         {
                             read(envelope.getRequest(), outStream);
                         }
@@ -282,7 +274,6 @@ public class Server implements Runnable {
         userIdMap.put(request.getPublicKey(), username);
         saveUserIdMap();
         usersBoards.put(request.getPublicKey(), new Pair<>(0, new AnnouncementBoard(request.getUsername())));
-        saveUsersBoards();
         if(!dropOperationFlag) {
             sendResponse(new Response(true, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         } else {
@@ -296,6 +287,7 @@ public class Server implements Runnable {
     //////////////////////////////////////////////////
     @SuppressWarnings("unchecked")
 	private void write(Request request, ObjectOutputStream outStream) throws IntegrityException, NonceTimeoutException {
+    	System.out.println("SERVER ON PORT " + this.serverPort + ": WRITE METHOD");
         // Get userName from keystore
         if(request.getTs() > usersBoards.get(request.getPublicKey()).getFirst()) {  // if ts' > ts then (ts, val) := (ts', v')
             usersBoards.get(request.getPublicKey()).setFirst(request.getTs());  // ts = ts'
@@ -321,7 +313,6 @@ public class Server implements Runnable {
                 }
                 announcementObject.put("ref_announcements", annoucementsList);
             }
-            System.out.println("aqui tou a guardar");
             usersBoards.get(request.getPublicKey()).getSecond().addAnnouncement(announcementObject); //update val with the new post
             saveUsersBoards();
 
@@ -353,8 +344,6 @@ public class Server implements Runnable {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-
                 //send
             }
         }
@@ -411,7 +400,7 @@ public class Server implements Runnable {
     }
     @SuppressWarnings("unchecked")
 	private void writeGeneral(Request request, ObjectOutputStream outStream) {
-        System.out.println("WRITEGENERALMETHOD");
+        System.out.println("SERVER ON PORT " + this.serverPort + ": WRITE GENERAL METHOD");
         if(request.getTs() >= generalBoard.getFirst()){
 
             if(request.getTs() > generalBoard.getFirst()){
@@ -481,8 +470,6 @@ public class Server implements Runnable {
         }
 
         System.out.println("SERVER ON PORT " + this.serverPort + ": READ METHOD");
-        String username = userIdMap.get(request.getPublicKeyToReadFrom());
-        String path = announcementBoardsPath + username + "/";
 
         int total = request.getNumber();
 
@@ -501,6 +488,7 @@ public class Server implements Runnable {
             e.printStackTrace();
             sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         }
+        
     }
     
 
@@ -510,7 +498,7 @@ public class Server implements Runnable {
     @SuppressWarnings("unchecked")
 	private void readGeneral(Request request) {
 
-        System.out.println("SERVER ON PORT " + this.serverPort + ": READGENERAL method");
+        System.out.println("SERVER ON PORT " + this.serverPort + ": READ GENERAL method");
 
         int total;
         if(request.getNumber() == 0) { //all posts
@@ -550,12 +538,11 @@ public class Server implements Runnable {
     //////////////////////////////////////////////
     
     private void wtsRequest(Request request, boolean isGeneral, ObjectOutputStream outStream) {
-    	System.out.println("SERVER ON PORT " + this.serverPort + ": WTS METHOD");
     	int wts = 0;
-    	if(isGeneral){
+    	if(isGeneral) {
             wts = generalBoard.getFirst();
         }
-    	else{
+    	else {
             wts = usersBoards.get(request.getPublicKey()).getFirst();
         }
         sendResponse(new Response(true, request.getClientNonce(), wts, cryptoManager.getPublicKeyFromKs("server")), outStream);
@@ -568,7 +555,7 @@ public class Server implements Runnable {
 //
 //////////////////////////////////////////
 
-    private Boolean checkValidAnnouncements(int[] announcs){
+    private Boolean checkValidAnnouncements(int[] announcs) {
         int total = getTotalAnnouncements();
         for (int i = 0; i < announcs.length; i++) { 		      
             if (announcs[i] >= total ) {
@@ -576,18 +563,6 @@ public class Server implements Runnable {
             }		
         } 	
         return true;
-    }
-    
-    private String[] getDirectoryList(PublicKey key){
-        String path = "";
-        if(key == null) {
-            path = generalBoardPath;
-        } else {
-            path = announcementBoardsPath + userIdMap.get(key) + "/";
-        }
-
-        File file = new File(path);
-        return file.list();
     }
 
     private void sendResponse(Response response, ObjectOutputStream outputStream) {
@@ -670,16 +645,10 @@ public class Server implements Runnable {
         userIdMap.clear();
         saveUserIdMap();
 
-        String path = announcementBoardsPath;
+        String path = storagePath;
 
         FileUtils.deleteDirectory(new File(path));
         File files = new File(path);
-        files.mkdirs();
-
-        path = generalBoardPath;
-
-        FileUtils.deleteDirectory(new File(path));
-        files = new File(path);
         files.mkdirs();
 
         setTotalAnnouncements(0);
@@ -760,12 +729,12 @@ public class Server implements Runnable {
 
     @SuppressWarnings("unchecked")
     private void saveUsersBoards() {
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(announcementBoardsCopy))) {
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(announcementBoardsPathCopy))) {
             out.writeObject(usersBoards);
             System.out.println("SERVER ON PORT " + this.serverPort + ": Created updated copy of Announcement Boards");
 
-            File original = new File(announcementBoardsFile);
-            File copy = new File(announcementBoardsCopy);
+            File original = new File(announcementBoardsPath);
+            File copy = new File(announcementBoardsPathCopy);
 
             if(original.delete()){
                 copy.renameTo(original);
@@ -796,7 +765,7 @@ public class Server implements Runnable {
 
     private void createOriginalUsersBoards() {
 
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(announcementBoardsFile))) {
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(announcementBoardsPath))) {
             out.writeObject(usersBoards);
 
         } catch (IOException e) {
@@ -813,12 +782,12 @@ public class Server implements Runnable {
 
     @SuppressWarnings("unchecked")
     private void saveGeneralBoard() {
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(generalBoardCopy))) {
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(generalBoardPathCopy))) {
             out.writeObject(generalBoard);
             System.out.println("SERVER ON PORT " + this.serverPort + ": Created updated copy of the General Board");
 
-            File original = new File(generalBoardFile);
-            File copy = new File(generalBoardCopy);
+            File original = new File(generalBoardPath);
+            File copy = new File(generalBoardPathCopy);
 
             if(original.delete()){
                 copy.renameTo(original);
@@ -831,31 +800,26 @@ public class Server implements Runnable {
 
     @SuppressWarnings("unchecked")
     private void getGeneralBoard() {
-        try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(generalBoardFile))) {
+        try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(generalBoardPath))) {
             generalBoard = (Pair<Integer, GeneralBoard>) in.readObject();
         } catch (ClassNotFoundException c) {
             System.out.println("SERVER ON PORT " + this.serverPort + ": Pair<Integer, GeneralBoard> class not found");
             c.printStackTrace();
             return;
-        }
-        catch(FileNotFoundException e){
-            generalBoard = new Pair<>(0, new GeneralBoard());
+        } catch(FileNotFoundException e) {
+            generalBoard = new Pair<Integer, GeneralBoard>(0, new GeneralBoard());
             createOriginalGeneralBoard();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void createOriginalGeneralBoard() {
-
-        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(generalBoardFile))) {
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(generalBoardPath))) {
             out.writeObject(generalBoard);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
 
@@ -946,7 +910,7 @@ public class Server implements Runnable {
                 // ## UserNotRegistered ## -> [READ] check if user TO READ FROM is registered
                 case -3:
                     if(!userIdMap.containsKey(request.getPublicKeyToReadFrom())) {
-                        sendResponse(new Response(false, -3, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
+                        sendExceptionCode(request.getPublicKey(), request.getClientNonce(), -3);
                         return false;
                     }
                     break;
@@ -980,7 +944,7 @@ public class Server implements Runnable {
                     break;
                 // ## TooMuchAnnouncements ## -> Check if user is trying to read more announcements that Board number of announcements
                 case -10:
-                    if ((request.getOperation().equals("READ") && request.getNumber() > getDirectoryList(request.getPublicKey()).length) || (request.getOperation().equals("READGENERAL") && request.getNumber() > getDirectoryList(null).length) ) {
+                    if ((request.getOperation().equals("READ") && request.getNumber() > usersBoards.get(request.getPublicKeyToReadFrom()).getSecond().size()) || (request.getOperation().equals("READGENERAL") && request.getNumber() > generalBoard.getSecond().size())) {
                         sendExceptionCode(request.getPublicKey(), request.getClientNonce(), -10);
                         return false;
                     }

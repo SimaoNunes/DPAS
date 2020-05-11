@@ -30,13 +30,13 @@ public class GeneralBoard implements Serializable {
         return this.annoucements;
     }
 
-    public JSONObject getAnnouncements(int number){
+    public JSONObject getAnnouncements(int number) {
         JSONArray annoucementsList = new JSONArray();
 
         if(number == 0){
             annoucementsList = getAnnoucements();
         }
-        else{
+        else {
             int i = 0;
             while (i < number){
                 JSONObject object = new JSONObject();
