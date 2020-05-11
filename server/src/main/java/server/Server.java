@@ -11,7 +11,6 @@ import org.apache.commons.io.FileUtils;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -119,7 +118,7 @@ public class Server implements Runnable {
 //
 //////////////////////////////////////////
     @SuppressWarnings("all")
-    public void run(){
+    public void run() {
 
         Socket socket = null;
         ObjectOutputStream outStream;
@@ -336,7 +335,7 @@ public class Server implements Runnable {
             saveTotalAnnouncements();*/
 
         }
-        if(listening.contains(userIdMap.get(request.getPublicKey()))){ // no one is reading from who is writing
+        if(listening.contains(userIdMap.get(request.getPublicKey()))) { // no one is reading from who is writing
             for(Map.Entry<PublicKey, Pair<Integer, Integer>> entry : listening.get(request.getPublicKey()).entrySet()){  //for every listening[q]
                 byte[] nonce = null;
                 try {
@@ -360,8 +359,6 @@ public class Server implements Runnable {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-
                 //send
             }
         }
@@ -579,7 +576,7 @@ public class Server implements Runnable {
 //
 //////////////////////////////////////////
 
-    private Boolean checkValidAnnouncements(int[] announcs){
+    private Boolean checkValidAnnouncements(int[] announcs) {
         int total = getTotalAnnouncements();
         for (int i = 0; i < announcs.length; i++) { 		      
             if (announcs[i] >= total ) {
