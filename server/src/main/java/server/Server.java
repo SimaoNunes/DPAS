@@ -167,7 +167,7 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READ":
-                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) && 
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1, -3}) && 
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                         		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
                         {
@@ -1007,7 +1007,7 @@ public class Server implements Runnable {
                 // ## UserNotRegistered ## -> [READ] check if user TO READ FROM is registered
                 case -3:
                     if(!userIdMap.containsKey(request.getPublicKeyToReadFrom())) {
-                        sendResponse(new Response(false, -3, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
+                        sendExceptionCode(request.getPublicKey(), request.getClientNonce(), -3);
                         return false;
                     }
                     break;
