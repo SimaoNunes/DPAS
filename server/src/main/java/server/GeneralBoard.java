@@ -33,12 +33,12 @@ public class GeneralBoard implements Serializable {
     public JSONObject getAnnouncements(int number) {
         JSONArray annoucementsList = new JSONArray();
 
-        if(number == 0){
+        if(number == 0) {
             annoucementsList = getAnnoucements();
         }
         else {
             int i = 0;
-            while (i < number){
+            while (i < number) {
                 JSONObject object = new JSONObject();
                 object.put("message", annoucements.get(annoucements.size() - 1 - i).getFirst());
                 object.put("signature", annoucements.get(annoucements.size() - 1 - i).getSecond());

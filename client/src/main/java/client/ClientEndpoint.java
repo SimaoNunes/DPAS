@@ -396,9 +396,7 @@ public class ClientEndpoint {
 
     public int postGeneral(String message, int[] announcs) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         // Ask Servers for actual wts in case we don't have it in memory
-        //if(wtsG == -1){
         wtsG = askForWts(true);
-        //}
         wtsG = wtsG + 1;
         // Variables to store responses and their results
         int[] results = new int[nServers];

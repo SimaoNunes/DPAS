@@ -361,13 +361,12 @@ public class Server implements Runnable {
     //				   POST GENERAL
     //////////////////////////////////////////////////
 
-    public void addConcurrentPost(JSONObject object, byte[] signature){
+    public void addConcurrentPost(JSONObject object, byte[] signature) {
         ArrayList<Pair<JSONObject, byte[]>> new_announcements = new ArrayList<>();
         String user = (String) object.get("user");
-
         int i = 0;
-        while(i < generalBoard.getSecond().getAnnoucements().size() - 1){
-            if((int) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst().get("ts") == (int) object.get("ts")){
+        while(i < generalBoard.getSecond().getAnnoucements().size() - 1) {
+            if((int) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst().get("ts") == (int) object.get("ts")) {
                 JSONObject older = (JSONObject) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst().get("user");
                 String older_user = (String) older.get("user");
 
@@ -398,14 +397,11 @@ public class Server implements Runnable {
         generalBoard.getSecond().setAnnoucements(new_announcements);
 
     }
+    
     @SuppressWarnings("unchecked")
 	private void writeGeneral(Request request, ObjectOutputStream outStream) {
         System.out.println("SERVER ON PORT " + this.serverPort + ": WRITE GENERAL METHOD");
-        if(request.getTs() >= generalBoard.getFirst()){
-
-            if(request.getTs() > generalBoard.getFirst()){
-                generalBoard.setFirst(request.getTs());
-            }
+        if(request.getTs() >= generalBoard.getFirst()) {
 
             // Get userName from keystore
             String username = userIdMap.get(request.getPublicKey());
@@ -424,7 +420,7 @@ public class Server implements Runnable {
             announcementObject.put("date", ft.format(dNow).toString());
 
 
-            if(refAnnouncements != null){
+            if(refAnnouncements != null) {
                 JSONArray annoucementsList = new JSONArray();
                 for(int i = 0; i < refAnnouncements.length; i++){
                     annoucementsList.add(Integer.toString(refAnnouncements[i]));
@@ -433,10 +429,11 @@ public class Server implements Runnable {
             }
 
             //ja n ta a escrever
-            if(request.getTs() == generalBoard.getFirst()){
+            if(request.getTs() == generalBoard.getFirst()) {
                 addConcurrentPost(announcementObject, request.getSignature());
             }
-            else{
+            else {
+            	generalBoard.setFirst(request.getTs());
                 generalBoard.getSecond().addAnnouncement(announcementObject, request.getSignature());
             }
 
@@ -502,7 +499,7 @@ public class Server implements Runnable {
 
         int total;
         if(request.getNumber() == 0) { //all posts
-            total = generalBoard.getSecond().size();    //directorySize
+            total = generalBoard.getSecond().size();
         } else {
             total = request.getNumber();
         }
