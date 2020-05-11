@@ -166,9 +166,10 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READ":
-                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1, -3}) && 
+                        if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) && 
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
-                        		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
+                                cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
+                                checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -10}))
                         {
                             read(envelope.getRequest(), outStream);
                         }
@@ -531,10 +532,12 @@ public class Server implements Runnable {
             path = generalBoardPath;
         } else {
             path = announcementBoardsPath + userIdMap.get(key) + "/";
-        }
-
+        }      
         File file = new File(path);
-        return file.list();
+        if(file.list() != null)
+            return file.list();
+        else
+            return new String[0];
     }
 
     private void sendResponse(Response response, ObjectOutputStream outputStream) {
