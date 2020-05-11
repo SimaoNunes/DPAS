@@ -91,10 +91,11 @@ public class Server implements Runnable {
         getUsersBoards();
         listening = new ConcurrentHashMap<>();
 
-        System.out.println("SERVER ON PORT " + this.serverPort + ": Up and running.");
         getUserIdMap();
 
         getTotalAnnouncementsFromFile();
+        
+        System.out.println("SERVER ON PORT " + this.serverPort + ": Up and running.");
 
         newListener();
     }
@@ -156,7 +157,8 @@ public class Server implements Runnable {
                     case "READ":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) && 
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
-                        		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
+                                cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
+                                checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -10}))
                         {
                             read(envelope.getRequest(), outStream);
                         }
@@ -510,17 +512,6 @@ public class Server implements Runnable {
             }		
         } 	
         return true;
-    }
-    
-    private String[] getDirectoryList(PublicKey key) {
-        String path = "";
-        if(key == null) {
-            path = generalBoardPath;
-        } else {
-            path = announcementBoardsPath + userIdMap.get(key) + "/";
-        }
-        File file = new File(path);
-        return file.list();
     }
 
     private void sendResponse(Response response, ObjectOutputStream outputStream) {
@@ -913,7 +904,7 @@ public class Server implements Runnable {
                     break;
                 // ## TooMuchAnnouncements ## -> Check if user is trying to read more announcements that Board number of announcements
                 case -10:
-                    if ((request.getOperation().equals("READ") && request.getNumber() > getDirectoryList(request.getPublicKey()).length) || (request.getOperation().equals("READGENERAL") && request.getNumber() > getDirectoryList(null).length) ) {
+                    if ((request.getOperation().equals("READ") && request.getNumber() > usersBoards.get(request.getPublicKeyToReadFrom()).getSecond().size()) || (request.getOperation().equals("READGENERAL") && request.getNumber() > generalBoard.getSecond().size())) {
                         sendExceptionCode(request.getPublicKey(), request.getClientNonce(), -10);
                         return false;
                     }
