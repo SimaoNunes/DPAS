@@ -23,15 +23,15 @@ public class AnnouncementBoard implements Serializable{
         this.announcements.add(object);
     }
 
-    public JSONArray getAnnouncements(int number){
+    public JSONArray getAnnouncements(int number) {
         JSONArray announcementsList = new JSONArray();
 
-        if(number == 0){
+        if(number == 0) {
             announcementsList = getAnnouncements();
         }
-        else{
+        else {
             int i = 0;
-            while (i < number){
+            while (i < number) {
                 announcementsList.add(announcements.get(announcements.size() - 1 - i));
                 i++;
             }
@@ -58,4 +58,5 @@ public class AnnouncementBoard implements Serializable{
     public int size() {
     	return this.announcements.size();
     }
+    
 }

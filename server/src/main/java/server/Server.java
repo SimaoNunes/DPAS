@@ -163,7 +163,7 @@ public class Server implements Runnable {
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) && 
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                                 cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
-                                checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -10}))
+                                checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -10, -6}))
                         {
                             read(envelope.getRequest(), outStream);
                         }
@@ -421,7 +421,6 @@ public class Server implements Runnable {
 
         System.out.println("SERVER ON PORT " + this.serverPort + ": READ METHOD");
         String username = userIdMap.get(request.getPublicKeyToReadFrom());
-        String path = announcementBoardsPath + username + "/";
 
         int total = request.getNumber();
 
@@ -440,6 +439,7 @@ public class Server implements Runnable {
             e.printStackTrace();
             sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         }
+        
     }
     
 
