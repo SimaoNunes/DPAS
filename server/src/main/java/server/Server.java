@@ -437,7 +437,7 @@ public class Server implements Runnable {
 
         int total;
         if(request.getNumber() == 0) { //all posts
-            total = directorySize;
+            total = usersBoards.get(userIdMap.get(request.getPublicKeyToReadFrom())).getSecond().size();
         } else {
             total = request.getNumber();
         }
