@@ -60,6 +60,7 @@ public class Server implements Runnable {
     /********************** Regular Register **********************/
 
     private Pair<Integer, GeneralBoard> generalBoard;
+    private ConcurrentHashMap<PublicKey, Integer> writers = null;
 
     
     /***************** Atomic Register variables ******************/
@@ -101,7 +102,9 @@ public class Server implements Runnable {
 
         getGeneralBoard();
         getUsersBoards();
+
         listening = new ConcurrentHashMap<>();
+        writers = new ConcurrentHashMap<>();
 
         System.out.println("SERVER ON PORT " + this.serverPort + ": Up and running.");
         getUserIdMap();
@@ -368,25 +371,69 @@ public class Server implements Runnable {
     //////////////////////////////////////////////////
     //				   POST GENERAL
     //////////////////////////////////////////////////
+
+    public void addConcurrentPost(JSONObject object, byte[] signature){
+        ArrayList<Pair<JSONObject, byte[]>> new_announcements = new ArrayList<>();
+        String user = (String) object.get("user");
+
+        int i = 0;
+        while(i < generalBoard.getSecond().getAnnoucements().size() - 1){
+            if((int) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst().get("ts") == (int) object.get("ts")){
+                JSONObject older = (JSONObject) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst().get("user");
+                String older_user = (String) older.get("user");
+
+                JSONObject next_older = (JSONObject) generalBoard.getSecond().getRawAnnouncements().get(i+1).getFirst().get("user");
+                String next_user = (String) next_older.get("user");
+
+                if(user.compareTo(older_user) < 0){
+                    new_announcements.add(new Pair<>(object, signature));
+                    new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+                    break;
+                }
+
+                if(user.compareTo(older_user) > 0 && user.compareTo(next_user) < 0) {
+                    new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+                    new_announcements.add(new Pair<>(object, signature));
+                    break;
+                }
+            }
+            else{
+                new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+            }
+
+        }
+        while(i < generalBoard.getSecond().getAnnoucements().size()){
+            new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+        }
+
+        generalBoard.getSecond().setAnnoucements(new_announcements);
+
+    }
     @SuppressWarnings("unchecked")
 	private void writeGeneral(Request request, ObjectOutputStream outStream) {
         System.out.println("WRITEGENERALMETHOD");
-        if(request.getTs() > generalBoard.getFirst()){
-            generalBoard.setFirst(request.getTs());
+        if(request.getTs() >= generalBoard.getFirst()){
+
+            if(request.getTs() > generalBoard.getFirst()){
+                generalBoard.setFirst(request.getTs());
+            }
 
             // Get userName from keystore
             String username = userIdMap.get(request.getPublicKey());
+
+            int[] refAnnouncements = request.getAnnouncements();
             // Write to file
             JSONObject announcementObject =  new JSONObject();
             announcementObject.put("id", Integer.toString(getTotalAnnouncements()));
             announcementObject.put("user", username);
             announcementObject.put("message", request.getMessage());
+            announcementObject.put("ts", request.getTs());
+            announcementObject.put("ref:", refAnnouncements);
 
             Date dNow = new Date();
             SimpleDateFormat ft = new SimpleDateFormat ("dd-MM-yyyy 'at' HH:mm");
             announcementObject.put("date", ft.format(dNow).toString());
 
-            int[] refAnnouncements = request.getAnnouncements();
 
             if(refAnnouncements != null){
                 JSONArray annoucementsList = new JSONArray();
@@ -396,7 +443,13 @@ public class Server implements Runnable {
                 announcementObject.put("ref_announcements", annoucementsList);
             }
 
-            generalBoard.getSecond().addAnnouncement(announcementObject, request.getSignature());
+            //ja n ta a escrever
+            if(request.getTs() == generalBoard.getFirst()){
+                addConcurrentPost(announcementObject, request.getSignature());
+            }
+            else{
+                generalBoard.getSecond().addAnnouncement(announcementObject, request.getSignature());
+            }
 
             saveGeneralBoard();
 

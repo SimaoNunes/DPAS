@@ -26,6 +26,10 @@ public class GeneralBoard implements Serializable {
         this.annoucements.add(new Pair<>(object, signature));
     }
 
+    public ArrayList<Pair<JSONObject, byte[]>> getRawAnnouncements(){
+        return this.annoucements;
+    }
+
     public JSONObject getAnnouncements(int number){
         JSONArray annoucementsList = new JSONArray();
 
@@ -47,7 +51,7 @@ public class GeneralBoard implements Serializable {
         return announcementsToSend;
     }
 
-    public void setAnnoucements(JSONArray annoucements) {
+    public void setAnnoucements(ArrayList<Pair<JSONObject, byte[]>> annoucements) {
         this.annoucements = annoucements;
     }
 

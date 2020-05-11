@@ -1,9 +1,7 @@
 package client;
 
 import exceptions.*;
-import library.Envelope;
-import library.Request;
-import library.Response;
+import library.*;
 
 import org.json.simple.JSONObject;
 
@@ -397,9 +395,9 @@ public class ClientEndpoint {
 
     public int postGeneral(String message, int[] announcs) throws UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         // Ask Servers for actual wts in case we don't have it in memory
-        if(wtsG == -1){
-            wtsG = askForWts(true);
-        }
+        //if(wtsG == -1){
+        wtsG = askForWts(true);
+        //}
         wtsG = wtsG + 1;
         // Variables to store responses and their results
         int[] results = new int[nServers];
@@ -471,7 +469,8 @@ public class ClientEndpoint {
                                                                                                                                                                                  UserNotRegisteredException, MessageTooBigException, OperationTimeoutException, FreshnessException, IntegrityException {
         Request request;
 
-        byte[] signature = cryptoManager.signMessage(message);
+        Quadruplet<String, Integer, String, int[]> quad = new Quadruplet<>(username, ts, message, announcs);
+        byte[] signature = cryptoManager.signMessage(quad);
 
         request = new Request("POSTGENERAL", clientKey, message, announcs, serverNonce, clientNonce, ts, signature);
 

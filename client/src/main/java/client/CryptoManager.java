@@ -19,6 +19,8 @@ import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import library.Pair;
+import library.Quadruplet;
 import library.Request;
 import library.Response;
 import org.json.simple.JSONObject;
@@ -64,7 +66,7 @@ public class CryptoManager {
 		return new byte[0];
 	}
 
-	byte[] signMessage(String message){
+	byte[] signMessage(Quadruplet<String, Integer, String, int[]> message){
     	try{
 			PrivateKey key = getPrivateKeyFromKs();
 			// Initialize needed structures
@@ -90,8 +92,6 @@ public class CryptoManager {
 
 	boolean verifyMessage(JSONObject object, byte[] signature){
 
-		String message = (String) object.get("message");
-
 		PublicKey keyFrom = getPublicKeyFromKs((String) object.get("user"));
 
 		try {
@@ -100,7 +100,7 @@ public class CryptoManager {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);
 			// Convert response to byteArray
-			out.writeObject(message);
+			out.writeObject(object);
 			out.flush();
 			byte[] messageBytes = bos.toByteArray();
 			// Verify signature
