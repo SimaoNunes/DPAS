@@ -34,7 +34,12 @@ public class GeneralBoard implements Serializable {
         JSONArray annoucementsList = new JSONArray();
 
         if(number == 0) {
-            annoucementsList = getAnnoucements();
+            for(int i = annoucements.size() - 1; i >= 0 ; i--){
+                JSONObject object = new JSONObject();
+                object.put("message", annoucements.get(i).getFirst());
+                object.put("signature", annoucements.get(i).getSecond());
+                annoucementsList.add(object);
+            }
         }
         else {
             int i = 0;
