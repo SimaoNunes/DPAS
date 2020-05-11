@@ -554,18 +554,19 @@ public class ClientEndpoint {
         }
         // Get result from Listener
         Envelope result = listener.getResult();
-        // Threads that will make the requests to the server
-        Thread[] tasksReadComplete = new Thread[nServers];
-        // Send 'read complete' to all servers
-        for (PublicKey serverKey : serversPorts.keySet()) {
-        	tasksReadComplete[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
-                public void run() {
-                	readComplete(announcUserName, serverKey, rid);
-                }
-            });
-        	tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
-        }
+
         if(result.getRequest() != null){
+             // Threads that will make the requests to the server
+            Thread[] tasksReadComplete = new Thread[nServers];
+            // Send 'read complete' to all servers
+            for (PublicKey serverKey : serversPorts.keySet()) {
+                tasksReadComplete[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
+                    public void run() {
+                        readComplete(announcUserName, serverKey, rid);
+                    }
+                });
+                tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
+            }
             return result.getRequest().getJsonObject();
         }
         else{
