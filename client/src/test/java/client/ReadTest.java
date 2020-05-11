@@ -43,7 +43,8 @@ public class ReadTest extends BaseTest{
 
 		String[] result = getMessagesFromJSON(clientEndpoint1.read("user1", 2)); // will receive 2
 		// check the one that corresponds to the post referring null announcements
-		assertEquals("user1 announc message3", result[1]); 
+		assertEquals("user1 announc message3", result[1]);
+		
 	}
 
 	@Test
@@ -53,11 +54,11 @@ public class ReadTest extends BaseTest{
 		String[] result2 = getMessagesFromJSON(clientEndpoint2.read("user2", 3)); // will receive 3
 
 		// check the ones that correspond to the posts referring null announcements
-		assertEquals(result1[1], "message3 user1");
-		assertEquals(result1[2], "message2 user1"); 
+		assertEquals(result1[1], "user1 announc message3");
+		assertEquals(result1[2], "user1 announc message2"); 
 
-		assertEquals(result2[1], "message3 user2");
-		assertEquals(result2[2], "message2 user2");
+		assertEquals(result2[1], "user2 announc message3");
+		assertEquals(result2[2], "user2 announc message2");
 
 	}
 
@@ -65,7 +66,7 @@ public class ReadTest extends BaseTest{
 	public void Should_Succeed_When_UserReadingNotRegistered() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		//user 3 is not registered
 		String[] result1 = getMessagesFromJSON(clientEndpoint2.read("user1", 3)); // will receive 3
-		assertEquals(result1[1], "message3 user1");
+		assertEquals(result1[1], "user1 announc message3");
 	}
 	
 	@Test(expected = UserNotRegisteredException.class)
