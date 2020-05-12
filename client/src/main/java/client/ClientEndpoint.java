@@ -41,6 +41,7 @@ public class ClientEndpoint {
     private ReplayAttacker replayAttacker = null;
     private boolean replayFlag = false;
     private boolean integrityFlag = false;
+    private boolean waitForReadCompleteFlag = false;
     
     
 //////////////////////////////////////////
@@ -72,6 +73,10 @@ public class ClientEndpoint {
 
 	public void setIntegrityFlag(boolean integrityFlag) {
 		this.integrityFlag = integrityFlag;
+	}
+	
+	public void setWaitForReadCompleteFlag(boolean waitForReadCompleteFlag) {
+		this.waitForReadCompleteFlag = waitForReadCompleteFlag;
 	}
 
     public PublicKey getPublicKey() {
@@ -551,7 +556,6 @@ public class ClientEndpoint {
         }
         // Get result from Listener
         Envelope result = listener.getResult();
-
         if(result.getRequest() != null) {
              // Threads that will make the requests to the server
             Thread[] tasksReadComplete = new Thread[nServers];
@@ -564,17 +568,18 @@ public class ClientEndpoint {
                 });
                 tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
             }
-            /* TURN THIS CODE ON IF YOU DONT WANT DELETE USERS TO HAVE NULL POINTER ON SOME TESTS
-               boolean stillAlive = true;
-            while(stillAlive) {
-                stillAlive = false;
-                for (PublicKey serverKey : serversPorts.keySet()) {
-                    if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
-                        stillAlive = true;
-                        break;
-                    }
-                }
-            }*/
+            if(waitForReadCompleteFlag) {
+	            boolean stillAlive = true;
+	            while(stillAlive) {
+	                stillAlive = false;
+	                for (PublicKey serverKey : serversPorts.keySet()) {
+	                    if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
+	                        stillAlive = true;
+	                        break;
+	                    }
+	                }
+	            }
+            }
             return result.getRequest().getJsonObject();
         }
         else {
