@@ -98,7 +98,7 @@ public class CryptoManager {
 				new Quadruplet( object.get("user"),
 						 object.get("ts"), object.get("message")
 						,  object.get("ref"));
-		
+
 		try {
 			// Initialize needed structures
 			Signature verifySignature = Signature.getInstance("SHA256withRSA");

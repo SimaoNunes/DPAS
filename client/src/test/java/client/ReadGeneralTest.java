@@ -58,14 +58,14 @@ public class ReadGeneralTest extends BaseTest {
     @Test
 	public void Should_Succeed_When_AnnouncsIsNull() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, NonceTimeoutException, UserNotRegisteredException, FreshnessException {
         // should succeed even though the user didn't refer any other announcements when posting
-        String[] general_result = getMessagesFromJSON(clientEndpoint1.readGeneral(2));
+        String[] general_result = getMessagesFromJSONGeneral(clientEndpoint1.readGeneral(2));
         assertEquals("public post2 from user2", general_result[1]);
     }
 
 	@Test
 	public void Should_Succeed_When_Asking_For_All() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, NonceTimeoutException, UserNotRegisteredException, FreshnessException {
 
-        String[] general_result = getMessagesFromJSON(clientEndpoint1.readGeneral(0));
+        String[] general_result = getMessagesFromJSONGeneral(clientEndpoint1.readGeneral(0));
 
         assertEquals(general_result[0], "message with references from user1");
         assertEquals(general_result[1], "public post2 from user2");
@@ -80,8 +80,8 @@ public class ReadGeneralTest extends BaseTest {
 		// get announcements with references -> which is the most recent one (1)       
         JSONObject result1 = clientEndpoint1.readGeneral(1); 
 
-		int ref_id1_from_user1 = Integer.parseInt(getReferencedAnnouncementsFromJSONResultWith1Post(result1)[0]);
-		int ref_id1_from_user2 = Integer.parseInt(getReferencedAnnouncementsFromJSONResultWith1Post(result1)[1]);
+		int ref_id1_from_user1 = Integer.parseInt(getReferencedAnnouncementsFromJSONResultWith1PostGeneral(result1)[0]);
+		int ref_id1_from_user2 = Integer.parseInt(getReferencedAnnouncementsFromJSONResultWith1PostGeneral(result1)[1]);
 
         assertEquals(0, ref_id1_from_user1);
         assertEquals(3, ref_id1_from_user2);
