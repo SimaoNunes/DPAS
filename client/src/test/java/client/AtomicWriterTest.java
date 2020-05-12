@@ -55,6 +55,11 @@ public class AtomicWriterTest extends BaseTest {
         clientEndpoint1.post("This should be the one returned user1", null);
 
         while(threadRead.isAlive()) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         assertEquals("This should be the one returned user1", result[0][0]);

@@ -809,7 +809,7 @@ public class Server implements Runnable {
             File original = new File(generalBoardPath);
             File copy = new File(generalBoardPathCopy);
 
-            if(original.delete()){
+            if(original.delete()) {
                 copy.renameTo(original);
             }
 
@@ -850,22 +850,22 @@ public class Server implements Runnable {
 /////////////////////////////////////////////////////////
 
 
-    private void incrementTotalAnnouncs(){
+    private void incrementTotalAnnouncs() {
         totalAnnouncements.incrementAndGet();
     }
 
-    private void setTotalAnnouncements(int value){
+    private void setTotalAnnouncements(int value) {
         totalAnnouncements.set(value);
     }
 
-    private int getTotalAnnouncements(){
+    private int getTotalAnnouncements() {
         return totalAnnouncements.get();
     }
 
-    private void saveTotalAnnouncements(){
+    private void saveTotalAnnouncements() {
         try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(totalAnnouncementsPathCopy))) {
             out.writeObject(totalAnnouncements.get());
-            System.out.println("SERVER ON PORT " + this.serverPort + ": Serialized data saved in copy");
+            System.out.println("SERVER ON PORT " + this.serverPort + ": Serialized data of Total Announcements saved in copy");
 
             File original = new File(totalAnnouncementsPath);
             File copy = new File(totalAnnouncementsPathCopy);
@@ -975,9 +975,8 @@ public class Server implements Runnable {
         }
         return true;
     }
-    
 
-    private void sendExceptionCode(PublicKey clientKey, byte[] clientNonce, int code){
+    private void sendExceptionCode(PublicKey clientKey, byte[] clientNonce, int code) {
         int clientPort = getClientPort(userIdMap.get(clientKey));
         int ts = usersBoards.get(clientKey).getFirst();
         try(ObjectOutputStream newOutputStream = new ObjectOutputStream(new Socket("localhost", clientPort).getOutputStream())) {
@@ -987,7 +986,14 @@ public class Server implements Runnable {
         }
     }
 
-    private int getClientPort(String client){
+    
+//////////////////////////////////////////
+//
+//			Auxiliary methods
+//
+//////////////////////////////////////////
+    
+    private int getClientPort(String client) {
         try(BufferedReader reader = new BufferedReader(new FileReader("../clients_addresses.txt"))){
             String line;
             while((line = reader.readLine()) != null){

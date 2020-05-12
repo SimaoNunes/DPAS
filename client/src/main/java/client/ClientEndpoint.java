@@ -515,7 +515,7 @@ public class ClientEndpoint {
 
     public JSONObject read(String announcUserName, int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         rid += 1;
-        //forall t > 0 do answers [t] := [⊥] N ;
+        // forall t > 0 do answers [t] := [⊥] N ;
         Listener listener = null;
         ServerSocket listenerSocket = null;
         try {
@@ -552,7 +552,7 @@ public class ClientEndpoint {
         // Get result from Listener
         Envelope result = listener.getResult();
 
-        if(result.getRequest() != null){
+        if(result.getRequest() != null) {
              // Threads that will make the requests to the server
             Thread[] tasksReadComplete = new Thread[nServers];
             // Send 'read complete' to all servers
@@ -564,9 +564,20 @@ public class ClientEndpoint {
                 });
                 tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
             }
+            /* TURN THIS CODE ON IF YOU DONT WANT DELETE USERS TO HAVE NULL POINTER ON SOME TESTS
+               boolean stillAlive = true;
+            while(stillAlive) {
+                stillAlive = false;
+                for (PublicKey serverKey : serversPorts.keySet()) {
+                    if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
+                        stillAlive = true;
+                        break;
+                    }
+                }
+            }*/
             return result.getRequest().getJsonObject();
         }
-        else{
+        else {
             switch (result.getResponse().getErrorCode()) {
                 case (-1):
                     throw new UserNotRegisteredException("User not Registered");
