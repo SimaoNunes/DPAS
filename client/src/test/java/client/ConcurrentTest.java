@@ -6,6 +6,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
+import java.security.PublicKey;
+
 public class ConcurrentTest extends BaseTest {
 
     @BeforeClass
@@ -13,7 +15,6 @@ public class ConcurrentTest extends BaseTest {
         clientEndpoint1.register();
         clientEndpoint2.register();
         clientEndpoint1.post("First test message user1", null);
-
     }
 
     @Test
@@ -24,10 +25,9 @@ public class ConcurrentTest extends BaseTest {
         String[][] result = new String[1][1];
 
         Thread threadRead = new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
-                    result[0] = getMessagesFromJSON(clientEndpoint1.read("user1", 1));
+                    result[0] = getMessagesFromJSON(clientEndpoint2.read("user1", 1));
                 } catch (UserNotRegisteredException e) {
                     e.printStackTrace();
                 } catch (InvalidPostsNumberException e) {
@@ -48,14 +48,14 @@ public class ConcurrentTest extends BaseTest {
 
         threadRead.start();
 
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        while(true) {
+        	if(threadRead.isAlive()) {
+        		break;
+        	}
         }
 
         clientEndpoint1.post("This should be the one returned user1", null);
 
-        assertEquals(result[0][0], "This should be the one returned user1");
+        assertEquals("This should be the one returned user1", result[0][0]);
     }
 }
