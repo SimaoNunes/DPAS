@@ -50,6 +50,7 @@ public class Server implements Runnable {
     private boolean dropOperationFlag = false;
     private boolean handshake = false;
     private boolean integrityFlag = false;
+    private boolean atomicWriteFlag = false;
     private Response oldResponse;
     private Envelope oldEnvelope;
     
@@ -245,6 +246,14 @@ public class Server implements Runnable {
                     case "DROP_OPERATION_FLAG_FALSE":
                     	dropOperationFlag = false;
                     	break;
+                    case "ATOMIC_WRITE_FLAG_TRUE":
+                        atomicWriteFlag = true;
+                        break;
+                    case "ATOMIC_WRITE_FLAG_FALSE":
+                        atomicWriteFlag = false;
+                        break;
+
+
                     default:
                         break;
                 }
@@ -467,6 +476,15 @@ public class Server implements Runnable {
         }
 
         System.out.println("SERVER ON PORT " + this.serverPort + ": READ METHOD");
+
+        if(atomicWriteFlag){
+            try{
+                System.out.println("Gonna sleep");
+                Thread.sleep(4000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
         int total = request.getNumber();
 
