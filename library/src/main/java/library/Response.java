@@ -16,7 +16,7 @@ public class Response implements Serializable {
     private int rid = 0;
     private int port = 0;
     private PublicKey publicKey;
-
+    private String operationType = null;
 
     public Response(byte[] nonce) {
         this.nonce = nonce;
@@ -49,20 +49,22 @@ public class Response implements Serializable {
     }
     
     // Throw exception
-    public Response(boolean success, int errorCode, byte[] nonce, PublicKey publicKey) {
+    public Response(boolean success, int errorCode, byte[] nonce, PublicKey publicKey, String operationType) {
         this.success = success;
         this.errorCode = errorCode;
         this.nonce = nonce;
         this.publicKey = publicKey;
+        this.operationType = operationType;
     }
 
      // Throw exception com o TIMESTAMP DO ERRO
-     public Response(boolean success, int errorCode, byte[] nonce, PublicKey publicKey, int ts) {
+     public Response(boolean success, int errorCode, byte[] nonce, PublicKey publicKey, int ts, String operationType) {
         this.success = success;
         this.errorCode = errorCode;
         this.nonce = nonce;
         this.publicKey = publicKey;
         this.ts = ts;
+        this.operationType = operationType;
     }
 
 
@@ -151,6 +153,14 @@ public class Response implements Serializable {
 
     public void setNonce(byte[] nonce) {
         this.nonce = nonce;
+    }
+
+    public String getOperationType() {
+        return operationType;
+    }
+
+    public void setOperationType(String type) {
+        this.operationType = type;
     }
 
     @Override

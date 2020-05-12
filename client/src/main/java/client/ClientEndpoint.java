@@ -685,14 +685,15 @@ public class ClientEndpoint {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        JSONObject result = listener.getResultGeneral();
+
+        Envelope result = listener.getResultGeneral();
+
         // Threads that will make the requests to the server
-        return result;
-        /*if(result.getSuccess()){
-            return result.getJsonObject();
+        if(result.getRequest() != null){
+            return result.getRequest().getJsonObject();
         }
         else{
-            switch (result.getErrorCode()) {
+            switch (result.getResponse().getErrorCode()) {
                 case (-1):
                     throw new UserNotRegisteredException("User not Registered");
                 case (-3):
@@ -711,9 +712,9 @@ public class ClientEndpoint {
                     throw new IntegrityException("Integrity Exception");
                 default:
                     break;
-
             }
-        }*/
+        }
+        return null;
     }
 
     public Response readGeneralMethod(int number, PublicKey serverKey, int rid) {
