@@ -38,6 +38,7 @@ public class Listener implements Runnable{
 
         cryptoManager = new CryptoManager(userName);
         answers = new ConcurrentHashMap<>();
+        answerGeneralExceptions = new HashMap<>();
         answerGeneral = Collections.synchronizedList(new ArrayList<Pair<Integer, Envelope>>());
         answerGeneralExceptions = new HashMap<PublicKey, Pair<Integer, Envelope>>();
         endpoint = ss;
@@ -122,7 +123,7 @@ public class Listener implements Runnable{
                         result = checkAnswer(envelope);
                         break;
                     case "READGENERAL":
-                        result = checkGeneralAnswer(envelope);
+                        resultGeneral = checkGeneralAnswer(envelope);
                         break;
                     default:
                         break;
@@ -210,8 +211,9 @@ public class Listener implements Runnable{
                     exceptionsCollection.add(entry.getValue().getSecond());
                 }
                 Envelope result = checkQuorum(exceptionsCollection);
-                if(result != null)
+                if(result != null){
                     return result;
+                }
             } 
         }
         return null;
