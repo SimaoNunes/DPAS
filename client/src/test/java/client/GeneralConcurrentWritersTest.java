@@ -27,12 +27,12 @@ public class GeneralConcurrentWritersTest extends BaseTest {
     @Test
     public void Should_Succeed_When_2ConcurrentWriter1Reader() throws UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, MessageTooBigException, FreshnessException, IntegrityException, OperationTimeoutException {
 
-        String[][] result = new String[1][1];
+        String[][] result = new String[2][1];
 
         Thread threadRead = new Thread(new Runnable() {
             public void run() {
                 try {
-                    clientEndpoint2.post(" message1 user1", null);
+                    clientEndpoint1.post(" message1 user1", null);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -40,7 +40,14 @@ public class GeneralConcurrentWritersTest extends BaseTest {
         });
         threadRead.start();
 
-        clientEndpoint1.post("This should be the one returned user1", null);
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        setGeneralConcurrentWriteFlag(false);
+
+        clientEndpoint2.post("This should be the one returned user1", null);
 
         while(threadRead.isAlive()) {
             try {
