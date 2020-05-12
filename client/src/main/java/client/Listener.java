@@ -23,20 +23,22 @@ public class Listener implements Runnable{
 
     private ServerSocket endpoint;
     private int nQuorum;
-    private Envelope result = null;
-    private JSONObject resultGeneral = null;
     private CryptoManager cryptoManager = null;
     private Thread listenerThread;
     private PublicKey clientKey;
-    private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Envelope>> answers = null;
-    private List<Pair<Integer, JSONArray>> readlist;
     private Map<PublicKey, Integer> serversPorts = null;
+    
+    private Envelope result = null;    
+    private Envelope resultGeneral = null;
+    private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Envelope>> answers = null;
+    private List<Pair<Integer, Envelope>> answerGeneral;
+    private Map<PublicKey , Pair<Integer, Envelope>> answerGeneralExceptions;
 
     public Listener(ServerSocket ss, int nQuorum, String userName, PublicKey key, Map<PublicKey, Integer> serversPortsFromEndpoint) {
 
         cryptoManager = new CryptoManager(userName);
         answers = new ConcurrentHashMap<>();
-        readlist = Collections.synchronizedList(new ArrayList<Pair<Integer, JSONArray>>());
+        answerGeneral = Collections.synchronizedList(new ArrayList<Pair<Integer, Envelope>>());
         endpoint = ss;
         this.nQuorum = nQuorum;
         this.clientKey = key;
@@ -44,11 +46,11 @@ public class Listener implements Runnable{
         serversPorts = serversPortsFromEndpoint;
     }
 
-    public JSONObject getResultGeneral() {
+    public Envelope getResultGeneral() {
         return resultGeneral;
     }
 
-    public void setResultGeneral(JSONObject resultGeneral) {
+    public void setResultGeneral(Envelope resultGeneral) {
         this.resultGeneral = resultGeneral;
     }
 
@@ -102,7 +104,7 @@ public class Listener implements Runnable{
 	                        }
             			}
             			break;
-                    case"VALUEGENERAL":
+                    case "VALUEGENERAL":
                         if(cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), envelope.getRequest().getPublicKey())) {
                             if (cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getClientNonce())) {
                                 resultGeneral = checkGeneralAnswer(envelope);
@@ -114,7 +116,16 @@ public class Listener implements Runnable{
             			break;
                 }
             } else {
-                result = checkAnswer(envelope);
+                switch(envelope.getResponse().getOperationType()) {
+                    case "READ":
+                        result = checkAnswer(envelope);
+                        break;
+                    case "READGENERAL":
+                        result = checkGeneralAnswer(envelope);
+                        break;
+                    default:
+                        break;
+                }
             }
             outputStream.close();
             inStream.close();
@@ -167,6 +178,44 @@ public class Listener implements Runnable{
         return null;
     }
 
+    private Envelope checkGeneralAnswer(Envelope envelope){
+        if(envelope.getRequest() != null){
+            Request request = envelope.getRequest();
+            JSONArray array = (JSONArray) request.getJsonObject().get("announcementList");
+            for(Object o : array){
+                JSONObject json = (JSONObject) o;
+                if(!cryptoManager.verifyMessage((JSONObject) json.get("message"), (byte[]) json.get("signature"))){
+                    return null; // there is a message with the wrong signature, maybe send integrity exception?
+                }
+            }
+            answerGeneral.add(new Pair<>(request.getTs(), envelope));
+            if(answerGeneral.size() > nQuorum){
+                int max = 0;
+                int index = 0;
+                for(int i = 0; i < answerGeneral.size(); i++){
+                    if(answerGeneral.get(i).getFirst() > max){
+                        max = answerGeneral.get(i).getFirst();
+                        index = i;
+                    }
+                }
+                return answerGeneral.get(index).getSecond();
+            } 
+        } else {
+            Response response = envelope.getResponse();
+            answerGeneralExceptions.put(response.getPublicKey(), new Pair<>(response.getTs(), envelope));
+            if(answerGeneralExceptions.size() > nQuorum){
+                Collection<Envelope> exceptionsCollection = new ArrayList<>();
+                for(Map.Entry<PublicKey, Pair<Integer, Envelope>> entry : answerGeneralExceptions.entrySet()){
+                    exceptionsCollection.add(entry.getValue().getSecond());
+                }
+                Envelope result = checkQuorum(exceptionsCollection);
+                if(result != null)
+                    return result;
+            } 
+        }
+        return null;
+    }
+
     private Envelope checkQuorum(Collection<Envelope> line) {
         HashMap<String, Integer> counter = new HashMap<>();
 
@@ -181,33 +230,6 @@ public class Listener implements Runnable{
                 counter.put(entry.toString(), 1);
             }
 
-        }
-        return null;
-    }
-
-
-    private JSONObject checkGeneralAnswer(Envelope envelope){
-        Request request = envelope.getRequest();
-        JSONArray array = (JSONArray) request.getJsonObject().get("announcementList");
-        for(Object o : array){
-            JSONObject json = (JSONObject) o;
-            if(!cryptoManager.verifyMessage((JSONObject) json.get("message"), (byte[]) json.get("signature"))){
-                return null; // there is a message with the wrong signature, maybe send integrity exception?
-            }
-        }
-        readlist.add(new Pair<>(request.getTs(), array));
-        if(readlist.size() > nQuorum){
-            int max = 0;
-            int index = 0;
-            for(int i = 0; i < readlist.size(); i++){
-                if(readlist.get(i).getFirst() > max){
-                    max = readlist.get(i).getFirst();
-                    index = i;
-                }
-            }
-            JSONObject final_result = new JSONObject();
-            final_result.put("announcementList", readlist.get(index).getSecond());
-            return final_result;
         }
         return null;
     }
