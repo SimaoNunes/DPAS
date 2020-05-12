@@ -92,14 +92,13 @@ public class CryptoManager {
 
 	boolean verifyMessage(JSONObject object, byte[] signature){
 
-		System.out.println(object.toJSONString());
 		PublicKey keyFrom = getPublicKeyFromKs((String) object.get("user"));
 
 		Quadruplet<String, Integer, String, int[]> quadruplet =
-				new Quadruplet( object.get("username"),
+				new Quadruplet( object.get("user"),
 						 object.get("ts"), object.get("message")
 						,  object.get("ref"));
-
+		
 		try {
 			// Initialize needed structures
 			Signature verifySignature = Signature.getInstance("SHA256withRSA");
