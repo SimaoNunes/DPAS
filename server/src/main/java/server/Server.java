@@ -16,6 +16,7 @@ import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.*;
 import java.text.SimpleDateFormat;
@@ -707,17 +708,18 @@ public class Server implements Runnable {
 
         int total = request.getNumber();
 
-        try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", getClientPort(userIdMap.get(request.getPublicKey()))).getOutputStream())){
+        try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", getClientPort(userIdMap.get(request.getPublicKey()))).getOutputStream())) {
 
-            JSONObject announcementsToSend =  new JSONObject();
+            JSONObject announcementsToSend = new JSONObject();
             announcementsToSend.put("announcementList", usersBoards.get(request.getPublicKeyToReadFrom()).getSecond().getAnnouncements(total));
 
             // Send response to client
             // ------> Handshake one way
             byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
-            
-            sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(request.getPublicKeyToReadFrom()).getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
 
+            sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(request.getPublicKeyToReadFrom()).getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
+        } catch (SocketException e){
+            return;  //if client socket is closed it means he already got enough answers or even byzantine client
         } catch(Exception e) {
             e.printStackTrace();
             sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server"), "READ"), outStream);
