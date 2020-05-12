@@ -154,7 +154,7 @@ public class Server implements Runnable {
                 Envelope envelope = (Envelope) inStream.readObject();
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
-                        //checkDelivered(envelope);
+                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}, null) &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(envelope.getRequest().getUsername())) &&
                             	cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
@@ -314,6 +314,7 @@ public class Server implements Runnable {
 
 
     private void checkReady(Envelope envelope){
+        System.out.println("CHECK READY PORT:" + serverPort);
         synchronized (readys){
             if(readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null){
                 readys.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), new ConcurrentHashMap<>());
@@ -332,8 +333,10 @@ public class Server implements Runnable {
                 if(counter.get(entry.toString()) > 2 * nFaults && (delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
                                                                        !delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
                     delivered.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
+                    System.out.println("ativei a delivered, PORT: " + serverPort);
                     sentEcho.remove(entry.getRequest().getPublicKey());
-                    sentReady.remove(entry.getRequest().getPublicKey());
+                    System.out.println("PORT SIZE: " + serverPort + sentReady.values().size());
+                    sentReady.clear();
                     echos.remove(entry.getRequest().getPublicKey());
                     readys.remove(entry.getRequest().getPublicKey());
                     break;
@@ -355,21 +358,29 @@ public class Server implements Runnable {
     }
 
     private void checkEcho(Envelope envelope){
+        System.out.println("CHECK ECHO PORT:" + serverPort);
         if(echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null){
+            System.out.println("1");
             echos.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), new ConcurrentHashMap<>());
             echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
         }
         else{
+            System.out.println("2");
             echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
         }
 
         HashMap<String, Integer> counter = new HashMap<>();
 
         for(Envelope entry: echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).values()){
+            System.out.println("3");
             if(counter.containsKey(entry.toString())){
+                System.out.println("4");
                 counter.put(entry.toString(), counter.get(entry.toString()) + 1);
-                if(counter.get(entry.toString()) > nQuorum && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
-                                                                      !sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
+                System.out.println("1" + (counter.get(entry.toString()) > nQuorum));
+                System.out.println("2" + (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey())));
+                System.out.println("3" + userIdMap.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()));
+                if(counter.get(entry.toString()) > nQuorum && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null )){
+                    System.out.println("5");
                     sentReady.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
                     broadcastReady(entry);
                 }
@@ -384,6 +395,7 @@ public class Server implements Runnable {
     }
 
     private void broadcastReady(Envelope envelope){
+        System.out.println("BROADCAST READY PORT: " + serverPort);
         Thread[] tasks = new Thread[nServers];
 
         int i = 0;
@@ -424,57 +436,57 @@ public class Server implements Runnable {
     private void checkDelivered(Envelope envelope){
         delivered.put(envelope.getRequest().getPublicKey(), false);
 
-        if(sentEcho.get(envelope.getRequest().getPublicKey()) == null){
+        if(sentEcho.get(envelope.getRequest().getPublicKey()) == null) {
             sentEcho.put(envelope.getRequest().getPublicKey(), true);
-        }
 
-        Thread[] tasks = new Thread[nServers];
+            Thread[] tasks = new Thread[nServers];
 
-        int i = 0;
-        while( i < nServers){
-            if((PORT + i) == Integer.parseInt(serverPort)){
-                Request request = new Request("ECHO", envelope, cryptoManager.getPublicKeyFromKs("server"), null, Integer.parseInt(serverPort));
-                checkEcho(new Envelope(request));
-            }
+            int i = 0;
+            while (i < nServers) {
+                if ((PORT + i) == Integer.parseInt(serverPort)) {
+                    Request request = new Request("ECHO", envelope, cryptoManager.getPublicKeyFromKs("server"), null, Integer.parseInt(serverPort));
+                    checkEcho(new Envelope(request));
+                } else {
+                    int finalI = i;
+                    tasks[i] = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try (ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", PORT + finalI).getOutputStream())) {
+                                byte[] nonce = startOneWayHandshakeServer(PORT + finalI);
+                                Request request = new Request("ECHO", envelope, cryptoManager.getPublicKeyFromKs("server"), nonce, Integer.parseInt(serverPort));
+                                sendRequest(request, outputStream);
+                            } catch (NonceTimeoutException e) {
+                                e.printStackTrace();
+                            } catch (IntegrityException e) {
+                                e.printStackTrace();
+                            } catch (UnknownHostException e) {
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
 
-            else{
-                int finalI = i;
-                tasks[i] = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", PORT + finalI).getOutputStream())) {
-                            byte[] nonce = startOneWayHandshakeServer(PORT + finalI);
-                            Request request = new Request("ECHO", envelope, cryptoManager.getPublicKeyFromKs("server"), nonce, Integer.parseInt(serverPort));
-                            sendRequest(request, outputStream);
-                        } catch (NonceTimeoutException e) {
-                            e.printStackTrace();
-                        } catch (IntegrityException e) {
-                            e.printStackTrace();
-                        } catch (UnknownHostException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
                         }
-
-                    }
-                });
-                tasks[i].start();
-            }
-            i++;
-        }
-        int timeout = 0;
-        while(!delivered.get(envelope.getRequest().getPublicKey())){
-            try {
-                Thread.sleep(50);
-                timeout++;
-                if(timeout == 1000){
-                    break; //lançar exceçao
+                    });
+                    tasks[i].start();
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                i++;
             }
-        }
+            int timeout = 0;
+            while (!delivered.get(envelope.getRequest().getPublicKey())) {
+                try {
+                    Thread.sleep(50);
+                    timeout++;
+                    System.out.println("tou a espera, PORT: " + serverPort);
 
+                    if (timeout == 1000) {
+                        break; //lançar exceçao
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            delivered.remove(envelope.getRequest().getPublicKey());
+        }
     }
 
     
