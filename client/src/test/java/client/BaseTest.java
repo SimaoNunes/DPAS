@@ -257,5 +257,31 @@ public class BaseTest {
             e.printStackTrace();
         }
     }
+
+    public static void setAtomicWriteFlag(boolean flag){
+        Socket socket = null;
+        String message = "ATOMIC_WRITE_FLAG_";
+        if(flag){
+            message+="TRUE";
+        }
+        else{
+            message+="FALSE";
+        }
+        try {
+            int port = PORT;
+            int i = 0;
+            while(i < 4){
+                socket = new Socket(serverAddress, port + i);
+                ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                outputStream.writeObject(new Envelope(new Request(message, null)));
+                outputStream.close();
+                socket.close();
+                i++;
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     
 }
