@@ -20,6 +20,8 @@ public class Request implements Serializable {
     private JSONObject jsonObject = null;
     private String username;
     private byte[] signature = null;
+    private Envelope envelope;
+    private int port;
     
     ////////////////////////////////////////////////////////////////
     //				                                         	  //
@@ -129,6 +131,31 @@ public class Request implements Serializable {
         this.rid = rid;
         this.ts = ts;
         this.publicKey = key;
+    }
+
+    //READY/ECHO
+    public Request(String operation, Envelope envelope, PublicKey key, byte[] nonce, int port){
+        this.operation = operation;
+        this.envelope = envelope;
+        this.publicKey = key;
+        this.serverNonce = nonce;
+        this.port = port;
+    }
+
+    public Envelope getEnvelope() {
+        return envelope;
+    }
+
+    public void setEnvelope(Envelope envelope) {
+        this.envelope = envelope;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 
     public byte[] getSignature() {
