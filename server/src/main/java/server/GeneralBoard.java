@@ -18,15 +18,14 @@ public class GeneralBoard implements Serializable {
 
     protected GeneralBoard() {
 
-        this.annoucements = new ArrayList<>();
+        this.annoucements = new ArrayList<Pair<JSONObject, byte[]>>();
     }
 
     public void addAnnouncement(JSONObject object, byte[] signature) {
-
-        this.annoucements.add(new Pair<>(object, signature));
+        this.annoucements.add(new Pair<JSONObject,byte[]>(object, signature));
     }
 
-    public ArrayList<Pair<JSONObject, byte[]>> getRawAnnouncements(){
+    public ArrayList<Pair<JSONObject, byte[]>> getRawAnnouncements() {
         return this.annoucements;
     }
 

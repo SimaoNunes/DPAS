@@ -428,8 +428,9 @@ public class Server implements Runnable {
                 announcementObject.put("ref_announcements", annoucementsList);
             }
 
-            //ja n ta a escrever
+            // ja n ta a escrever
             if(request.getTs() == generalBoard.getFirst()) {
+            	System.out.println("concurrente");
                 addConcurrentPost(announcementObject, request.getSignature());
             }
             else {
