@@ -40,6 +40,7 @@ public class Listener implements Runnable{
         answers = new ConcurrentHashMap<>();
         answerGeneralExceptions = new HashMap<>();
         answerGeneral = Collections.synchronizedList(new ArrayList<Pair<Integer, Envelope>>());
+        answerGeneralExceptions = new HashMap<PublicKey, Pair<Integer, Envelope>>();
         endpoint = ss;
         this.nQuorum = nQuorum;
         this.clientKey = key;
@@ -204,7 +205,7 @@ public class Listener implements Runnable{
         } else {
             Response response = envelope.getResponse();
             answerGeneralExceptions.put(response.getPublicKey(), new Pair<>(response.getTs(), envelope));
-            if(answerGeneralExceptions.size() > nQuorum){
+            if(answerGeneralExceptions.size() > nQuorum) {
                 Collection<Envelope> exceptionsCollection = new ArrayList<>();
                 for(Map.Entry<PublicKey, Pair<Integer, Envelope>> entry : answerGeneralExceptions.entrySet()){
                     exceptionsCollection.add(entry.getValue().getSecond());

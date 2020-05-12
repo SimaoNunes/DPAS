@@ -814,11 +814,11 @@ public class Server implements Runnable {
             }
             /************************************************************************************************************/
             /***** SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)] *****/
-            if(replayFlag && !handshake){
+            if(replayFlag && !handshake) {
                 outputStream.writeObject(oldEnvelope);
             }
             /*********************************************************************************************************************/
-            else{
+            else {
                 outputStream.writeObject(new Envelope(response, signature));
             }
         } catch (IOException e) {
