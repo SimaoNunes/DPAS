@@ -307,12 +307,14 @@ public class Server implements Runnable {
 
 
     private void checkReady(Envelope envelope){
-        if(readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null){
-            readys.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), new ConcurrentHashMap<>());
-            readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
-        }
-        else{
-            readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
+        synchronized (readys){
+            if(readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null){
+                readys.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), new ConcurrentHashMap<>());
+                readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
+            }
+            else{
+                readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
+            }
         }
 
         HashMap<String, Integer> counter = new HashMap<>();
@@ -323,10 +325,10 @@ public class Server implements Runnable {
                 if(counter.get(entry.toString()) > 2 * nFaults && (delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
                                                                        !delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
                     delivered.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
-                    sentEcho = new ConcurrentHashMap<>();
-                    sentReady = new ConcurrentHashMap<>();
-                    echos = new ConcurrentHashMap<>();
-                    readys = new ConcurrentHashMap<>();
+                    sentEcho.clear();
+                    sentReady.clear();
+                    echos.clear();
+                    readys.clear();
                     break;
                 }
 
