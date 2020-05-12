@@ -108,7 +108,7 @@ public class ClientEndpoint {
 
     private Envelope sendReceive(Envelope envelope, int port) throws IOException, ClassNotFoundException {
         Socket socket = createSocket(port);
-        socket.setSoTimeout(20000);
+        socket.setSoTimeout(15000);
         // Sign envelope
         envelope.setSignature(cryptoManager.signRequest(envelope.getRequest()));
         createOutputStream(socket).writeObject(envelope);
@@ -118,7 +118,7 @@ public class ClientEndpoint {
 
     private void send(Envelope envelope, int port) throws IOException, ClassNotFoundException {
         Socket socket = createSocket(port);
-        socket.setSoTimeout(20000);
+        socket.setSoTimeout(15000);
         ObjectOutputStream out = createOutputStream(socket);
         // Sign envelope
         envelope.setSignature(cryptoManager.signRequest(envelope.getRequest()));

@@ -336,8 +336,7 @@ public class Server implements Runnable {
                     break;
                 }
 
-                else if(counter.get(entry.toString()) > nFaults && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
-                                                                            !sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
+                else if(counter.get(entry.toString()) > nFaults && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null)){
                     sentReady.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
                     broadcastReady(entry);
 
@@ -365,8 +364,7 @@ public class Server implements Runnable {
         for(Envelope entry: echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).values()){
             if(counter.containsKey(entry.toString())){
                 counter.put(entry.toString(), counter.get(entry.toString()) + 1);
-                if(counter.get(entry.toString()) > nQuorum && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
-                                                                      !sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
+                if(counter.get(entry.toString()) > nQuorum && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null )){
                     sentReady.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
                     broadcastReady(entry);
                 }
@@ -418,60 +416,65 @@ public class Server implements Runnable {
 
     }
 
-    private void checkDelivered(Envelope envelope) {
+    private void checkDelivered(Envelope envelope){
+
         delivered.put(envelope.getRequest().getPublicKey(), false);
 
+        sentEcho.remove(envelope.getRequest().getPublicKey());
+        sentReady.remove(envelope.getRequest().getPublicKey());
+        echos.remove(envelope.getRequest().getPublicKey());
+        readys.remove(envelope.getRequest().getPublicKey());
+        
         if(sentEcho.get(envelope.getRequest().getPublicKey()) == null) {
             sentEcho.put(envelope.getRequest().getPublicKey(), true);
-        }
 
-        Thread[] tasks = new Thread[nServers];
+            Thread[] tasks = new Thread[nServers];
 
-        int i = 0;
-        while( i < nServers){
-            if((PORT + i) == Integer.parseInt(serverPort)){
-                Request request = new Request("ECHO", envelope, cryptoManager.getPublicKeyFromKs("server"), null, Integer.parseInt(serverPort));
-                checkEcho(new Envelope(request));
-            }
+            int i = 0;
+            while (i < nServers) {
+                if ((PORT + i) == Integer.parseInt(serverPort)) {
+                    Request request = new Request("ECHO", envelope, cryptoManager.getPublicKeyFromKs("server"), null, Integer.parseInt(serverPort));
+                    checkEcho(new Envelope(request));
+                } else {
+                    int finalI = i;
+                    tasks[i] = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try (ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", PORT + finalI).getOutputStream())) {
+                                byte[] nonce = startOneWayHandshakeServer(PORT + finalI);
+                                Request request = new Request("ECHO", envelope, cryptoManager.getPublicKeyFromKs("server"), nonce, Integer.parseInt(serverPort));
+                                sendRequest(request, outputStream);
+                            } catch (NonceTimeoutException e) {
+                                e.printStackTrace();
+                            } catch (IntegrityException e) {
+                                e.printStackTrace();
+                            } catch (UnknownHostException e) {
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
 
-            else{
-                int finalI = i;
-                tasks[i] = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", PORT + finalI).getOutputStream())) {
-                            byte[] nonce = startOneWayHandshakeServer(PORT + finalI);
-                            Request request = new Request("ECHO", envelope, cryptoManager.getPublicKeyFromKs("server"), nonce, Integer.parseInt(serverPort));
-                            sendRequest(request, outputStream);
-                        } catch (NonceTimeoutException e) {
-                            e.printStackTrace();
-                        } catch (IntegrityException e) {
-                            e.printStackTrace();
-                        } catch (UnknownHostException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
                         }
-
-                    }
-                });
-                tasks[i].start();
-            }
-            i++;
-        }
-        int timeout = 0;
-        while(!delivered.get(envelope.getRequest().getPublicKey())){
-            try {
-                Thread.sleep(50);
-                timeout++;
-                if(timeout == 1000){
-                    break; //lançar exceçao
+                    });
+                    tasks[i].start();
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                i++;
             }
-        }
+            int timeout = 0;
+            while (!delivered.get(envelope.getRequest().getPublicKey())) {
+                try {
+                    Thread.sleep(50);
+                    timeout++;
 
+                    if (timeout == 1000) {
+                        break; //lançar exceçao
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            delivered.remove(envelope.getRequest().getPublicKey());
+        }
     }
 
     
@@ -579,7 +582,6 @@ public class Server implements Runnable {
     //////////////////////////////////////////////////
 
     public void addConcurrentPost(JSONObject object, byte[] signature) {
-        System.out.println("CONCURRENT POST");
         ArrayList<Pair<JSONObject, byte[]>> new_announcements = new ArrayList<>();
         String user = (String) object.get("user");
         int i = 0;
