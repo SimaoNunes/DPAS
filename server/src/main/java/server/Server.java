@@ -413,7 +413,7 @@ public class Server implements Runnable {
             announcementObject.put("user", username);
             announcementObject.put("message", request.getMessage());
             announcementObject.put("ts", request.getTs());
-            announcementObject.put("ref:", refAnnouncements);
+            announcementObject.put("ref", refAnnouncements);
 
             Date dNow = new Date();
             SimpleDateFormat ft = new SimpleDateFormat ("dd-MM-yyyy 'at' HH:mm");

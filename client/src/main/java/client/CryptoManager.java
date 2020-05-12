@@ -92,7 +92,13 @@ public class CryptoManager {
 
 	boolean verifyMessage(JSONObject object, byte[] signature){
 
+		System.out.println(object.toJSONString());
 		PublicKey keyFrom = getPublicKeyFromKs((String) object.get("user"));
+
+		Quadruplet<String, Integer, String, int[]> quadruplet =
+				new Quadruplet( object.get("username"),
+						 object.get("ts"), object.get("message")
+						,  object.get("ref"));
 
 		try {
 			// Initialize needed structures
@@ -100,7 +106,7 @@ public class CryptoManager {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream out = new ObjectOutputStream(bos);
 			// Convert response to byteArray
-			out.writeObject(object);
+			out.writeObject(quadruplet);
 			out.flush();
 			byte[] messageBytes = bos.toByteArray();
 			// Verify signature
