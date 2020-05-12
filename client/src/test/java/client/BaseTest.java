@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.*;
 
 ////////////////////////////////////////////////////////////////////
@@ -284,6 +285,32 @@ public class BaseTest {
 
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public static void setGeneralConcurrentWriteFlag(boolean flag){
+        Socket socket = null;
+        String message = "CONCURRENT_WRITE_FLAG_";
+        if(flag){
+            message+="TRUE";
+        }
+        else{
+            message+="FALSE";
+        }
+        int port = PORT;
+        int i = 0;
+        while(i < 4){
+            try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket(serverAddress, port + i).getOutputStream())) {
+                outputStream.writeObject(new Envelope(new Request(message)));
+                outputStream.close();
+                socket.close();
+                i++;
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         }
     }
     

@@ -54,6 +54,7 @@ public class Server implements Runnable {
     private boolean handshake = false;
     private boolean integrityFlag = false;
     private boolean atomicWriteFlag = false;
+    private boolean concurrentWrite = false;
     private Response oldResponse;
     private Envelope oldEnvelope;
     
@@ -152,7 +153,7 @@ public class Server implements Runnable {
                 Envelope envelope = (Envelope) inStream.readObject();
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
-                        checkDelivered(envelope);
+                        //checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}, null) &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(envelope.getRequest().getUsername())) &&
                             	cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
@@ -291,7 +292,12 @@ public class Server implements Runnable {
                     case "ATOMIC_WRITE_FLAG_FALSE":
                         atomicWriteFlag = false;
                         break;
-
+                    case "CONCURRENT_WRITE_FLAG_TRUE":
+                        concurrentWrite = true;
+                        break;
+                    case "CONCURRENT_WRITE_FLAG_FALSE":
+                        concurrentWrite = false;
+                        break;
 
                     default:
                         break;
@@ -344,9 +350,6 @@ public class Server implements Runnable {
             }
 
         }
-
-
-
 
     }
 
@@ -578,6 +581,7 @@ public class Server implements Runnable {
     //////////////////////////////////////////////////
 
     public void addConcurrentPost(JSONObject object, byte[] signature) {
+        System.out.println("CONCURRENT POST");
         ArrayList<Pair<JSONObject, byte[]>> new_announcements = new ArrayList<>();
         String user = (String) object.get("user");
         int i = 0;
@@ -620,6 +624,14 @@ public class Server implements Runnable {
         if(request.getTs() >= generalBoard.getFirst()) {
 
             // Get userName from keystore
+            if(concurrentWrite){
+                try {
+                    System.out.println("General gonna sleep");
+                    Thread.sleep(4000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
             String username = userIdMap.get(request.getPublicKey());
 
             int[] refAnnouncements = request.getAnnouncements();
