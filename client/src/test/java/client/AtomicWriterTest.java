@@ -8,8 +8,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-import java.security.PublicKey;
-
 public class AtomicWriterTest extends BaseTest {
 
     @BeforeClass
@@ -36,19 +34,7 @@ public class AtomicWriterTest extends BaseTest {
             public void run() {
                 try {
                     result[0] = getMessagesFromJSON(clientEndpoint2.read("user1", 1));
-                } catch (UserNotRegisteredException e) {
-                    e.printStackTrace();
-                } catch (InvalidPostsNumberException e) {
-                    e.printStackTrace();
-                } catch (TooMuchAnnouncementsException e) {
-                    e.printStackTrace();
-                } catch (NonceTimeoutException e) {
-                    e.printStackTrace();
-                } catch (OperationTimeoutException e) {
-                    e.printStackTrace();
-                } catch (FreshnessException e) {
-                    e.printStackTrace();
-                } catch (IntegrityException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -57,10 +43,7 @@ public class AtomicWriterTest extends BaseTest {
         
         clientEndpoint1.post("This should be the one returned user1", null);
 
-        while(true) {
-        	if(!threadRead.isAlive()) {
-        		break;
-        	}
+        while(threadRead.isAlive()) {
         }
 
         assertEquals("This should be the one returned user1", result[0][0]);
@@ -77,19 +60,7 @@ public class AtomicWriterTest extends BaseTest {
             public void run() {
                 try {
                     results[0] = getMessagesFromJSON(clientEndpoint2.read("user1", 1));
-                } catch (UserNotRegisteredException e) {
-                    e.printStackTrace();
-                } catch (InvalidPostsNumberException e) {
-                    e.printStackTrace();
-                } catch (TooMuchAnnouncementsException e) {
-                    e.printStackTrace();
-                } catch (NonceTimeoutException e) {
-                    e.printStackTrace();
-                } catch (OperationTimeoutException e) {
-                    e.printStackTrace();
-                } catch (FreshnessException e) {
-                    e.printStackTrace();
-                } catch (IntegrityException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -100,19 +71,7 @@ public class AtomicWriterTest extends BaseTest {
             public void run() {
                 try {
                     results[1] = getMessagesFromJSON(clientEndpoint3.read("user1", 1));
-                } catch (UserNotRegisteredException e) {
-                    e.printStackTrace();
-                } catch (InvalidPostsNumberException e) {
-                    e.printStackTrace();
-                } catch (TooMuchAnnouncementsException e) {
-                    e.printStackTrace();
-                } catch (NonceTimeoutException e) {
-                    e.printStackTrace();
-                } catch (OperationTimeoutException e) {
-                    e.printStackTrace();
-                } catch (FreshnessException e) {
-                    e.printStackTrace();
-                } catch (IntegrityException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -121,10 +80,8 @@ public class AtomicWriterTest extends BaseTest {
         
         clientEndpoint1.post("This should be the one returned user1", null);
 
-        while(true) {
-        	if(!threadReader2.isAlive() && !threadReader3.isAlive()) {
-        		break;
-        	}
+        while(threadReader2.isAlive() || threadReader3.isAlive()) {
+        	
         }
 
         assertEquals("This should be the one returned user1", results[0][0]);
