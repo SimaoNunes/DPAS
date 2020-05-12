@@ -680,13 +680,13 @@ public class ClientEndpoint {
             }
         }
 
+        Envelope result = listener.getResultGeneral();
+
         try {
             listenerSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        Envelope result = listener.getResultGeneral();
 
         // Threads that will make the requests to the server
         if(result.getRequest() != null){
