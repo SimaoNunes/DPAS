@@ -16,6 +16,7 @@ import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.*;
 import java.text.SimpleDateFormat;
@@ -54,6 +55,7 @@ public class Server implements Runnable {
     private boolean handshake = false;
     private boolean integrityFlag = false;
     private boolean atomicWriteFlag = false;
+    private boolean concurrentWrite = false;
     private Response oldResponse;
     private Envelope oldEnvelope;
     
@@ -291,7 +293,12 @@ public class Server implements Runnable {
                     case "ATOMIC_WRITE_FLAG_FALSE":
                         atomicWriteFlag = false;
                         break;
-
+                    case "CONCURRENT_WRITE_FLAG_TRUE":
+                        concurrentWrite = true;
+                        break;
+                    case "CONCURRENT_WRITE_FLAG_FALSE":
+                        concurrentWrite = false;
+                        break;
 
                     default:
                         break;
@@ -325,10 +332,10 @@ public class Server implements Runnable {
                 if(counter.get(entry.toString()) > 2 * nFaults && (delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
                                                                        !delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
                     delivered.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
-                    sentEcho.clear();
-                    sentReady.clear();
-                    echos.clear();
-                    readys.clear();
+                    sentEcho.remove(entry.getRequest().getPublicKey());
+                    sentReady.remove(entry.getRequest().getPublicKey());
+                    echos.remove(entry.getRequest().getPublicKey());
+                    readys.remove(entry.getRequest().getPublicKey());
                     break;
                 }
 
@@ -344,9 +351,6 @@ public class Server implements Runnable {
             }
 
         }
-
-
-
 
     }
 
@@ -464,7 +468,7 @@ public class Server implements Runnable {
                 Thread.sleep(50);
                 timeout++;
                 if(timeout == 1000){
-                    break;
+                    break; //lançar exceçao
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -578,6 +582,7 @@ public class Server implements Runnable {
     //////////////////////////////////////////////////
 
     public void addConcurrentPost(JSONObject object, byte[] signature) {
+        System.out.println("CONCURRENT POST");
         ArrayList<Pair<JSONObject, byte[]>> new_announcements = new ArrayList<>();
         String user = (String) object.get("user");
         int i = 0;
@@ -620,6 +625,14 @@ public class Server implements Runnable {
         if(request.getTs() >= generalBoard.getFirst()) {
 
             // Get userName from keystore
+            if(concurrentWrite){
+                try {
+                    System.out.println("General gonna sleep");
+                    Thread.sleep(4000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
             String username = userIdMap.get(request.getPublicKey());
 
             int[] refAnnouncements = request.getAnnouncements();
@@ -695,17 +708,18 @@ public class Server implements Runnable {
 
         int total = request.getNumber();
 
-        try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", getClientPort(userIdMap.get(request.getPublicKey()))).getOutputStream())){
+        try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", getClientPort(userIdMap.get(request.getPublicKey()))).getOutputStream())) {
 
-            JSONObject announcementsToSend =  new JSONObject();
+            JSONObject announcementsToSend = new JSONObject();
             announcementsToSend.put("announcementList", usersBoards.get(request.getPublicKeyToReadFrom()).getSecond().getAnnouncements(total));
 
             // Send response to client
             // ------> Handshake one way
             byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
-            
-            sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(request.getPublicKeyToReadFrom()).getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
 
+            sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(request.getPublicKeyToReadFrom()).getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
+        } catch (SocketException e){
+            return;  //if client socket is closed it means he already got enough answers or even byzantine client
         } catch(Exception e) {
             e.printStackTrace();
             sendResponse(new Response(false, -8, request.getClientNonce(), cryptoManager.getPublicKeyFromKs("server"), "READ"), outStream);
