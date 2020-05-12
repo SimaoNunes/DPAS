@@ -153,7 +153,7 @@ public class Server implements Runnable {
                 Envelope envelope = (Envelope) inStream.readObject();
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
-                        //checkDelivered(envelope);
+                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}, null) &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(envelope.getRequest().getUsername())) &&
                             	cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
@@ -331,10 +331,10 @@ public class Server implements Runnable {
                 if(counter.get(entry.toString()) > 2 * nFaults && (delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
                                                                        !delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
                     delivered.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
-                    sentEcho.clear();
-                    sentReady.clear();
-                    echos.clear();
-                    readys.clear();
+                    sentEcho.remove(entry.getRequest().getPublicKey());
+                    sentReady.remove(entry.getRequest().getPublicKey());
+                    echos.remove(entry.getRequest().getPublicKey());
+                    readys.remove(entry.getRequest().getPublicKey());
                     break;
                 }
 
@@ -467,7 +467,7 @@ public class Server implements Runnable {
                 Thread.sleep(50);
                 timeout++;
                 if(timeout == 1000){
-                    break;
+                    break; //lançar exceçao
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
