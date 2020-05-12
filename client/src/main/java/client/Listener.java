@@ -207,7 +207,6 @@ public class Listener implements Runnable{
             }
             JSONObject final_result = new JSONObject();
             final_result.put("announcementList", readlist.get(index).getSecond());
-            System.out.println(final_result);
             return final_result;
         }
         return null;

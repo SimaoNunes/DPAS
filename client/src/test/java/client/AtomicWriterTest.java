@@ -92,7 +92,11 @@ public class AtomicWriterTest extends BaseTest {
         clientEndpoint1.post("This should be the one returned user1", null);
 
         while(threadReader2.isAlive() || threadReader3.isAlive()) {
-        	
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         assertEquals("This should be the one returned user1", results[0][0]);
