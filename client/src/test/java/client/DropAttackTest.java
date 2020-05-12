@@ -1,6 +1,8 @@
 package client;
 
 import exceptions.*;
+
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -11,6 +13,12 @@ public class DropAttackTest extends BaseTest {
         clientEndpoint1.register();
         clientEndpoint1.post("user1 announc message1", null);
         clientEndpoint1.postGeneral("user1 general message1", null);
+    }
+    
+    @AfterClass
+    public static void turnOffFlag() {
+		setDropNonceFlag(false);
+		setDropOperationFlag(false);
     }
 
     @Test(expected = NonceTimeoutException.class)

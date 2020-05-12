@@ -40,9 +40,8 @@ public class ClientApp {
 				runApp();
 			} catch (KeyStoreException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded). You sure you typed your name right?");
-			} catch (IOException e) {
-				System.out.println("\nWrong Password!");
 			} catch (
+				IOException				 |
 				NoSuchAlgorithmException | 
 				CertificateException e) {
 				System.out.println("\nThere's a problem with the application.\n Error related with Keystore (problably badly loaded).");
@@ -336,7 +335,6 @@ public class ClientApp {
 	private static void printAnnouncements(JSONObject jsonAnnouncs, Boolean isGeneral) {
 		// Get array of announcements in JSON format, iterate over them and print them
         JSONArray array = (JSONArray) jsonAnnouncs.get("announcementList");
-        System.out.println(array.toJSONString());
         int i = 1;
         // ReadGeneral
         for (Object array_obj : array) {

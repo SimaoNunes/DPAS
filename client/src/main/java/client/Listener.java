@@ -151,9 +151,9 @@ public class Listener implements Runnable{
 
         if(answers.containsKey(timestamp)) {
             answers.get(timestamp).put(serversPorts.get(serverPublicKey), envelope);
-            if(answers.get(timestamp).size() > nQuorum){
+            if(answers.get(timestamp).size() > nQuorum) {
                 Envelope result = checkQuorum(answers.get(timestamp).values());
-                if(result != null){
+                if(result != null) {
                     listenerThread.interrupt();
                     return result;
                 }

@@ -95,7 +95,7 @@ public class Server implements Runnable {
         
         getUsersBoards();
 
-        listening = new ConcurrentHashMap<>();
+        listening = new ConcurrentHashMap<PublicKey, ConcurrentHashMap<PublicKey, Pair<Integer, Integer>>>();
 
         getUserIdMap();
 
@@ -217,7 +217,7 @@ public class Server implements Runnable {
                         break;
 
                     case "DELETEALL":
-                        deleteUsers();
+                        deleteUsers(outStream);
                         break;
                     case "SHUTDOWN":
                         shutDown();
@@ -329,7 +329,7 @@ public class Server implements Runnable {
             saveTotalAnnouncements();
 
         }
-        if(listening.contains(request.getPublicKey())){ // no one is reading from who is writing
+        if(listening.contains(request.getPublicKey())) { // no one is reading from who is writing
             for(Map.Entry<PublicKey, Pair<Integer, Integer>> entry : listening.get(request.getPublicKey()).entrySet()) {  //for every listening[q]
                 byte[] nonce = null;
                 try {
@@ -468,11 +468,11 @@ public class Server implements Runnable {
 	private void read(Request request, ObjectOutputStream outStream) {
 
         if(listening.contains(request.getPublicKeyToReadFrom())) {	//someone is already reading that board
-            listening.get(request.getPublicKeyToReadFrom()).put(request.getPublicKey(), new Pair<>(request.getRid(), request.getNumber()));  //listening [p] := r ;
+            listening.get(request.getPublicKeyToReadFrom()).put(request.getPublicKey(), new Pair<Integer,Integer>(request.getRid(), request.getNumber()));  //listening [p] := r ;
         }
         else {
             listening.put(request.getPublicKeyToReadFrom(), new ConcurrentHashMap<>()); //listening [p] := r ;
-            listening.get(request.getPublicKeyToReadFrom()).put(request.getPublicKey(), new Pair<>(request.getRid(), request.getNumber()));
+            listening.get(request.getPublicKeyToReadFrom()).put(request.getPublicKey(), new Pair<Integer,Integer>(request.getRid(), request.getNumber()));
         }
 
         System.out.println("SERVER ON PORT " + this.serverPort + ": READ METHOD");
@@ -542,7 +542,9 @@ public class Server implements Runnable {
     }
 
     private void readComplete(Request request) {
-        if(request.getRid() == listening.get(request.getPublicKeyToReadFrom()).get(request.getPublicKey()).getFirst()) {
+    	if(listening.get(request.getPublicKeyToReadFrom()) != null &&
+    			listening.get(request.getPublicKeyToReadFrom()).get(request.getPublicKey()) != null &&
+    			(request.getRid() == listening.get(request.getPublicKeyToReadFrom()).get(request.getPublicKey()).getFirst())) {
             listening.get(request.getPublicKeyToReadFrom()).remove(request.getPublicKey());
         }
     }
@@ -653,7 +655,7 @@ public class Server implements Runnable {
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-    public void deleteUsers() throws IOException {
+    public void deleteUsers(ObjectOutputStream outputStream) throws IOException {
 
         System.out.println("SERVER ON PORT " + this.serverPort + ": DELETE OPERATION");
 
@@ -668,6 +670,9 @@ public class Server implements Runnable {
 
         setTotalAnnouncements(0);
         saveTotalAnnouncements();
+        
+        outputStream.writeObject(new Envelope(new Request("DEL_ACK")));
+
     }
 
     private void shutDown(){

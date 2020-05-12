@@ -9,6 +9,7 @@ import library.Envelope;
 import library.Request;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.*;
@@ -44,12 +45,10 @@ public class BaseTest {
 
 	@AfterClass
 	public static void cleanUp() {
-		setDropNonceFlag(false);
-		setDropOperationFlag(false);
         deleteUsers();
 	}
 
-    public static PublicKey generateSmallerKey(){
+    public static PublicKey generateSmallerKey() {
         KeyPairGenerator keyGen = null;
         try {
             keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
@@ -67,22 +66,26 @@ public class BaseTest {
         return null;
     }
 
-    public static void deleteUsers(){
+    public static void deleteUsers() {
         int port = PORT;
         int i = 0;
-        while( i < (faults*3) + 1) {
+        while(i < (faults*3) + 1) {
             try(Socket socket = new Socket("localhost", port++)) {
                 ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-                outputStream.writeObject(new Envelope(new Request("DELETEALL", null)));
+                ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+                outputStream.writeObject(new Envelope(new Request("DELETEALL")));
+				Envelope confirmDelete = (Envelope) inputStream.readObject();
                 outputStream.close();
                 i++;
-            } catch (IOException e) {
+            } catch (
+            		IOException |
+            		ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public String[] getMessagesFromJSON(JSONObject json){
+    public String[] getMessagesFromJSON(JSONObject json) {
 
         JSONArray array = (JSONArray) json.get("announcementList");
         String[] result = new String[array.size()];
@@ -97,7 +100,7 @@ public class BaseTest {
         return result;
     }
 
-    public String[] getMessagesFromJSONGeneral(JSONObject json){
+    public String[] getMessagesFromJSONGeneral(JSONObject json) {
 
         JSONArray array = (JSONArray) json.get("announcementList");
         String[] result = new String[array.size()];
@@ -112,7 +115,7 @@ public class BaseTest {
         return result;
     }
 
-    public String[] getReferencedAnnouncementsFromJSONResultWith1Post(JSONObject json){
+    public String[] getReferencedAnnouncementsFromJSONResultWith1Post(JSONObject json) {
 
     	JSONArray arrayAnnouncement = (JSONArray) json.get("announcementList");
         String[] numbers = null;
@@ -165,7 +168,7 @@ public class BaseTest {
         try {
             socket = new Socket(serverAddress, 9000);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            outputStream.writeObject(new Request("SHUTDOWN", null));
+            outputStream.writeObject(new Request("SHUTDOWN"));
             outputStream.close();
             socket.close();
 
@@ -186,7 +189,7 @@ public class BaseTest {
         try {
             socket = new Socket(serverAddress, 9000);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            outputStream.writeObject(new Envelope(new Request(message, null)));
+            outputStream.writeObject(new Envelope(new Request(message)));
             outputStream.close();
             socket.close();
 
@@ -207,7 +210,7 @@ public class BaseTest {
         try {
             socket = new Socket(serverAddress, 9000);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            outputStream.writeObject(new Envelope(new Request(message, null)));
+            outputStream.writeObject(new Envelope(new Request(message)));
             outputStream.close();
             socket.close();
 
@@ -228,7 +231,7 @@ public class BaseTest {
         try {
             socket = new Socket(serverAddress, 9000);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            outputStream.writeObject(new Envelope(new Request(message, null)));
+            outputStream.writeObject(new Envelope(new Request(message)));
             outputStream.close();
             socket.close();
 
@@ -249,7 +252,7 @@ public class BaseTest {
         try {
             socket = new Socket(serverAddress, 9000);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            outputStream.writeObject(new Envelope(new Request(message, null)));
+            outputStream.writeObject(new Envelope(new Request(message)));
             outputStream.close();
             socket.close();
 
@@ -273,7 +276,7 @@ public class BaseTest {
             while(i < 4){
                 socket = new Socket(serverAddress, port + i);
                 ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-                outputStream.writeObject(new Envelope(new Request(message, null)));
+                outputStream.writeObject(new Envelope(new Request(message)));
                 outputStream.close();
                 socket.close();
                 i++;

@@ -35,8 +35,8 @@ public class AtomicWriterTest extends BaseTest {
     }
 
     @Test
-    public void Should_Succed_When_1ConcurrentReader() throws UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, MessageTooBigException, FreshnessException, IntegrityException, OperationTimeoutException {
-
+    public void Should_Succeed_When_1ConcurrentReader() throws UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, MessageTooBigException, FreshnessException, IntegrityException, OperationTimeoutException {
+    	
     	clientEndpoint1.post("First test message user1", null);
     	
         String[][] result = new String[1][1];
@@ -61,8 +61,8 @@ public class AtomicWriterTest extends BaseTest {
     }
     
     @Test
-    public void Should_Succed_When_2ConcurrentReaders() throws UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, MessageTooBigException, FreshnessException, IntegrityException, OperationTimeoutException {
-
+    public void Should_Succeed_When_2ConcurrentReaders() throws UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, MessageTooBigException, FreshnessException, IntegrityException, OperationTimeoutException {
+    	
     	clientEndpoint1.post("First test message user1", null);
     	
         String[][] results = new String[2][1];
