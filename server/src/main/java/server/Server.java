@@ -25,7 +25,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server implements Runnable {
 	
-	
+	private int nServers = 4;
+	private int nFaults = 1;
+	private int nQuorum = 2;
+	private static final int PORT = 9000;
     private ServerSocket server;
     private String serverPort;
     private ConcurrentHashMap<PublicKey, String> userIdMap = null;
@@ -55,6 +58,15 @@ public class Server implements Runnable {
     private Envelope oldEnvelope;
     
     /**************************************************/
+
+    /******************** AUTHENTICATED DOUBLE ECHO VARIABLES ******/
+    private ConcurrentHashMap<PublicKey, Boolean> sentEcho;
+    private ConcurrentHashMap<PublicKey, Boolean> sentReady;
+    private ConcurrentHashMap<PublicKey, Boolean> delivered;
+    private ConcurrentHashMap<PublicKey, ConcurrentHashMap<PublicKey, Envelope>> echos;
+    private ConcurrentHashMap<PublicKey, ConcurrentHashMap<PublicKey, Envelope>> readys;
+
+
     
     /********************** Regular Register **********************/
 
@@ -97,6 +109,12 @@ public class Server implements Runnable {
 
         listening = new ConcurrentHashMap<PublicKey, ConcurrentHashMap<PublicKey, Pair<Integer, Integer>>>();
 
+        sentEcho = new ConcurrentHashMap<>();
+        sentReady = new ConcurrentHashMap<>();
+        delivered = new ConcurrentHashMap<>();
+        echos = new ConcurrentHashMap<>();
+        readys = new ConcurrentHashMap<>();
+
         getUserIdMap();
 
         getTotalAnnouncementsFromFile();
@@ -134,6 +152,7 @@ public class Server implements Runnable {
                 Envelope envelope = (Envelope) inStream.readObject();
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
+                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}) && 
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(envelope.getRequest().getUsername())) &&
                             	cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
@@ -143,6 +162,7 @@ public class Server implements Runnable {
                         }
                         break;
                     case "POST":
+                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                             	cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
@@ -152,6 +172,7 @@ public class Server implements Runnable {
                         }
                         break;
                     case "POSTGENERAL":
+                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) && 
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                         		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
@@ -161,6 +182,7 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READ":
+                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) && 
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                                 cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
@@ -170,6 +192,7 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READGENERAL":
+                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                         		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
@@ -200,6 +223,7 @@ public class Server implements Runnable {
                     	}
                         break;
                     case "WTS":
+                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                         		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
@@ -208,11 +232,26 @@ public class Server implements Runnable {
                         }
                     	break;
                     case "WTSGENERAL":
+                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}) &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                         		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
                         {
                             wtsRequest(envelope.getRequest(), true, outStream);
+                        }
+                        break;
+                    case "ECHO":
+                        if(cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs("server" + envelope.getRequest().getPort())) &&
+                                   cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
+                        {
+                            checkEcho(envelope);
+                        }
+                        break;
+                    case "READY":
+                        if(cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs("server" + envelope.getRequest().getPort())) &&
+                                   cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
+                        {
+                            checkReady(envelope);
                         }
                         break;
 
@@ -264,6 +303,172 @@ public class Server implements Runnable {
         }catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+
+    private void checkReady(Envelope envelope){
+        if(readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null){
+            readys.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), new ConcurrentHashMap<>());
+            readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
+        }
+        else{
+            readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
+        }
+
+        HashMap<String, Integer> counter = new HashMap<>();
+
+        for(Envelope entry: readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).values()){
+            if(counter.containsKey(entry.toString())){
+                counter.put(entry.toString(), counter.get(entry.toString()) + 1);
+                if(counter.get(entry.toString()) > 2 * nFaults && (delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
+                                                                       !delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
+                    delivered.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
+                    sentEcho = new ConcurrentHashMap<>();
+                    sentReady = new ConcurrentHashMap<>();
+                    echos = new ConcurrentHashMap<>();
+                    readys = new ConcurrentHashMap<>();
+                    break;
+                }
+
+                else if(counter.get(entry.toString()) > nFaults && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
+                                                                            !sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
+                    sentReady.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
+                    broadcastReady(entry);
+
+                }
+            }
+            else{
+                counter.put(entry.toString(), 1);
+            }
+
+        }
+
+
+
+
+    }
+
+    private void checkEcho(Envelope envelope){
+        if(echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null){
+            echos.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), new ConcurrentHashMap<>());
+            echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
+        }
+        else{
+            echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
+        }
+
+        HashMap<String, Integer> counter = new HashMap<>();
+
+        for(Envelope entry: echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).values()){
+            if(counter.containsKey(entry.toString())){
+                counter.put(entry.toString(), counter.get(entry.toString()) + 1);
+                if(counter.get(entry.toString()) > nQuorum && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
+                                                                      !sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
+                    sentReady.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
+                    broadcastReady(entry);
+                }
+            }
+            else{
+                counter.put(entry.toString(), 1);
+            }
+
+        }
+
+
+    }
+
+    private void broadcastReady(Envelope envelope){
+        Thread[] tasks = new Thread[nServers];
+
+        int i = 0;
+        while( i < nServers){
+            if((PORT + i) == Integer.parseInt(serverPort)){
+                Request request = new Request("READY", envelope, cryptoManager.getPublicKeyFromKs("server"), null, Integer.parseInt(serverPort));
+                checkReady(new Envelope(request));
+            }
+
+            else{
+                int finalI = i;
+                tasks[i] = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", PORT + finalI).getOutputStream())) {
+                            byte[] nonce = startOneWayHandshakeServer(PORT + finalI);
+                            Request request = new Request("READY", envelope, cryptoManager.getPublicKeyFromKs("server"), nonce, Integer.parseInt(serverPort));
+                            sendRequest(request, outputStream);
+                        } catch (NonceTimeoutException e) {
+                            e.printStackTrace();
+                        } catch (IntegrityException e) {
+                            e.printStackTrace();
+                        } catch (UnknownHostException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                });
+                tasks[i].start();
+            }
+            i++;
+        }
+
+    }
+
+    private void checkDelivered(Envelope envelope){
+        delivered.put(envelope.getRequest().getPublicKey(), false);
+
+        if(sentEcho.get(envelope.getRequest().getPublicKey()) == null){
+            sentEcho.put(envelope.getRequest().getPublicKey(), true);
+        }
+
+        Thread[] tasks = new Thread[nServers];
+
+        int i = 0;
+        while( i < nServers){
+            if((PORT + i) == Integer.parseInt(serverPort)){
+                Request request = new Request("ECHO", envelope, cryptoManager.getPublicKeyFromKs("server"), null, Integer.parseInt(serverPort));
+                checkEcho(new Envelope(request));
+            }
+
+            else{
+                int finalI = i;
+                tasks[i] = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", PORT + finalI).getOutputStream())) {
+                            byte[] nonce = startOneWayHandshakeServer(PORT + finalI);
+                            Request request = new Request("ECHO", envelope, cryptoManager.getPublicKeyFromKs("server"), nonce, Integer.parseInt(serverPort));
+                            sendRequest(request, outputStream);
+                        } catch (NonceTimeoutException e) {
+                            e.printStackTrace();
+                        } catch (IntegrityException e) {
+                            e.printStackTrace();
+                        } catch (UnknownHostException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                });
+                tasks[i].start();
+            }
+            i++;
+        }
+        int timeout = 0;
+        while(!delivered.get(envelope.getRequest().getPublicKey())){
+            try {
+                Thread.sleep(50);
+                timeout++;
+                if(timeout == 1000){
+                    break;
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     
@@ -1020,6 +1225,25 @@ public class Server implements Runnable {
     }
 
     private Envelope askForClientNonce(PublicKey serverKey, int port) throws NonceTimeoutException {
+        try(Socket socket = new Socket("localhost", port);
+            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream())) {
+            return sendReceive(new Request("NONCE", serverKey), outputStream, inputStream);
+        } catch (IOException e) {
+            throw new NonceTimeoutException("The operation was not possible, please try again!"); //IOException apanha tudo
+        }
+    }
+
+    private byte[] startOneWayHandshakeServer(int port) throws NonceTimeoutException, IntegrityException {
+        Envelope nonceEnvelope = askForServerNonce(cryptoManager.getPublicKeyFromKs("server"), port);
+        if(cryptoManager.verifyResponse(nonceEnvelope.getResponse(), nonceEnvelope.getSignature(), "server" + port)) {
+            return nonceEnvelope.getResponse().getNonce();
+        } else {
+            throw new IntegrityException("Integrity Exception");
+        }
+    }
+
+    private Envelope askForServerNonce(PublicKey serverKey, int port) throws NonceTimeoutException {
         try(Socket socket = new Socket("localhost", port);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
             ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream())) {
