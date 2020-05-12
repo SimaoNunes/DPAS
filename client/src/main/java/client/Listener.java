@@ -191,9 +191,7 @@ public class Listener implements Runnable{
         JSONArray array = (JSONArray) request.getJsonObject().get("announcementList");
         for(Object o : array){
             JSONObject json = (JSONObject) o;
-            System.out.println(((JSONObject) o).toJSONString());
             if(!cryptoManager.verifyMessage((JSONObject) json.get("message"), (byte[]) json.get("signature"))){
-                System.out.println("n devia entrar aqui");
                 return null; // there is a message with the wrong signature, maybe send integrity exception?
             }
         }
