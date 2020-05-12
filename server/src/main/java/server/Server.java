@@ -335,15 +335,14 @@ public class Server implements Runnable {
                     delivered.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
                     System.out.println("ativei a delivered, PORT: " + serverPort);
                     sentEcho.remove(entry.getRequest().getPublicKey());
-                    System.out.println("PORT SIZE: " + serverPort + sentReady.values().size());
-                    sentReady.clear();
+                    sentReady.remove(entry.getRequest().getPublicKey());
                     echos.remove(entry.getRequest().getPublicKey());
                     readys.remove(entry.getRequest().getPublicKey());
                     break;
                 }
 
-                else if(counter.get(entry.toString()) > nFaults && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
-                                                                            !sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
+                else if(counter.get(entry.toString()) > nFaults && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null)){
+                    System.out.println("ENTREI AQUI PORT: " + serverPort);
                     sentReady.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
                     broadcastReady(entry);
 
@@ -382,6 +381,8 @@ public class Server implements Runnable {
                 if(counter.get(entry.toString()) > nQuorum && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null )){
                     System.out.println("5");
                     sentReady.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
+                    System.out.println("PUS O SENTREADY DO: " + envelope.getRequest().getPublicKey());
+
                     broadcastReady(entry);
                 }
             }
@@ -434,7 +435,14 @@ public class Server implements Runnable {
     }
 
     private void checkDelivered(Envelope envelope){
+
         delivered.put(envelope.getRequest().getPublicKey(), false);
+
+        System.out.println("ativei a delivered, PORT: " + serverPort);
+        sentEcho.remove(envelope.getRequest().getPublicKey());
+        sentReady.remove(envelope.getRequest().getPublicKey());
+        echos.remove(envelope.getRequest().getPublicKey());
+        readys.remove(envelope.getRequest().getPublicKey());
 
         if(sentEcho.get(envelope.getRequest().getPublicKey()) == null) {
             sentEcho.put(envelope.getRequest().getPublicKey(), true);
