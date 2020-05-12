@@ -8,6 +8,17 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
+////////////////////////////////////////////////////////////////////
+//
+//	WARNING: Server must be running in order to run these tests
+//
+////////////////////////////////////////////////////////////////////
+
+/* We are testing concurrent read of a register while writing to it. You are assuming the sleep we apply
+ * 	for the read to be concurrent is enough for the value to be updated on all correct servers, therefore
+ * 	we are expecting the output to be the updated value.
+ */
+
 public class AtomicWriterTest extends BaseTest {
 
     @BeforeClass
