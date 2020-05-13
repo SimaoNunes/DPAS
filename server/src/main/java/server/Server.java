@@ -259,7 +259,6 @@ public class Server implements Runnable {
                             checkReady(envelope);
                         }
                         break;
-
                     case "DELETEALL":
                         deleteUsers(outStream);
                         break;
@@ -542,7 +541,7 @@ public class Server implements Runnable {
         if(request.getTs() > usersBoards.get(request.getPublicKey()).getFirst()) {  // if ts' > ts then (ts, val) := (ts', v')
             usersBoards.get(request.getPublicKey()).setFirst(request.getTs());  // ts = ts'
 
-            String username = userIdMap.get(request.getPublicKey());                    //val = v'
+            String username = userIdMap.get(request.getPublicKey());     //val = v'
             String path = announcementBoardsPath + username + "/";
             // Write to file
             JSONObject announcementObject =  new JSONObject();

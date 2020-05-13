@@ -40,9 +40,7 @@ public class ClientEndpoint {
 
     private ReplayAttacker replayAttacker = null;
     private boolean replayFlag = false;
-    private boolean integrityFlag = false;
-    private boolean waitForReadCompleteFlag = false;
-    
+    private boolean integrityFlag = false;    
     
 //////////////////////////////////////////
 //
@@ -78,10 +76,6 @@ public class ClientEndpoint {
 
 	public void setIntegrityFlag(boolean integrityFlag) {
 		this.integrityFlag = integrityFlag;
-	}
-	
-	public void setWaitForReadCompleteFlag(boolean waitForReadCompleteFlag) {
-		this.waitForReadCompleteFlag = waitForReadCompleteFlag;
 	}
 
     public PublicKey getPublicKey() {
@@ -527,10 +521,12 @@ public class ClientEndpoint {
     //////////////////////////////////////////////////
 
     public JSONObject read(String announcUserName, int number) throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+        
         rid += 1;
         // forall t > 0 do answers [t] := [⊥] N ;
         Listener listener = null;
         ServerSocket listenerSocket = null;
+
         try {
             listenerSocket = new ServerSocket(getClientPort());
             listenerSocket.setSoTimeout(20000);
@@ -538,17 +534,60 @@ public class ClientEndpoint {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         // Threads that will make the requests to the server
         Thread[] tasksRead = new Thread[nServers];
+        int[] resultsFromTasksRead = new int[nServers];
         // Send read to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
         	tasksRead[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
-                	readMethod(announcUserName, number, serverKey, rid);
+                	resultsFromTasksRead[serversPorts.get(serverKey) - PORT] = readMethod(announcUserName, number, serverKey, rid);
                 }
             });
         	tasksRead[serversPorts.get(serverKey) - PORT].start();
         }
+
+        // wait for requests to be made
+        boolean stillAlive = true;
+        while(stillAlive) {
+            stillAlive = false;
+            for (PublicKey serverKey : serversPorts.keySet()) {
+                if(tasksRead[serversPorts.get(serverKey) - PORT].isAlive()) {
+                    stillAlive = true;
+                    break;
+                }
+            }
+        }
+
+        switch (getQuorumInt(resultsFromTasksRead)) {
+            case (1):
+                break;
+            case (-11):
+                try {
+                    listenerSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+            case (-14):
+                try {
+                    listenerSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+            case (-12):
+                try {
+                    listenerSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+            default:
+                break;
+        }
+
         // Wait for listeners to get result
         int timeout = 0;
         boolean timeout_flag = false;
@@ -564,6 +603,7 @@ public class ClientEndpoint {
                 e.printStackTrace();
             }
         }
+
         // Close Listener socket when we get its result
         try {
             listenerSocket.close();
@@ -574,52 +614,65 @@ public class ClientEndpoint {
         if(timeout_flag){
             throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
         }
+
         // Get result from Listener
         Envelope result = listener.getResult();
         if(result.getRequest() != null) {
              // Threads that will make the requests to the server
             Thread[] tasksReadComplete = new Thread[nServers];
+            int[] resultsFromTasksReadComplete = new int[nServers];
             // Send 'read complete' to all servers
             for (PublicKey serverKey : serversPorts.keySet()) {
                 tasksReadComplete[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                     public void run() {
-                        readComplete(announcUserName, serverKey, rid);
+                        resultsFromTasksReadComplete[serversPorts.get(serverKey) - PORT] = readComplete(announcUserName, serverKey, rid);
                     }
                 });
                 tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
             }
-            if(waitForReadCompleteFlag) {
-	            boolean stillAlive = true;
-	            while(stillAlive) {
-	                stillAlive = false;
-	                for (PublicKey serverKey : serversPorts.keySet()) {
-	                    if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
-	                        stillAlive = true;
-	                        break;
-	                    }
-	                }
-	            }
+            // wait for all read complete tasks
+            stillAlive = true;
+            while(stillAlive) {
+                stillAlive = false;
+                for (PublicKey serverKey : serversPorts.keySet()) {
+                    if(tasksReadComplete[serversPorts.get(serverKey) - PORT].isAlive()) {
+                        stillAlive = true;
+                        break;
+                    }
+                }
+            }
+            switch (getQuorumInt(resultsFromTasksReadComplete)) {
+                case (1):
+                    break;
+                case (-11):
+                    throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+                case (-14):
+                    throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+                case (-12):
+                    throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+                default:
+                    break;
             }
             return result.getRequest().getJsonObject();
         }
         else {
             switch (result.getResponse().getErrorCode()) {
                 case (-1):
-                    throw new UserNotRegisteredException("User not Registered");
+                    throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
                 case (-3):
-                    throw new UserNotRegisteredException("The user you're reading from is not registered!");  //OLD EXCEPTION FIX ME
+                    throw new UserNotRegisteredException(ExceptionsMessages.USER_TO_READ_FROM_NOT_REGISTERED);
                 case (-6):
-                    throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+                    throw new InvalidPostsNumberException(ExceptionsMessages.INVALID_READ_ANNOUNCEMENT);
                 case (-10):
-                    throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
+                    throw new TooMuchAnnouncementsException(ExceptionsMessages.TOO_MUCH_ANNOUNCEMENTS);
                 case (-11):
-                    throw new NonceTimeoutException("Nonce timeout");
+                    throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-12):
-                    throw new OperationTimeoutException("Operation timeout");
+                    throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-13):
-                    throw new FreshnessException("Freshness Exception");
+                    throw new FreshnessException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-14):
-                    throw new IntegrityException("Integrity Exception");
+                    throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 default:
                     break;
             }
@@ -627,7 +680,7 @@ public class ClientEndpoint {
         }
     }
 
-    public void readMethod(String announcUserName, int number, PublicKey serverKey, int rid) {
+    public int readMethod(String announcUserName, int number, PublicKey serverKey, int rid) {
         try {
 			//  -----> Handshake one way
 			byte[] serverNonce = startHandshake(serverKey, true);
@@ -636,16 +689,20 @@ public class ClientEndpoint {
 			//  -----> send read operation to server
 			Request request = new Request("READ", getPublicKey(), pubKeyToReadFrom, number, serverNonce, rid);
 			Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
-			send(envelopeRequest, serversPorts.get(serverKey));
-		} catch (ClassNotFoundException |
-				NonceTimeoutException   |
-				IntegrityException 	 	|
-				IOException e) {
-			e.printStackTrace();
-		}
+            send(envelopeRequest, serversPorts.get(serverKey));
+            return 1;
+		} catch (ClassNotFoundException e) {
+            return -666;
+        } catch (NonceTimeoutException e) {
+            return -11;
+        } catch (IntegrityException e) {
+            return -14;
+        } catch (IOException e) {
+            return -12;
+        }
     }
 
-    private void readComplete(String announcUserName, PublicKey serverKey, int rid) {
+    private int readComplete(String announcUserName, PublicKey serverKey, int rid) {
         try {
             //  -----> Handshake one way
         	byte[] serverNonce = startHandshake(serverKey, true);
@@ -655,13 +712,15 @@ public class ClientEndpoint {
             Request request = new Request("READCOMPLETE", getPublicKey(), pubKeyToReadFrom, serverNonce, rid);
             Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
             send(envelopeRequest, serversPorts.get(serverKey));
-        } catch (ClassNotFoundException |
-                NonceTimeoutException   |
-                IOException             |
-                IntegrityException   e) {
-            e.printStackTrace();
-            //Impossible to know if fault from the server when doing handshake or drop attack
-            //throw new OperationTimeoutException("There was a problem in the connection, please do a read operation to confirm your post!");
+            return 1;
+		} catch (ClassNotFoundException e) {
+            return -666;
+        } catch (NonceTimeoutException e) {
+            return -11;
+        } catch (IntegrityException e) {
+            return -14;
+        } catch (IOException e) {
+            return -12;
         }
     }
 
@@ -727,21 +786,21 @@ public class ClientEndpoint {
         else{
             switch (result.getResponse().getErrorCode()) {
                 case (-1):
-                    throw new UserNotRegisteredException("User not Registered");
+                    throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
                 case (-3):
-                    throw new UserNotRegisteredException("The user you're reading from is not registered!");  //OLD EXCEPTION FIX ME
+                    throw new UserNotRegisteredException(ExceptionsMessages.USER_TO_READ_FROM_NOT_REGISTERED);
                 case (-6):
-                    throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+                    throw new InvalidPostsNumberException(ExceptionsMessages.INVALID_READ_ANNOUNCEMENT);
                 case (-10):
-                    throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
+                    throw new TooMuchAnnouncementsException(ExceptionsMessages.TOO_MUCH_ANNOUNCEMENTS);
                 case (-11):
-                    throw new NonceTimeoutException("Nonce timeout");
+                    throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-12):
-                    throw new OperationTimeoutException("Operation timeout");
+                    throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-13):
-                    throw new FreshnessException("Freshness Exception");
+                    throw new FreshnessException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-14):
-                    throw new IntegrityException("Integrity Exception");
+                    throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 default:
                     break;
             }

@@ -55,7 +55,7 @@ public class ResponseChecker {
                 throw new UserNotRegisteredException(ExceptionsMessages.USER_TO_READ_FROM_NOT_REGISTERED);
             }
             else if(error == -6) {
-                throw new InvalidPostsNumberException(ExceptionsMessages.INVALID_READ_POST);
+                throw new InvalidPostsNumberException(ExceptionsMessages.INVALID_READ_ANNOUNCEMENT);
             }
             else if(error == -10) {
                 throw new TooMuchAnnouncementsException(ExceptionsMessages.TOO_MUCH_ANNOUNCEMENTS);
@@ -70,7 +70,7 @@ public class ResponseChecker {
                 throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
             }
             else if(error == -6) {
-                throw new InvalidPostsNumberException(ExceptionsMessages.INVALID_READ_POST);
+                throw new InvalidPostsNumberException(ExceptionsMessages.INVALID_READ_ANNOUNCEMENT);
             }
             else if(error == -10) {
                 throw new TooMuchAnnouncementsException(ExceptionsMessages.TOO_MUCH_ANNOUNCEMENTS);

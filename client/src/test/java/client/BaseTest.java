@@ -178,24 +178,27 @@ public class BaseTest {
         }
     }
 
-    public static void setReplayFlag(boolean flag) {
+    public static void setReplayFlag(boolean flag, int nServers) {
         Socket socket = null;
         String message = "REPLAY_FLAG_";
-        if(flag){
+        if(flag) {
             message+="TRUE";
         }
-        else{
+        else {
             message+="FALSE";
         }
         try {
-            socket = new Socket(serverAddress, 9000);
-            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-            outputStream.writeObject(new Envelope(new Request(message)));
-            Envelope confirmIntegrity = (Envelope) inputStream.readObject();
-            outputStream.close();
-            socket.close();
-
+        	int port = PORT;
+            int i = 0;
+            while(i < nServers) {
+	            socket = new Socket(serverAddress, port + i);
+	            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+	            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+	            outputStream.writeObject(new Envelope(new Request(message)));
+	            Envelope confirmReplay = (Envelope) inputStream.readObject();
+	            outputStream.close();
+	            socket.close();
+            }
         } catch (IOException |
                 ClassNotFoundException e) {
         e.printStackTrace();
