@@ -296,9 +296,11 @@ public class Server implements Runnable {
                         atomicWriteFlag = false;
                         break;
                     case "CONCURRENT_WRITE_FLAG_TRUE":
+                        outStream.writeObject(new Envelope(new Request("CONCURRENT_WRITE_ACK")));
                         concurrentWrite = true;
                         break;
                     case "CONCURRENT_WRITE_FLAG_FALSE":
+                        outStream.writeObject(new Envelope(new Request("CONCURRENT_WRITE_ACK")));
                         concurrentWrite = false;
                         break;
                     default:
@@ -586,37 +588,66 @@ public class Server implements Runnable {
     //////////////////////////////////////////////////
 
     public void addConcurrentPost(JSONObject object, byte[] signature) {
+        System.out.println("CONCURRENT POST");
         ArrayList<Pair<JSONObject, byte[]>> new_announcements = new ArrayList<>();
         String user = (String) object.get("user");
         int i = 0;
-        while(i < generalBoard.getSecond().getAnnoucements().size() - 1) {
-            if((int) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst().get("ts") == (int) object.get("ts")) {
-                JSONObject older = (JSONObject) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst().get("user");
+        System.out.println("BEFORE: " + generalBoard.getSecond().getAnnoucements().toJSONString());
+        if(generalBoard.getSecond().getRawAnnouncements().size() < 2){
+            System.out.println("0");
+            if((int) generalBoard.getSecond().getRawAnnouncements().get(0).getFirst().get("ts") == (int) object.get("ts")){
+                System.out.println("1");
+                JSONObject older = generalBoard.getSecond().getRawAnnouncements().get(0).getFirst();
                 String older_user = (String) older.get("user");
-
-                JSONObject next_older = (JSONObject) generalBoard.getSecond().getRawAnnouncements().get(i+1).getFirst().get("user");
-                String next_user = (String) next_older.get("user");
 
                 if(user.compareTo(older_user) < 0){
                     new_announcements.add(new Pair<>(object, signature));
-                    new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
-                    break;
+                    new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(0));
                 }
-
-                if(user.compareTo(older_user) > 0 && user.compareTo(next_user) < 0) {
-                    new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+                else{
+                    System.out.println("4434");
+                    new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(0));
                     new_announcements.add(new Pair<>(object, signature));
-                    break;
                 }
             }
-            else{
-                new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
-            }
+
 
         }
-        while(i < generalBoard.getSecond().getAnnoucements().size()){
-            new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+        else{
+            while(i < generalBoard.getSecond().getAnnoucements().size() - 1) {
+                if((int) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst().get("ts") == (int) object.get("ts")) {
+                    JSONObject older = (JSONObject) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst();
+                    String older_user = (String) older.get("user");
+
+                    JSONObject next_older = generalBoard.getSecond().getRawAnnouncements().get(i+1).getFirst();
+                    String next_user = (String) next_older.get("user");
+
+                    if(user.compareTo(older_user) < 0){
+                        System.out.println("0");
+                        new_announcements.add(new Pair<>(object, signature));
+                        new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+                        break;
+                    }
+
+                    if(user.compareTo(older_user) > 0 && user.compareTo(next_user) < 0) {
+                        System.out.println("1");
+                        new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+                        new_announcements.add(new Pair<>(object, signature));
+                        break;
+                    }
+                }
+                else{
+                    System.out.println("ta a entrar no else");
+                    new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+                }
+                i++;
+            }
+            while(i < generalBoard.getSecond().getAnnoucements().size()){
+                new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+                i++;
+            }
         }
+
 
         generalBoard.getSecond().setAnnoucements(new_announcements);
 
@@ -839,8 +870,8 @@ public class Server implements Runnable {
             byte[] signature = cryptoManager.signRequest(request);
             /***** SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash] *****/
             if(integrityFlag) {
-                //request.setSuccess(false);  --> alteramos outras coisas
-                //request.setErrorCode(-33);
+                // request.setSuccess(false);
+                // request.setErrorCode(-33);
             }
             /************************************************************************************************************/
             /***** SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)] *****/

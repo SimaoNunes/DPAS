@@ -1,7 +1,6 @@
 package client;
 
 import exceptions.*;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -32,37 +31,40 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
         setIntegrityFlag(false);
 
     }
-/*
+
     @Test
     public void Should_Tolerate_Post() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException {
         
         assertEquals(1, clientEndpoint1.post("user1 announc message1", null));
 
-    }*/
+    }
 
-    // @Test(expected = IntegrityException.class)
-    // public void Should_throw_Integrity_Exception_Read() throws NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
-    //     setIntegrityFlag(true);
+    @Test
+    public void Should_Tolerate_Read() throws NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException,
+            MessageTooBigException, InvalidAnnouncementException {
 
-    //     clientEndpoint1.read("user2", 1);
+        clientEndpoint1.post("message2 from user1", null);
+    	String[] result = getMessagesFromJSON(clientEndpoint1.read("user1", 1));
+    	assertEquals("message2 from user1", result[0]);
 
-    // }
+    }
 
-    // @Test(expected = IntegrityException.class)
-    // public void Should_throw_Integrity_Exception_PostGeneral() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
-    //     setIntegrityFlag(true);
+    @Test
+    public void Should_Tolerate_PostGeneral() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
 
-    //     clientEndpoint1.post("a resposta vai ser alterada confiem", null);
+        assertEquals(1, clientEndpoint1.postGeneral("user1 announc general message1", null));
 
-    // }
+    }
 
-    // @Test(expected = IntegrityException.class)
-    // public void Should_throw_Integrity_Exception_ReadGeneral() throws IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, NonceTimeoutException, UserNotRegisteredException, FreshnessException {
-    //     setIntegrityFlag(true);
+    @Test
+    public void Should_Tolerate_ReadGeneral() throws IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, NonceTimeoutException, UserNotRegisteredException, FreshnessException,
+            MessageTooBigException, InvalidAnnouncementException {
 
-    //     clientEndpoint1.readGeneral(1);
+        clientEndpoint1.postGeneral("user1 announc general message2", null);
+    	String[] result = getMessagesFromJSONGeneral(clientEndpoint1.readGeneral(1));
+    	assertEquals("user1 announc general message2", result[0]);
 
-    // }
+    }
 
     // @Test(expected = IntegrityException.class)
     // public void Should_throw_Integrity_Exception_Register() throws NonceTimeoutException, FreshnessException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, UnknownPublicKeyException, AlreadyRegisteredException {
