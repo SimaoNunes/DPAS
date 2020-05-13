@@ -77,13 +77,6 @@ public class IntegrityRequestTolerateFaultTest extends BaseTest {
     	assertEquals("user1 general message2", result[0]);
 	}
 	
-	@Test(expected = TooMuchAnnouncementsException.class)
-	public void Should_Throw_When_ReadGeneralIsTamperedWith() throws UserNotRegisteredException, InvalidPostsNumberException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException, MessageTooBigException, InvalidAnnouncementException {
-		// Flag will make endpoint send to 1 server that userX wants to read from user3
-		clientEndpoint1.postGeneral("user1 general message3", null);
-    	String[] result = getMessagesFromJSONGeneral(clientEndpoint1.readGeneral(10));
-	}
-	
 	@Test(expected = AlreadyRegisteredException.class)
 	public void Should_Throw_When_RegisterIsTamperedWith() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException,
 			OperationTimeoutException, FreshnessException, IntegrityException {
