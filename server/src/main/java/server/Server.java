@@ -152,41 +152,37 @@ public class Server implements Runnable {
                 Envelope envelope = (Envelope) inStream.readObject();
                 switch(envelope.getRequest().getOperation()) {
                     case "REGISTER":
-                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7}, null) &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(envelope.getRequest().getUsername())) &&
                             	cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
-                            	checkExceptions(envelope.getRequest(), outStream, new int[] {-2}, null))
+                            	checkExceptions(envelope.getRequest(), outStream, new int[] {-2}, null) && checkDelivered(envelope))
                         {
                             register(envelope.getRequest(), outStream);
                         }
                         break;
                     case "POST":
-                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}, null) &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                             	cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
-                            	checkExceptions(envelope.getRequest(), outStream, new int[] {-4, -5}, null)) 
+                            	checkExceptions(envelope.getRequest(), outStream, new int[] {-4, -5}, null) && checkDelivered(envelope))
                         {
                             write(envelope.getRequest(), outStream);
                         }
                         break;
                     case "POSTGENERAL":
-                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}, null) &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                         		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
-                        		checkExceptions(envelope.getRequest(), outStream, new int[] {-4, -5}, null))
+                        		checkExceptions(envelope.getRequest(), outStream, new int[] {-4, -5}, null) && checkDelivered(envelope))
                         {
                         	writeGeneral(envelope.getRequest(), outStream);
                         }
                         break;
                     case "READ":
-                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}, "READ") &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                                 cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
-                                checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -10, -6}, "READ"))
+                                checkExceptions(envelope.getRequest(), outStream, new int[] {-3, -10, -6}, "READ") && checkDelivered(envelope))
                         {
                             read(envelope.getRequest(), outStream);
                         }
@@ -196,7 +192,7 @@ public class Server implements Runnable {
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}, "READGENERAL") &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                         		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
-                        		checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10}, "READGENERAL"))
+                        		checkExceptions(envelope.getRequest(), outStream, new int[] {-6, -10}, "READGENERAL") && checkDelivered(envelope))
                         {
                             readGeneral(envelope.getRequest());
                         }
@@ -223,7 +219,6 @@ public class Server implements Runnable {
                     	}
                         break;
                     case "WTS":
-                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}, null) &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                         		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
@@ -232,7 +227,6 @@ public class Server implements Runnable {
                         }
                     	break;
                     case "WTSGENERAL":
-                        checkDelivered(envelope);
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}, null) &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                         		cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()))
@@ -428,8 +422,7 @@ public class Server implements Runnable {
 
     }
 
-    private void checkDelivered(Envelope envelope){
-
+    private boolean checkDelivered(Envelope envelope){
         delivered.put(envelope.getRequest().getPublicKey(), false);
 
         sentEcho.remove(envelope.getRequest().getPublicKey());
@@ -479,7 +472,7 @@ public class Server implements Runnable {
                     timeout++;
 
                     if (timeout == 1000) {
-                        break; //lançar exceçao
+                        return false;
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -487,6 +480,7 @@ public class Server implements Runnable {
             }
             delivered.remove(envelope.getRequest().getPublicKey());
         }
+        return true;
     }
 
     
