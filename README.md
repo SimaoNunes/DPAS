@@ -55,17 +55,13 @@ cd server
 mvn exec:java
 ```
 
-- Now, that the servers are ready to receive requests, you can go back to console number 1 and test the whole system by executing:
-
-```bash
-mvn test
-```
-
-- If you want to run a single test you can also run the following command:
+- Now, that the servers are ready to receive requests, you can go back to console number 1 and run single tests of the system by executing:
 
 ```bash
 mvn -Dtest=<testname> test
 ```
+
+- You can also run tests on *Eclipse* or *Intellij* or any other IDE that supports JUnit tests.
 
 ### Warnings
 
