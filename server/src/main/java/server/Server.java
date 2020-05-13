@@ -294,9 +294,11 @@ public class Server implements Runnable {
                         atomicWriteFlag = false;
                         break;
                     case "CONCURRENT_WRITE_FLAG_TRUE":
+                        outStream.writeObject(new Envelope(new Request("CONCURRENT_WRITE_ACK")));
                         concurrentWrite = true;
                         break;
                     case "CONCURRENT_WRITE_FLAG_FALSE":
+                        outStream.writeObject(new Envelope(new Request("CONCURRENT_WRITE_ACK")));
                         concurrentWrite = false;
                         break;
 
@@ -314,7 +316,6 @@ public class Server implements Runnable {
 
 
     private void checkReady(Envelope envelope){
-        System.out.println("CHECK READY PORT:" + serverPort);
         synchronized (readys){
             if(readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null){
                 readys.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), new ConcurrentHashMap<>());
@@ -333,7 +334,6 @@ public class Server implements Runnable {
                 if(counter.get(entry.toString()) > 2 * nFaults && (delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
                                                                        !delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
                     delivered.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
-                    System.out.println("ativei a delivered, PORT: " + serverPort);
                     sentEcho.remove(entry.getRequest().getPublicKey());
                     sentReady.remove(entry.getRequest().getPublicKey());
                     echos.remove(entry.getRequest().getPublicKey());
@@ -342,7 +342,6 @@ public class Server implements Runnable {
                 }
 
                 else if(counter.get(entry.toString()) > nFaults && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null)){
-                    System.out.println("ENTREI AQUI PORT: " + serverPort);
                     sentReady.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
                     broadcastReady(entry);
 
@@ -357,31 +356,21 @@ public class Server implements Runnable {
     }
 
     private void checkEcho(Envelope envelope){
-        System.out.println("CHECK ECHO PORT:" + serverPort);
         if(echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null){
-            System.out.println("1");
             echos.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), new ConcurrentHashMap<>());
             echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
         }
         else{
-            System.out.println("2");
             echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
         }
 
         HashMap<String, Integer> counter = new HashMap<>();
 
         for(Envelope entry: echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).values()){
-            System.out.println("3");
             if(counter.containsKey(entry.toString())){
-                System.out.println("4");
                 counter.put(entry.toString(), counter.get(entry.toString()) + 1);
-                System.out.println("1" + (counter.get(entry.toString()) > nQuorum));
-                System.out.println("2" + (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey())));
-                System.out.println("3" + userIdMap.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()));
                 if(counter.get(entry.toString()) > nQuorum && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null )){
-                    System.out.println("5");
                     sentReady.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
-                    System.out.println("PUS O SENTREADY DO: " + envelope.getRequest().getPublicKey());
 
                     broadcastReady(entry);
                 }
@@ -396,7 +385,6 @@ public class Server implements Runnable {
     }
 
     private void broadcastReady(Envelope envelope){
-        System.out.println("BROADCAST READY PORT: " + serverPort);
         Thread[] tasks = new Thread[nServers];
 
         int i = 0;
@@ -438,7 +426,6 @@ public class Server implements Runnable {
 
         delivered.put(envelope.getRequest().getPublicKey(), false);
 
-        System.out.println("ativei a delivered, PORT: " + serverPort);
         sentEcho.remove(envelope.getRequest().getPublicKey());
         sentReady.remove(envelope.getRequest().getPublicKey());
         echos.remove(envelope.getRequest().getPublicKey());
@@ -484,7 +471,6 @@ public class Server implements Runnable {
                 try {
                     Thread.sleep(50);
                     timeout++;
-                    System.out.println("tou a espera, PORT: " + serverPort);
 
                     if (timeout == 1000) {
                         break; //lançar exceçao
@@ -603,37 +589,66 @@ public class Server implements Runnable {
 
     public void addConcurrentPost(JSONObject object, byte[] signature) {
         System.out.println("CONCURRENT POST");
+        System.out.println("OBJECT: " + object.toJSONString());
         ArrayList<Pair<JSONObject, byte[]>> new_announcements = new ArrayList<>();
         String user = (String) object.get("user");
         int i = 0;
-        while(i < generalBoard.getSecond().getAnnoucements().size() - 1) {
-            if((int) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst().get("ts") == (int) object.get("ts")) {
-                JSONObject older = (JSONObject) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst().get("user");
+        System.out.println("BEFORE: " + generalBoard.getSecond().getAnnoucements().toJSONString());
+        if(generalBoard.getSecond().getRawAnnouncements().size() < 2){
+            System.out.println("0");
+            if((int) generalBoard.getSecond().getRawAnnouncements().get(0).getFirst().get("ts") == (int) object.get("ts")){
+                System.out.println("1");
+                JSONObject older = generalBoard.getSecond().getRawAnnouncements().get(0).getFirst();
                 String older_user = (String) older.get("user");
-
-                JSONObject next_older = (JSONObject) generalBoard.getSecond().getRawAnnouncements().get(i+1).getFirst().get("user");
-                String next_user = (String) next_older.get("user");
 
                 if(user.compareTo(older_user) < 0){
                     new_announcements.add(new Pair<>(object, signature));
-                    new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
-                    break;
+                    new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(0));
                 }
-
-                if(user.compareTo(older_user) > 0 && user.compareTo(next_user) < 0) {
-                    new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+                else{
+                    System.out.println("4434");
+                    new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(0));
                     new_announcements.add(new Pair<>(object, signature));
-                    break;
                 }
             }
-            else{
-                new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
-            }
+
 
         }
-        while(i < generalBoard.getSecond().getAnnoucements().size()){
-            new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+        else{
+            while(i < generalBoard.getSecond().getAnnoucements().size() - 1) {
+                if((int) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst().get("ts") == (int) object.get("ts")) {
+                    JSONObject older = (JSONObject) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst();
+                    String older_user = (String) older.get("user");
+
+                    JSONObject next_older = generalBoard.getSecond().getRawAnnouncements().get(i+1).getFirst();
+                    String next_user = (String) next_older.get("user");
+
+                    if(user.compareTo(older_user) < 0){
+                        System.out.println("0");
+                        new_announcements.add(new Pair<>(object, signature));
+                        new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+                        break;
+                    }
+
+                    if(user.compareTo(older_user) > 0 && user.compareTo(next_user) < 0) {
+                        System.out.println("1");
+                        new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+                        new_announcements.add(new Pair<>(object, signature));
+                        break;
+                    }
+                }
+                else{
+                    System.out.println("ta a entrar no else");
+                    new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+                }
+                i++;
+            }
+            while(i < generalBoard.getSecond().getAnnoucements().size()){
+                new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
+                i++;
+            }
         }
+
 
         generalBoard.getSecond().setAnnoucements(new_announcements);
 

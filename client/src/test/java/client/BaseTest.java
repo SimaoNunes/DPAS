@@ -289,7 +289,6 @@ public class BaseTest {
     }
 
     public static void setGeneralConcurrentWriteFlag(boolean flag){
-        Socket socket = null;
         String message = "CONCURRENT_WRITE_FLAG_";
         if(flag){
             message+="TRUE";
@@ -300,14 +299,18 @@ public class BaseTest {
         int port = PORT;
         int i = 0;
         while(i < 4){
-            try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket(serverAddress, port + i).getOutputStream())) {
+            try {
+                Socket socket = new Socket(serverAddress, port + i);
+                ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
                 outputStream.writeObject(new Envelope(new Request(message)));
-                outputStream.close();
-                socket.close();
+                ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+                Envelope confirmDelete = (Envelope) inputStream.readObject();
                 i++;
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
 
