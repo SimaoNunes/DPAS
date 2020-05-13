@@ -57,6 +57,11 @@ public class ClientEndpoint {
         serversPorts = initiateServersPorts();
     }
 
+    public void changeNservers(int nServers){
+        this.nServers = nServers;
+        serversPorts = initiateServersPorts();
+    }
+
     public boolean isReplayFlag() {
         return replayFlag;
     }
