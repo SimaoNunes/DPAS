@@ -1,6 +1,7 @@
 package client;
 
 import exceptions.*;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -30,6 +31,15 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
     public static void turnFlagOff() {
         setIntegrityFlag(false,1);
 
+    }
+
+    @After
+    public void waitMethod() {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
