@@ -1,4 +1,5 @@
 # Dependable Public Announcement Server
+
 High Dependable Systems Project: DPAS.
 This is Java API that wants to solve the problems concerned with the emergence of fake news and the need for trusted sources of information. We want to make sure that relevant public information and facts can be posted, tracked and verified.
 	The main specifications are:
@@ -8,9 +9,10 @@ This is Java API that wants to solve the problems concerned with the emergence o
 - Users can read all the announcements of other users and obtain their cronological order
 - When posting announcements, users can refer to previous announcements posted by them or other users.
 
-## exceptions Guide
+## Exceptions Guide
 
-Each error code sent by the server is translated into an exception client side.
+Every time the server must throw an exception, it sends an error code to the client.
+This error code is translated into an exception as the following:
 
 - -1 -> UserNotRegistered
 - -2 -> AlreadyRegistered
@@ -23,12 +25,14 @@ Each error code sent by the server is translated into an exception client side.
 - -9 -> ErrorWrittingFile
 - -10 -> TooMuchAnnouncements
 
-(Exception from endpoint to app)
+This are exceptions that the server doesn't throw explicitly, which means this are exceptios that the endpoint
+interprets based on timeouts and non fresh/non integrate messages.
 
 - -11 -> NonceTimeout
 - -12 -> OperationTimeout
 - -13 -> Freshness
 - -14 -> Integrity
+
 ## How to test 
 
 To test our system and simulate possible attacks, we provided a set of tests inside the Client's module. 
@@ -43,20 +47,20 @@ To test our system and simulate possible attacks, we provided a set of tests ins
 
 - You will need to open two consoles to execute our tests. 
 
-- In console number 1, inside the root directory of this repository, you must install all the different components with Maven. Since the tests will only work when the server is running, you should skip the test phase (for now):
+- In console number 1, inside the root directory of this repository (DPAS), you must install all the different components with Maven. Since the tests will only work when the server is running, you should skip the test phase (for now):
 
 ```bash
 mvn -DskipTests clean install
 ```
 
-- Once the installation process is complete, you should start the execution of the server in console number 2, after entering inside the Server's directory. To do this, you must execute the following commands: 
+- Once the installation process is complete, you should start the execution of the servers in console number 2, after entering inside the Server's directory. To do this, you must execute the following commands (this will run 4 servers):
 
 ```bash
-cd Server
+cd server
 mvn exec:java
 ```
 
-- Now, that the server is ready to receive requests, you can go back to console number 1 and test the whole system by executing:
+- Now, that the servers are ready to receive requests, you can go back to console number 1 and test the whole system by executing:
 
 
 ```bash
