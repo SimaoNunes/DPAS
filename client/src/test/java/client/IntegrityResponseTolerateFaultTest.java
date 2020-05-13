@@ -66,7 +66,7 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
 
     }
 
-    @Test(expected = AlreadyRegisteredExecption.class)
+    @Test(expected = AlreadyRegisteredException.class)
     public void Should_throw_AlreadyRegisteredException_Register() throws NonceTimeoutException, FreshnessException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, UnknownPublicKeyException, AlreadyRegisteredException {
         clientEndpoint1.register();
     }
