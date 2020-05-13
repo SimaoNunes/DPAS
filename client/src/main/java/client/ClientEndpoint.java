@@ -346,7 +346,9 @@ public class ClientEndpoint {
             case (-14):
                 throw new IntegrityException(ExceptionsMessages.CANT_INFER_POST);
             case (-666):
-                throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
+                if(nServers == 2){
+                    throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
+                }
         }
         return result;
     }
@@ -465,7 +467,9 @@ public class ClientEndpoint {
             case (-14):
                 throw new IntegrityException(ExceptionsMessages.CANT_INFER_POST);
             case (-666):
-                throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
+                if(nServers == 2){
+                    throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
+                }
         }
         return result;
     }

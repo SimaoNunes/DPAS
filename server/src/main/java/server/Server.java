@@ -1188,7 +1188,6 @@ public class Server implements Runnable {
 //////////////////////////////////////////
     @SuppressWarnings("all")
     public boolean checkExceptions(Request request, ObjectOutputStream outStream, int[] codes, String operationType) {
-        System.out.println("check exceptions");
         for (int i = 0; i < codes.length; i++) {
             switch(codes[i]) {
                 // ## UserNotRegistered ## -> check if user is registered

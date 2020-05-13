@@ -193,7 +193,6 @@ public class CryptoManager {
 	}
 
     public boolean checkNonce(PublicKey clientKey, byte[] nonce) {
-		System.out.println("check nonce");
     	if(nonces.containsKey(clientKey) && Arrays.equals(nonces.get(clientKey), nonce)) {
         	nonces.put(clientKey, null);
         	return true;
