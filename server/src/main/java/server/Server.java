@@ -837,8 +837,8 @@ public class Server implements Runnable {
             byte[] signature = cryptoManager.signRequest(request);
             /***** SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash] *****/
             if(integrityFlag) {
-                //request.setSuccess(false);  --> alteramos outras coisas
-                //request.setErrorCode(-33);
+                // request.setSuccess(false);
+                // request.setErrorCode(-33);
             }
             /************************************************************************************************************/
             /***** SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)] *****/
