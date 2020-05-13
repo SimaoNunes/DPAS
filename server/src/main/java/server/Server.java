@@ -428,7 +428,7 @@ public class Server implements Runnable {
 
     }
 
-    private void checkDelivered(Envelope envelope){
+    private void checkDelivered(Envelope envelope) {
 
         delivered.put(envelope.getRequest().getPublicKey(), false);
 
