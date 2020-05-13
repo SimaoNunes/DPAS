@@ -55,17 +55,13 @@ cd server
 mvn exec:java
 ```
 
-- Now, that the servers are ready to receive requests, you can go back to console number 1 and test the whole system by executing:
-
-```bash
-mvn test
-```
-
-- If you want to run a single test you can also run the following command:
+- Now, that the servers are ready to receive requests, you can go back to console number 1 and run single tests of the system by executing:
 
 ```bash
 mvn -Dtest=<testname> test
 ```
+
+- You can also run tests on *Eclipse* or *Intellij* or any other IDE that supports JUnit tests.
 
 ### Warnings
 
@@ -74,7 +70,7 @@ During the test process, the test modules will ask you to reboot the server to s
 
 To reboot the server, you must stop the execution on console number 2, and execute again:
 
-It may also be the case that you may need to delete the *storage* files in case of test fails, in order to run them properly in a next round of tests (tests can fail for example if a machine is the slow and the timeout is exceed).
+It may also be the case that you may need to delete the *storage* files in case of test fails, in order to run them properly in a next round of tests (tests can fail because of concurrence, for example if a machine is much slower than a certain assumption a timeout will be exceed).
 
 ```bash
 ctrl+c  #interrupt the execution
