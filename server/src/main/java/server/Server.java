@@ -166,10 +166,8 @@ public class Server implements Runnable {
                             	cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             	checkExceptions(envelope.getRequest(), outStream, new int[] {-4, -5}, null) && checkDelivered(envelope))
                         {
-                            System.out.println("dentro do write");
                             write(envelope.getRequest(), outStream);
                         }
-                        System.out.println("acabei tudo");
                         break;
                     case "POSTGENERAL":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}, null) &&
@@ -181,7 +179,6 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READ":
-                        System.out.println("entrei no READ");
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}, "READ") &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                                 cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
@@ -1189,7 +1186,6 @@ public class Server implements Runnable {
 //////////////////////////////////////////
     @SuppressWarnings("all")
     public boolean checkExceptions(Request request, ObjectOutputStream outStream, int[] codes, String operationType) {
-        System.out.println("check exceptions");
         for (int i = 0; i < codes.length; i++) {
             switch(codes[i]) {
                 // ## UserNotRegistered ## -> check if user is registered
