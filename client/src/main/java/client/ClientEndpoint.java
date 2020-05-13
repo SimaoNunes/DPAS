@@ -30,7 +30,7 @@ public class ClientEndpoint {
     /************ Replication variables *************/
     private static final int PORT = 9000;
     private static final int TIMEOUT = 5000;
-    private static final int TIMEOUT_WHILE = 100;  // this * 50
+    private static final int TIMEOUT_WHILE = 100;  // this * 50 miliseconds
     private int nServers = 4;
     private int nFaults  = 1;
     private int nQuorum  = 2;
@@ -374,8 +374,6 @@ public class ClientEndpoint {
         try {
 
             Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(serverKey));
-
-            System.out.println("AFTER DO SENDRECEIVE:" + envelopeResponse.getResponse().toString());
 
             /***** SIMULATE ATTACKER: replay register *****/
             if(isReplayFlag()){
@@ -751,15 +749,58 @@ public class ClientEndpoint {
         }
         // Threads that will make the requests to the server
         Thread[] tasksRead = new Thread[nServers];
+        int[] resultsFromTasksRead = new int[nServers];
         // Send read to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
             tasksRead[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
-                    readGeneralMethod(number, serverKey, rid);
+                    resultsFromTasksRead[serversPorts.get(serverKey) - PORT] = readGeneralMethod(number, serverKey, rid);
                 }
             });
             tasksRead[serversPorts.get(serverKey) - PORT].start();
         }
+
+        // wait for requests to be made
+        boolean stillAlive = true;
+        while(stillAlive) {
+            stillAlive = false;
+            for (PublicKey serverKey : serversPorts.keySet()) {
+                if(tasksRead[serversPorts.get(serverKey) - PORT].isAlive()) {
+                    stillAlive = true;
+                    break;
+                }
+            }
+        }
+
+        switch (getQuorumInt(resultsFromTasksRead)) {
+            case (1):
+                break;
+            case (-11):
+                try {
+                    listenerSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+            case (-14):
+                try {
+                    listenerSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+            case (-12):
+                try {
+                    listenerSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+            default:
+                break;
+        }
+
+
         // Wait for listeners to get result
         int timeout = 0;
         boolean timeout_flag = false;
@@ -818,8 +859,7 @@ public class ClientEndpoint {
         return null;
     }
 
-    public Response readGeneralMethod(int number, PublicKey serverKey, int rid) {
-
+    public int readGeneralMethod(int number, PublicKey serverKey, int rid) {
         try {
             //  -----> Handshake one way
             byte[] serverNonce = startHandshake(serverKey, true);
@@ -827,39 +867,16 @@ public class ClientEndpoint {
             Request request = new Request("READGENERAL", getPublicKey(), number, serverNonce, rid);
             Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
             send(envelopeRequest, serversPorts.get(serverKey));
-        } catch (ClassNotFoundException |
-                         NonceTimeoutException |
-                         IntegrityException |
-                         IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-
-
-        /***** SIMULATE ATTACKER: send replayed messages to the server *****/
-        /*
-        if(isReplayFlag()){
-            	this.replayAttacker.sendReplays(new Envelope(request, null), 2);
-            }
-            /*******************************************************************/
-        /*
-        if (!checkNonce(envelopeResponse.getResponse(), port)) {
-                return new Response(false, -13, null);
-                //throw new FreshnessException(errorMessage);
-            }
-            if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)){
-                return new Response(false, -14, null);
-                //throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
-            }
-			//checkReadGeneral(envelopeResponse.getResponse());
-            return envelopeResponse.getResponse();
-
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            return 1;
+		} catch (ClassNotFoundException e) {
+            return -666;
+        } catch (NonceTimeoutException e) {
+            return -11;
+        } catch (IntegrityException e) {
+            return -14;
         } catch (IOException e) {
-            return new Response(false, -12, null);
-        	//throw new OperationTimeoutException("There was a problem with the connection, please try again!");
-        }*/
+            return -12;
+        }
     }
     
 	//////////////////////////////////////////////////
@@ -976,18 +993,6 @@ public class ClientEndpoint {
         }
         //NOT QUORUM
         return -666;
-    }
-
-    private Response getQuorumResponse(Response[] results) {
-        Response finalResult = results[0];
-        for(int i = 1; i < results.length; i++) {
-            if (results[i].getSuccess() == finalResult.getSuccess() && results[i].getErrorCode() == finalResult.getErrorCode()) {
-                continue;
-            } else {
-                System.out.println("Not quorum n sei o que fazer");
-            }
-        }
-        return finalResult;
     }
     
     private int getMajorityOfQuorumInt(int[] results) {

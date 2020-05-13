@@ -167,10 +167,8 @@ public class Server implements Runnable {
                             	cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             	checkExceptions(envelope.getRequest(), outStream, new int[] {-4, -5}, null) && checkDelivered(envelope))
                         {
-                            System.out.println("dentro do write");
                             write(envelope.getRequest(), outStream);
                         }
-                        System.out.println("acabei tudo");
                         break;
                     case "POSTGENERAL":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}, null) &&
@@ -182,7 +180,6 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READ":
-                        System.out.println("entrei no READ");
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}, "READ") &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                                 cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
@@ -1206,7 +1203,6 @@ public class Server implements Runnable {
                     break;
                 // ## UserNotRegistered ## -> [READ] check if user TO READ FROM is registered
                 case -3:
-                    System.out.println("-3");
                     if(!userIdMap.containsKey(request.getPublicKeyToReadFrom())) {
                         sendExceptionCode(request.getPublicKey(), request.getClientNonce(), -3, operationType);
                         return false;
@@ -1228,7 +1224,6 @@ public class Server implements Runnable {
                     break;
                 // ## InvalidPostsNumber ## -> check if number of requested posts are bigger than zero
                 case -6:
-                    System.out.println("-6");
                     if (request.getNumber() < 0) {
                         sendExceptionCode(request.getPublicKey(), request.getClientNonce(), -6, operationType);
                         return false;
@@ -1243,11 +1238,8 @@ public class Server implements Runnable {
                     break;
                 // ## TooMuchAnnouncements ## -> Check if user is trying to read more announcements that Board number of announcements
                 case -10:
-                    System.out.println("-10");
                     if ((request.getOperation().equals("READ") && request.getNumber() > usersBoards.get(request.getPublicKeyToReadFrom()).getSecond().size()) || (request.getOperation().equals("READGENERAL") && request.getNumber() > generalBoard.getSecond().size())) {
-                        System.out.println("before send");
                         sendExceptionCode(request.getPublicKey(), request.getClientNonce(), -10, operationType);
-                        System.out.println("after send");
                         return false;
                     }
                     break;
