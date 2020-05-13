@@ -721,15 +721,58 @@ public class ClientEndpoint {
         }
         // Threads that will make the requests to the server
         Thread[] tasksRead = new Thread[nServers];
+        int[] resultsFromTasksRead = new int[nServers];
         // Send read to all servers
         for (PublicKey serverKey : serversPorts.keySet()) {
             tasksRead[serversPorts.get(serverKey) - PORT] = new Thread(new Runnable() {
                 public void run() {
-                    readGeneralMethod(number, serverKey, rid);
+                    resultsFromTasksRead[serversPorts.get(serverKey) - PORT] = readGeneralMethod(number, serverKey, rid);
                 }
             });
             tasksRead[serversPorts.get(serverKey) - PORT].start();
         }
+
+        // wait for requests to be made
+        boolean stillAlive = true;
+        while(stillAlive) {
+            stillAlive = false;
+            for (PublicKey serverKey : serversPorts.keySet()) {
+                if(tasksRead[serversPorts.get(serverKey) - PORT].isAlive()) {
+                    stillAlive = true;
+                    break;
+                }
+            }
+        }
+
+        switch (getQuorumInt(resultsFromTasksRead)) {
+            case (1):
+                break;
+            case (-11):
+                try {
+                    listenerSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+            case (-14):
+                try {
+                    listenerSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+            case (-12):
+                try {
+                    listenerSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+            default:
+                break;
+        }
+
+
         // Wait for listeners to get result
         while(listener.getResultGeneral() == null) {
             try {
@@ -776,8 +819,7 @@ public class ClientEndpoint {
         return null;
     }
 
-    public Response readGeneralMethod(int number, PublicKey serverKey, int rid) {
-
+    public int readGeneralMethod(int number, PublicKey serverKey, int rid) {
         try {
             //  -----> Handshake one way
             byte[] serverNonce = startHandshake(serverKey, true);
@@ -785,39 +827,16 @@ public class ClientEndpoint {
             Request request = new Request("READGENERAL", getPublicKey(), number, serverNonce, rid);
             Envelope envelopeRequest = new Envelope(request, cryptoManager.signRequest(request));
             send(envelopeRequest, serversPorts.get(serverKey));
-        } catch (ClassNotFoundException |
-                         NonceTimeoutException |
-                         IntegrityException |
-                         IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-
-
-        /***** SIMULATE ATTACKER: send replayed messages to the server *****/
-        /*
-        if(isReplayFlag()){
-            	this.replayAttacker.sendReplays(new Envelope(request, null), 2);
-            }
-            /*******************************************************************/
-        /*
-        if (!checkNonce(envelopeResponse.getResponse(), port)) {
-                return new Response(false, -13, null);
-                //throw new FreshnessException(errorMessage);
-            }
-            if(!cryptoManager.verifyResponse(envelopeResponse.getResponse(), envelopeResponse.getSignature(), userName)){
-                return new Response(false, -14, null);
-                //throw new IntegrityException("There was a problem with your request, we cannot infer if you registered. Please try to login");
-            }
-			//checkReadGeneral(envelopeResponse.getResponse());
-            return envelopeResponse.getResponse();
-
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            return 1;
+		} catch (ClassNotFoundException e) {
+            return -666;
+        } catch (NonceTimeoutException e) {
+            return -11;
+        } catch (IntegrityException e) {
+            return -14;
         } catch (IOException e) {
-            return new Response(false, -12, null);
-        	//throw new OperationTimeoutException("There was a problem with the connection, please try again!");
-        }*/
+            return -12;
+        }
     }
     
 	//////////////////////////////////////////////////
