@@ -74,7 +74,7 @@ During the test process, the test modules will ask you to reboot the server to s
 
 To reboot the server, you must stop the execution on console number 2, and execute again:
 
-It may also be the case that you may need to delete the *storage* files in case of test fails, in order to run them properly in a next round of tests (tests can fail for example if a machine is the slow and the timeout is exceed).
+It may also be the case that you may need to delete the *storage* files in case of test fails, in order to run them properly in a next round of tests (tests can fail because of concurrence, for example if a machine is much slower than a certain assumption a timeout will be exceed).
 
 ```bash
 ctrl+c  #interrupt the execution
