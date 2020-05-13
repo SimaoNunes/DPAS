@@ -87,14 +87,14 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
     }
 
     @Test(expected = TooMuchAnnouncementsException.class)
-	public void Should_Fail_When_AskingAlotOfPosts() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+	public void Should_Fail_When_Asking_Alot_Of_Posts() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		clientEndpoint1.read("user1", 50);
     }
-    
-    @Test(expected = InvalidPostsNumberException.class)
-	public void Should_Fail_When_BadPostsNumber() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-		clientEndpoint1.read("user1", -10);
-    }
+
+    @Test(expected = TooMuchAnnouncementsException.class)
+	public void Should_Fail_When_Asking_Alot_Of_Posts_In_General() throws InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, NonceTimeoutException, UserNotRegisteredException, FreshnessException {
+		clientEndpoint1.readGeneral(50);
+	}
 
     @Test(expected = InvalidAnnouncementException.class)
 	public void Should_Fail_When_AnnouncDoesntExist() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
@@ -102,32 +102,9 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
 		assertEquals(1, clientEndpoint1.post("user1 referenced announcements:", announcs1));
     }
     
-    @Test(expected = MessageTooBigException.class)
-	public void Should_Fail_When_MessageIsTooBig() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-		clientEndpoint1.post("Has 256 charssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
-					   "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
-					   "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
-					   "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", null);
-    }
-
-    @Test(expected = UserNotRegisteredException.class)
-	public void Should_Fail_When_UserIsNotRegistered() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-		clientEndpoint3.post("I am not a registered user", null);
-    }
-    
     @Test(expected = InvalidAnnouncementException.class)
-	public void Should_Fail_When_PostingInGeneralAndAnnouncDoesntExist() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+	public void Should_Fail_When_AnnouncDoesntExistInGeneral() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		int[] announcs1 = {20};
 		assertEquals(1, clientEndpoint1.postGeneral("user1 referenced announcements:", announcs1));
     }
-    
-    @Test(expected = MessageTooBigException.class)
-	public void Should_Fail_When_MessageIsTooBigInGeneral() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
-		clientEndpoint1.postGeneral("Has 256 charssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
-									"sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
-									"sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
-									"ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", null);
-	}
-
-
 }
