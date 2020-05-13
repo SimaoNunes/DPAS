@@ -108,6 +108,11 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
 					   "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
 					   "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
 					   "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", null);
+    }
+
+    @Test(expected = UserNotRegisteredException.class)
+	public void Should_Fail_When_UserIsNotRegistered() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+		clientEndpoint3.post("I am not a registered user", null);
 	}
 
 
