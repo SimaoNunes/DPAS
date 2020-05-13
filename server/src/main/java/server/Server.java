@@ -271,9 +271,11 @@ public class Server implements Runnable {
                         break;
                     case "INTEGRITY_FLAG_TRUE":
                         integrityFlag = true;
+                        outStream.writeObject(new Envelope(new Request("INTEGRITY_ACK")));
                         break;
                     case "INTEGRITY_FLAG_FALSE":
                         integrityFlag = false;
+                        outStream.writeObject(new Envelope(new Request("INTEGRITY_ACK")));
                         break;
                     case "DROP_NONCE_FLAG_TRUE":
                     	dropNonceFlag = true;
@@ -333,7 +335,6 @@ public class Server implements Runnable {
                 if(counter.get(entry.toString()) > 2 * nFaults && (delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null ||
                                                                        !delivered.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()))){
                     delivered.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
-                    System.out.println("ativei a delivered, PORT: " + serverPort);
                     sentEcho.remove(entry.getRequest().getPublicKey());
                     sentReady.remove(entry.getRequest().getPublicKey());
                     echos.remove(entry.getRequest().getPublicKey());
@@ -342,7 +343,6 @@ public class Server implements Runnable {
                 }
 
                 else if(counter.get(entry.toString()) > nFaults && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null)){
-                    System.out.println("ENTREI AQUI PORT: " + serverPort);
                     sentReady.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
                     broadcastReady(entry);
 
@@ -357,31 +357,21 @@ public class Server implements Runnable {
     }
 
     private void checkEcho(Envelope envelope){
-        System.out.println("CHECK ECHO PORT:" + serverPort);
         if(echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null){
-            System.out.println("1");
             echos.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), new ConcurrentHashMap<>());
             echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
         }
         else{
-            System.out.println("2");
             echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).put(envelope.getRequest().getPublicKey(), envelope.getRequest().getEnvelope());
         }
 
         HashMap<String, Integer> counter = new HashMap<>();
 
         for(Envelope entry: echos.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()).values()){
-            System.out.println("3");
             if(counter.containsKey(entry.toString())){
-                System.out.println("4");
                 counter.put(entry.toString(), counter.get(entry.toString()) + 1);
-                System.out.println("1" + (counter.get(entry.toString()) > nQuorum));
-                System.out.println("2" + (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey())));
-                System.out.println("3" + userIdMap.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()));
                 if(counter.get(entry.toString()) > nQuorum && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null )){
-                    System.out.println("5");
                     sentReady.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
-                    System.out.println("PUS O SENTREADY DO: " + envelope.getRequest().getPublicKey());
 
                     broadcastReady(entry);
                 }
