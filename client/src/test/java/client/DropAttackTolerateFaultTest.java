@@ -38,7 +38,7 @@ public class DropAttackTolerateFaultTest extends BaseTest {
     	setDropNonceFlag(true);
     	clientEndpoint1.post("user1 announc message3", null);
     	String[] result = getMessagesFromJSON(clientEndpoint1.read("user1", 2));
-    	assertEquals("user1 announc message3", result[1]);
+    	assertEquals("user1 announc message3", result[0]);
     }
 
     @Test
@@ -70,7 +70,7 @@ public class DropAttackTolerateFaultTest extends BaseTest {
     	setDropNonceFlag(false);
     	clientEndpoint1.post("user1 announc message5", null);
     	String[] result = getMessagesFromJSON(clientEndpoint1.read("user1", 2));
-    	assertEquals("user1 announc message3", result[1]);
+    	assertEquals("user1 announc message5", result[0]);
     }
 
     @Test
@@ -80,11 +80,13 @@ public class DropAttackTolerateFaultTest extends BaseTest {
         assertEquals(1, clientEndpoint1.postGeneral("user1 general message3", null));
     }
 
-    /*public void When_ServerResponseIsDropped_ReadGeneral() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, InterruptedException, UnknownPublicKeyException, AlreadyRegisteredException {
+    public void When_ServerResponseIsDropped_ReadGeneral() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, InterruptedException, UnknownPublicKeyException, AlreadyRegisteredException {
     	setDropOperationFlag(true);
     	setDropNonceFlag(false);
-        clientEndpoint1.readGeneral(1);
-    }*/
+    	clientEndpoint1.postGeneral("user1 general message4", null);
+    	String[] result = getMessagesFromJSON(clientEndpoint1.readGeneral(2));
+    	assertEquals("user1 general message4", result[0]);
+    }
 
     @Test
     public void When_ServerResponseIsDropped_Register() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, InterruptedException, UnknownPublicKeyException, AlreadyRegisteredException {
