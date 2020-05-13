@@ -14,12 +14,10 @@ public class GeneralConcurrentWritersTest extends BaseTest {
         clientEndpoint1.register();
         clientEndpoint2.register();
         clientEndpoint3.register();
-        clientEndpoint3.setWaitForReadCompleteFlag(true);
     }
 
     @AfterClass
     public static void turnOffFaggot() {
-        clientEndpoint3.setWaitForReadCompleteFlag(false);
         setGeneralConcurrentWriteFlag(false);
     }
 

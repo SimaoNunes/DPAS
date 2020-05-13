@@ -26,15 +26,11 @@ public class AtomicWriterTest extends BaseTest {
         clientEndpoint1.register();
         clientEndpoint2.register();
         clientEndpoint3.register();
-    	clientEndpoint2.setWaitForReadCompleteFlag(true);
-    	clientEndpoint3.setWaitForReadCompleteFlag(true);
         setAtomicWriteFlag(true);        
     }
     
     @AfterClass
     public static void turnOffFaggot() {
-    	clientEndpoint2.setWaitForReadCompleteFlag(false);
-    	clientEndpoint3.setWaitForReadCompleteFlag(false);
     	setAtomicWriteFlag(false);
     }
 
