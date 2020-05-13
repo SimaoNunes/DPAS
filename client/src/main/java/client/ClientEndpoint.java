@@ -327,7 +327,6 @@ public class ClientEndpoint {
         }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getQuorumInt(results);
-        System.out.println("RESULT: " + result);
         switch (result) {
             case (-1):
                 throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
@@ -368,8 +367,6 @@ public class ClientEndpoint {
         try {
 
             Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(serverKey));
-
-            System.out.println(envelopeResponse.getResponse().toString());
 
             /***** SIMULATE ATTACKER: replay register *****/
             if(isReplayFlag()){
