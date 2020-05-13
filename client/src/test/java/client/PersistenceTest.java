@@ -8,7 +8,7 @@ import static junit.framework.TestCase.assertEquals;
 
 public class PersistenceTest extends BaseTest {
 
-    /*@BeforeClass
+    @BeforeClass
     public static void populate() throws AlreadyRegisteredException, UnknownPublicKeyException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
         clientEndpoint1.register();
     }
@@ -26,12 +26,12 @@ public class PersistenceTest extends BaseTest {
     public void PersistencePostTest() throws MessageTooBigException, UserNotRegisteredException,
                                                      InvalidAnnouncementException, InterruptedException, InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, FreshnessException, NonceTimeoutException {
 
-        clientEndpoint1.post("message1 user1", null, false);
+        clientEndpoint1.post("message1 user1", null);
 
         System.out.println("\nYou have 7 seconds to reboot the server");
         Thread.sleep(7000);
 
-        clientEndpoint1.post("message2 user1", null, false);
+        clientEndpoint1.post("message2 user1", null);
 
         String[] result = getMessagesFromJSON(clientEndpoint1.read("user1", 2));
 
@@ -43,20 +43,20 @@ public class PersistenceTest extends BaseTest {
     public void PersistencePostGeneralTest() throws MessageTooBigException, UserNotRegisteredException,
                                                             InvalidAnnouncementException, InterruptedException, InvalidPostsNumberException, TooMuchAnnouncementsException, IntegrityException, OperationTimeoutException, FreshnessException, NonceTimeoutException, UnknownPublicKeyException, AlreadyRegisteredException {
 
-        clientEndpoint1.post("general1 user2", null, true);
+        clientEndpoint1.postGeneral("general1 user2", null);
         clientEndpoint2.register();
 
-        clientEndpoint2.post("general2 user2", null, true);
+        clientEndpoint2.postGeneral("general2 user2", null);
 
         System.out.println("\nYou have 7 seconds to reboot the server");
         Thread.sleep(7000);
 
         clientEndpoint3.register();
-        clientEndpoint3.post("general3 user3", null, true);
+        clientEndpoint3.postGeneral("general3 user3", null);
 
-        String[] result = getMessagesFromJSON(clientEndpoint3.readGeneral(2));
+        String[] result = getMessagesFromJSONGeneral(clientEndpoint3.readGeneral(2));
 
         assertEquals(result[0], "general3 user3");
         assertEquals(result[1], "general2 user2");
-    }*/
+    }
 }

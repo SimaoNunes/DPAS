@@ -1,6 +1,7 @@
 package client;
 
 import exceptions.*;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -19,6 +20,15 @@ public class GeneralConcurrentWritersTest extends BaseTest {
     @AfterClass
     public static void turnOffFaggot() {
         setGeneralConcurrentWriteFlag(false);
+    }
+
+    @After
+    public void waitMethod() {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test

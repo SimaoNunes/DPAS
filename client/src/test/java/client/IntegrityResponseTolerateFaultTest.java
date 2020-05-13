@@ -38,6 +38,15 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
 
     }
 
+    @After
+    public void waitMethod() {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
     public void Should_Tolerate_Post() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException {
         
