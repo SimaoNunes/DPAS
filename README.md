@@ -1,6 +1,6 @@
 # Dependable Public Announcement Server
 
-High Dependable Systems Project: DPAS.
+**High Dependable Systems Project: DPAS**.
 This is Java API that wants to solve the problems concerned with the emergence of fake news and the need for trusted sources of information. We want to make sure that relevant public information and facts can be posted, tracked and verified.
 	The main specifications are:
 - Every user of this system has his/her own Announcement Board where only he/she can post announcements.
@@ -11,18 +11,15 @@ This is Java API that wants to solve the problems concerned with the emergence o
 
 ## ClientApp
 
-We developed a simple App that runs the API as an example. To run it you must go to the directory client and
-then ran the app:
+We developed a simple App that runs the API as an example. To run it you must go to the directory *client* and then run the app:
 
 ```bash
 cd client
 mvn exec:java
 ```
 
-If you don't provide any arguments, the application assumes you are trying to register to the Service. If so
-you must provide an username that appears on the keystore [user1, user2, user3] because we are assuming the server
-and clients know all the keys from everyone, and for simplification, we used the keystore alias as their well known usernames.
-If you are already registered in the system you must run app as a registered user:
+If you don't provide any arguments, the application assumes you are trying to register to the Service. If so you must provide an username that appears on the keystore [user1, user2, user3] because we are assuming the server and clients know all the keys from everyone, and for simplification, we used the keystore alias as their well known usernames.
+If you are already registered in the system you must run the app as a registered user:
 
 ```bash
 cd client
@@ -33,7 +30,7 @@ Now just enjoy the application!
 
 ## How to test 
 
-To test our system and simulate possible attacks, we provided a set of tests inside the Client's module. 
+To test our system and simulate possible attacks, we provided a set of tests inside the *client* module. 
 
 #### Before testing our system, your machine should have:
 - Java 13 installed
@@ -51,7 +48,7 @@ To test our system and simulate possible attacks, we provided a set of tests ins
 mvn -DskipTests clean install
 ```
 
-- Once the installation process is complete, you should start the execution of the servers in console number 2, after entering inside the Server's directory. To do this, you must execute the following commands (this will run 4 servers):
+- Once the installation process is complete, you should start the execution of the servers in console number 2, after entering inside the directory *server*. To do this, you must execute the following commands (this will run 4 servers):
 
 ```bash
 cd server
@@ -59,7 +56,6 @@ mvn exec:java
 ```
 
 - Now, that the servers are ready to receive requests, you can go back to console number 1 and test the whole system by executing:
-
 
 ```bash
 mvn test
