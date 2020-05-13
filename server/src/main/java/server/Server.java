@@ -430,8 +430,7 @@ public class Server implements Runnable {
 
     }
 
-    private boolean checkDelivered(Envelope envelope){
-        System.out.println("CHECK DELIVERED");
+    private boolean checkDelivered(Envelope envelope) {
 
         delivered.put(envelope.getRequest().getPublicKey(), false);
         boolean break_flag = false;
