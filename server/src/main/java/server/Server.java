@@ -430,7 +430,7 @@ public class Server implements Runnable {
 
     }
 
-    private boolean checkDelivered(Envelope envelope){
+    private boolean checkDelivered(Envelope envelope) {
         delivered.put(envelope.getRequest().getPublicKey(), false);
         boolean break_flag = false;
 
