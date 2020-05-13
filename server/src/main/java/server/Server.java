@@ -67,8 +67,6 @@ public class Server implements Runnable {
     private ConcurrentHashMap<PublicKey, Boolean> delivered;
     private ConcurrentHashMap<PublicKey, ConcurrentHashMap<PublicKey, Envelope>> echos;
     private ConcurrentHashMap<PublicKey, ConcurrentHashMap<PublicKey, Envelope>> readys;
-
-
     
     /********************** Regular Register **********************/
 
@@ -301,7 +299,6 @@ public class Server implements Runnable {
                     case "CONCURRENT_WRITE_FLAG_FALSE":
                         concurrentWrite = false;
                         break;
-
                     default:
                         break;
                 }
@@ -316,7 +313,6 @@ public class Server implements Runnable {
 
 
     private void checkReady(Envelope envelope){
-        System.out.println("CHECK READY PORT:" + serverPort);
         synchronized (readys){
             if(readys.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null){
                 readys.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), new ConcurrentHashMap<>());
@@ -372,7 +368,6 @@ public class Server implements Runnable {
                 counter.put(entry.toString(), counter.get(entry.toString()) + 1);
                 if(counter.get(entry.toString()) > nQuorum && (sentReady.get(envelope.getRequest().getEnvelope().getRequest().getPublicKey()) == null )){
                     sentReady.put(envelope.getRequest().getEnvelope().getRequest().getPublicKey(), true);
-
                     broadcastReady(entry);
                 }
             }
@@ -386,7 +381,6 @@ public class Server implements Runnable {
     }
 
     private void broadcastReady(Envelope envelope){
-        System.out.println("BROADCAST READY PORT: " + serverPort);
         Thread[] tasks = new Thread[nServers];
 
         int i = 0;
@@ -428,12 +422,11 @@ public class Server implements Runnable {
 
         delivered.put(envelope.getRequest().getPublicKey(), false);
 
-        System.out.println("ativei a delivered, PORT: " + serverPort);
         sentEcho.remove(envelope.getRequest().getPublicKey());
         sentReady.remove(envelope.getRequest().getPublicKey());
         echos.remove(envelope.getRequest().getPublicKey());
         readys.remove(envelope.getRequest().getPublicKey());
-
+        
         if(sentEcho.get(envelope.getRequest().getPublicKey()) == null) {
             sentEcho.put(envelope.getRequest().getPublicKey(), true);
 
@@ -474,7 +467,6 @@ public class Server implements Runnable {
                 try {
                     Thread.sleep(50);
                     timeout++;
-                    System.out.println("tou a espera, PORT: " + serverPort);
 
                     if (timeout == 1000) {
                         break; //lançar exceçao
@@ -581,7 +573,7 @@ public class Server implements Runnable {
         if(!dropOperationFlag) {
             sendResponse(new Response(true, request.getClientNonce(), usersBoards.get(request.getPublicKey()).getFirst(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         } else {
-            System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED POST");
+            System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED WRITE");
         }
 
     }
@@ -592,7 +584,6 @@ public class Server implements Runnable {
     //////////////////////////////////////////////////
 
     public void addConcurrentPost(JSONObject object, byte[] signature) {
-        System.out.println("CONCURRENT POST");
         ArrayList<Pair<JSONObject, byte[]>> new_announcements = new ArrayList<>();
         String user = (String) object.get("user");
         int i = 0;
@@ -686,7 +677,7 @@ public class Server implements Runnable {
         if(!dropOperationFlag) {
             sendResponse(new Response(true, request.getClientNonce(), generalBoard.getFirst(), cryptoManager.getPublicKeyFromKs("server")), outStream);
         } else {
-            System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED POST");
+            System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED WRITE GENERAL");
         }
     }
     
@@ -707,7 +698,7 @@ public class Server implements Runnable {
 
         System.out.println("SERVER ON PORT " + this.serverPort + ": READ METHOD");
 
-        if(atomicWriteFlag){
+        if(atomicWriteFlag) {
             try{
                 System.out.println("Gonna sleep");
                 Thread.sleep(4000);
@@ -726,8 +717,12 @@ public class Server implements Runnable {
             // Send response to client
             // ------> Handshake one way
             byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
-
-            sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(request.getPublicKeyToReadFrom()).getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
+            
+            if(!dropOperationFlag) {
+            	sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(request.getPublicKeyToReadFrom()).getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
+            } else {
+            	System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED VALUE");
+            }
         } catch (SocketException e){
             return;  //if client socket is closed it means he already got enough answers or even byzantine client
         } catch(Exception e) {

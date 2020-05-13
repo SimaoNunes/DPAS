@@ -32,13 +32,13 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
         setIntegrityFlag(false);
 
     }
-
+/*
     @Test
     public void Should_Tolerate_Post() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException {
         
         assertEquals(1, clientEndpoint1.post("user1 announc message1", null));
 
-    }
+    }*/
 
     // @Test(expected = IntegrityException.class)
     // public void Should_throw_Integrity_Exception_Read() throws NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {

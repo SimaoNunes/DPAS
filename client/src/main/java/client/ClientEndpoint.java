@@ -235,7 +235,7 @@ public class ClientEndpoint {
 
         Envelope envelopeRequest = new Envelope(request);
         /***** SIMULATE ATTACKER: changing the userX key to userY pubKey [in this case user3] *****/
-        if(isIntegrityFlag()) {
+        if(isIntegrityFlag() && serversPorts.get(serverKey) == 9000) {
         	envelopeRequest.getRequest().setPublicKey(cryptoManager.getPublicKeyFromKs("user3"));
         }
         /******************************************************************************************/
@@ -361,7 +361,7 @@ public class ClientEndpoint {
         Envelope envelopeRequest = new Envelope(request);
 
         /***** SIMULATE ATTACKER: changing the message (tamper) *****/
-        if(isIntegrityFlag()) {
+        if(isIntegrityFlag() && serversPorts.get(serverKey) == 9000) {
         	envelopeRequest.getRequest().setMessage("Olá, eu odeio-te");
         }
         /************************************************************/
@@ -480,7 +480,7 @@ public class ClientEndpoint {
         Envelope envelopeRequest = new Envelope(request);
 
         /***** SIMULATE ATTACKER: changing the message (tamper) *****/
-        if(isIntegrityFlag()) {
+        if(isIntegrityFlag() && serversPorts.get(serverKey) == 9000) {
             envelopeRequest.getRequest().setMessage("Olá, eu odeio-te");
         }
         /************************************************************/
