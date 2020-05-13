@@ -553,14 +553,28 @@ public class ClientEndpoint {
 
         switch (getQuorumInt(resultsFromTasksRead)) {
             case (1):
-                System.out.println("tudo ok nas tasks de read");
                 break;
             case (-11):
-                throw new NonceTimeoutException("Nonce timeout");
+                try {
+                    listenerSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             case (-14):
-                throw new IntegrityException("Integrity Exception");
-            case (-666):
-                throw new OperationTimeoutException("Operation timeout");
+                try {
+                    listenerSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+            case (-12):
+                try {
+                    listenerSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
             default:
                 break;
         }
@@ -597,6 +611,7 @@ public class ClientEndpoint {
                 tasksReadComplete[serversPorts.get(serverKey) - PORT].start();
             }
             // wait for all read complete tasks
+            stillAlive = true;
             while(stillAlive) {
                 stillAlive = false;
                 for (PublicKey serverKey : serversPorts.keySet()) {
@@ -608,38 +623,36 @@ public class ClientEndpoint {
             }
             switch (getQuorumInt(resultsFromTasksReadComplete)) {
                 case (1):
-                    System.out.println("tudo ok nas tasks de read complete");
                     break;
                 case (-11):
-                    throw new NonceTimeoutException("Nonce timeout");
+                    throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-14):
-                    throw new IntegrityException("Integrity Exception");
-                case (-666):
-                    throw new OperationTimeoutException("Operation timeout");
+                    throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
+                case (-12):
+                    throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 default:
                     break;
             }
             return result.getRequest().getJsonObject();
         }
         else {
-            System.out.println("vai dar merdas");
             switch (result.getResponse().getErrorCode()) {
                 case (-1):
-                    throw new UserNotRegisteredException("User not Registered");
+                    throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
                 case (-3):
-                    throw new UserNotRegisteredException("The user you're reading from is not registered!");  //OLD EXCEPTION FIX ME
+                    throw new UserNotRegisteredException(ExceptionsMessages.USER_TO_READ_FROM_NOT_REGISTERED);
                 case (-6):
-                    throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+                    throw new InvalidPostsNumberException(ExceptionsMessages.INVALID_READ_ANNOUNCEMENT);
                 case (-10):
-                    throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
+                    throw new TooMuchAnnouncementsException(ExceptionsMessages.TOO_MUCH_ANNOUNCEMENTS);
                 case (-11):
-                    throw new NonceTimeoutException("Nonce timeout");
+                    throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-12):
-                    throw new OperationTimeoutException("Operation timeout");
+                    throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-13):
-                    throw new FreshnessException("Freshness Exception");
+                    throw new FreshnessException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-14):
-                    throw new IntegrityException("Integrity Exception");
+                    throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 default:
                     break;
             }
@@ -665,7 +678,7 @@ public class ClientEndpoint {
         } catch (IntegrityException e) {
             return -14;
         } catch (IOException e) {
-            return -666;
+            return -12;
         }
     }
 
@@ -687,7 +700,7 @@ public class ClientEndpoint {
         } catch (IntegrityException e) {
             return -14;
         } catch (IOException e) {
-            return -666;
+            return -12;
         }
     }
 
@@ -741,21 +754,21 @@ public class ClientEndpoint {
         else{
             switch (result.getResponse().getErrorCode()) {
                 case (-1):
-                    throw new UserNotRegisteredException("User not Registered");
+                    throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
                 case (-3):
-                    throw new UserNotRegisteredException("The user you're reading from is not registered!");  //OLD EXCEPTION FIX ME
+                    throw new UserNotRegisteredException(ExceptionsMessages.USER_TO_READ_FROM_NOT_REGISTERED);
                 case (-6):
-                    throw new InvalidPostsNumberException("Invalid announcements number to be read!");
+                    throw new InvalidPostsNumberException(ExceptionsMessages.INVALID_READ_ANNOUNCEMENT);
                 case (-10):
-                    throw new TooMuchAnnouncementsException("The number of announcements you've asked for exceeds the number of announcements existing in such board");
+                    throw new TooMuchAnnouncementsException(ExceptionsMessages.TOO_MUCH_ANNOUNCEMENTS);
                 case (-11):
-                    throw new NonceTimeoutException("Nonce timeout");
+                    throw new NonceTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-12):
-                    throw new OperationTimeoutException("Operation timeout");
+                    throw new OperationTimeoutException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-13):
-                    throw new FreshnessException("Freshness Exception");
+                    throw new FreshnessException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 case (-14):
-                    throw new IntegrityException("Integrity Exception");
+                    throw new IntegrityException(ExceptionsMessages.OPERATION_NOT_POSSIBLE);
                 default:
                     break;
             }
@@ -908,10 +921,8 @@ public class ClientEndpoint {
 //////////////////////////////////////////////////
 
     private int getQuorumInt(int[] results) {
-        System.out.println("quorum");
         HashMap<Integer, Integer> map = new HashMap<>();
         for(int i = 0; i < results.length; i++) {
-            System.out.println(results[i]);
             if (!map.containsKey(results[i])) {
                 map.put(results[i], 1);
             } else {
