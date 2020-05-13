@@ -30,7 +30,7 @@ public class ClientEndpoint {
     /************ Replication variables *************/
     private static final int PORT = 9000;
     private static final int TIMEOUT = 5000;
-    private static final int TIMEOUT_WHILE = 100;  // this * 50
+    private static final int TIMEOUT_WHILE = 100;  // this * 50 miliseconds
     private int nServers = 4;
     private int nFaults  = 1;
     private int nQuorum  = 2;
