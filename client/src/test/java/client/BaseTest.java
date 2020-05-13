@@ -233,13 +233,23 @@ public class BaseTest {
             message+="FALSE";
         }
         try {
-            socket = new Socket(serverAddress, 9000);
-            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            outputStream.writeObject(new Envelope(new Request(message)));
-            outputStream.close();
-            socket.close();
+            int port = PORT;
+            int i = 0;
+            while(i < 4){
+                socket = new Socket(serverAddress, port + i);
+                ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                outputStream.writeObject(new Envelope(new Request(message)));
+                ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+                Envelope confirmDelete = (Envelope) inputStream.readObject();
+                inputStream.close();
+                outputStream.close();
+                socket.close();
+                i++;
+            }
 
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -254,13 +264,23 @@ public class BaseTest {
             message+="FALSE";
         }
         try {
-            socket = new Socket(serverAddress, 9000);
-            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            outputStream.writeObject(new Envelope(new Request(message)));
-            outputStream.close();
-            socket.close();
+            int port = PORT;
+            int i = 0;
+            while(i < 4){
+                socket = new Socket(serverAddress, port + i);
+                ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+                outputStream.writeObject(new Envelope(new Request(message)));
+                Envelope confirmDelete = (Envelope) inputStream.readObject();
+                inputStream.close();
+                outputStream.close();
+                socket.close();
+                i++;
+            }
 
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -280,13 +300,18 @@ public class BaseTest {
             while(i < 4){
                 socket = new Socket(serverAddress, port + i);
                 ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
                 outputStream.writeObject(new Envelope(new Request(message)));
+                Envelope confirmDelete = (Envelope) inputStream.readObject();
+                inputStream.close();
                 outputStream.close();
                 socket.close();
                 i++;
             }
 
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }

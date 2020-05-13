@@ -276,21 +276,27 @@ public class Server implements Runnable {
                         outStream.writeObject(new Envelope(new Request("INTEGRITY_ACK")));
                         break;
                     case "DROP_NONCE_FLAG_TRUE":
-                    	dropNonceFlag = true;
+                        outStream.writeObject(new Envelope(new Request("DROP_NONCE_ACK")));
+                        dropNonceFlag = true;
                     	break;
                     case "DROP_NONCE_FLAG_FALSE":
-                    	dropNonceFlag = false;
+                        outStream.writeObject(new Envelope(new Request("DROP_NONCE_ACK")));
+                        dropNonceFlag = false;
                     	break;
                     case "DROP_OPERATION_FLAG_TRUE":
-                    	dropOperationFlag = true;
+                        outStream.writeObject(new Envelope(new Request("DROP_OPERATION_ACK")));
+                        dropOperationFlag = true;
                     	break;
                     case "DROP_OPERATION_FLAG_FALSE":
-                    	dropOperationFlag = false;
+                        outStream.writeObject(new Envelope(new Request("DROP_OPERATION_ACK")));
+                        dropOperationFlag = false;
                     	break;
                     case "ATOMIC_WRITE_FLAG_TRUE":
+                        outStream.writeObject(new Envelope(new Request("ATOMIC_WRITE_ACK")));
                         atomicWriteFlag = true;
                         break;
                     case "ATOMIC_WRITE_FLAG_FALSE":
+                        outStream.writeObject(new Envelope(new Request("ATOMIC_WRITE_ACK")));
                         atomicWriteFlag = false;
                         break;
                     case "CONCURRENT_WRITE_FLAG_TRUE":
