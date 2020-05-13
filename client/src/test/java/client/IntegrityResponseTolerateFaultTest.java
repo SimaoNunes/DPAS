@@ -113,6 +113,12 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
     @Test(expected = UserNotRegisteredException.class)
 	public void Should_Fail_When_UserIsNotRegistered() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		clientEndpoint3.post("I am not a registered user", null);
+    }
+    
+    @Test(expected = InvalidAnnouncementException.class)
+	public void Should_Fail_When_PostingInGeneralAndAnnouncDoesntExist() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+		int[] announcs1 = {20};
+		assertEquals(1, clientEndpoint1.postGeneral("user1 referenced announcements:", announcs1));
 	}
 
 
