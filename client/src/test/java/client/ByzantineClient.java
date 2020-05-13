@@ -14,9 +14,15 @@ public class ByzantineClient extends BaseTest {
     }
 
     @Test
+    public void ShouldNotDoAnythingPost() throws UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, MessageTooBigException, FreshnessException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
+        clientEndpoint1.changeNservers(2);
+        clientEndpoint1.post("message1", null);
+
+    }
+
+    @Test(expected = OperationTimeoutException.class)
     public void ShouldNotDoAnything() throws UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, MessageTooBigException, FreshnessException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
         clientEndpoint1.changeNservers(2);
-        //clientEndpoint1.post("will not be posted", null);
         clientEndpoint1.read("user1", 1);
 
     }
