@@ -95,7 +95,6 @@ public class CryptoManager {
     }
 
 	boolean verifyRequest(Request request, byte[] signature, PublicKey keyFrom) {
-		System.out.println("verify request");
     	try {
 			// Initialize needed structures
 			Signature verifySignature = Signature.getInstance("SHA256withRSA");
@@ -193,7 +192,6 @@ public class CryptoManager {
 	}
 
     public boolean checkNonce(PublicKey clientKey, byte[] nonce) {
-		System.out.println("check nonce");
     	if(nonces.containsKey(clientKey) && Arrays.equals(nonces.get(clientKey), nonce)) {
         	nonces.put(clientKey, null);
         	return true;
