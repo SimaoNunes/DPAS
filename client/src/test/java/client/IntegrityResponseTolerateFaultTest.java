@@ -96,5 +96,11 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
 		clientEndpoint1.read("user1", -10);
     }
 
+    @Test(expected = InvalidAnnouncementException.class)
+	public void Should_Fail_When_AnnouncDoesntExist() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+		int[] announcs1 = {20};
+		assertEquals(1, clientEndpoint1.post("user1 referenced announcements:", announcs1));
+	}
+
 
 }

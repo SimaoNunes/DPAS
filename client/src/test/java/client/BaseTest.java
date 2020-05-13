@@ -41,7 +41,7 @@ public class BaseTest {
 		clientEndpoint1 = new ClientEndpoint("user1");
 		clientEndpoint2 = new ClientEndpoint("user2");
 		clientEndpoint3 = new ClientEndpoint("user3");
-		clientEndpointError = new ClientEndpoint("usererror");
+        clientEndpointError = new ClientEndpoint("usererror");
 	}
 
 	@AfterClass
