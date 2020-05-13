@@ -61,12 +61,20 @@ mvn exec:java
 mvn test
 ```
 
-### Warning
+- If you want to run a single test you can also run the following command:
+
+```bash
+mvn -Dtest=<testname> test
+```
+
+### Warnings
 
 During the test process, the test modules will ask you to reboot the server to simulate one possible situation that would compromise our system: 
 - If the Server maintains persistent information, even if it crashes
 
 To reboot the server, you must stop the execution on console number 2, and execute again:
+
+It may also be the case that you may need to delete the *storage* files in case of test fails, in order to run them properly in a next round of tests (tests can fail for example if a machine is the slow and the timeout is exceed).
 
 ```bash
 ctrl+c  #interrupt the execution
