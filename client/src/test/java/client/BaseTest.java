@@ -190,12 +190,15 @@ public class BaseTest {
         try {
             socket = new Socket(serverAddress, 9000);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
             outputStream.writeObject(new Envelope(new Request(message)));
+            Envelope confirmIntegrity = (Envelope) inputStream.readObject();
             outputStream.close();
             socket.close();
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException |
+                ClassNotFoundException e) {
+        e.printStackTrace();
         }
     }
 

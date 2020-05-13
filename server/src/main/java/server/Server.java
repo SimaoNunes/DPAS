@@ -262,10 +262,12 @@ public class Server implements Runnable {
                         shutDown();
                         break;
                     case "REPLAY_FLAG_TRUE":
-                        replayFlag = true;
+                    	replayFlag = true;
+                    	outStream.writeObject(new Envelope(new Request("REPLAY_ACK")));
                         break;
                     case "REPLAY_FLAG_FALSE":
-                        replayFlag = false;
+                    	replayFlag = false;
+                    	outStream.writeObject(new Envelope(new Request("REPLAY_ACK")));
                         break;
                     case "INTEGRITY_FLAG_TRUE":
                         integrityFlag = true;
@@ -406,7 +408,7 @@ public class Server implements Runnable {
                         try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", PORT + finalI).getOutputStream())) {
                             byte[] nonce = startOneWayHandshakeServer(PORT + finalI);
                             Request request = new Request("READY", envelope, cryptoManager.getPublicKeyFromKs("server"), nonce, Integer.parseInt(serverPort));
-                            sendRequest(request, outputStream);
+                            sendRequest(request, outputStream, false, false);
                         } catch (NonceTimeoutException e) {
                             e.printStackTrace();
                         } catch (IntegrityException e) {
@@ -453,7 +455,7 @@ public class Server implements Runnable {
                             try (ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", PORT + finalI).getOutputStream())) {
                                 byte[] nonce = startOneWayHandshakeServer(PORT + finalI);
                                 Request request = new Request("ECHO", envelope, cryptoManager.getPublicKeyFromKs("server"), nonce, Integer.parseInt(serverPort));
-                                sendRequest(request, outputStream);
+                                sendRequest(request, outputStream, false, false);
                             } catch (NonceTimeoutException e) {
                                 e.printStackTrace();
                             } catch (IntegrityException e) {
@@ -568,9 +570,9 @@ public class Server implements Runnable {
                     int ts = usersBoards.get(entry.getKey()).getFirst();
                     JSONObject objectToSend = new JSONObject();
                     objectToSend.put("announcementList", usersBoards.get(entry.getKey()).getSecond().getAnnouncements(number));
-
-                    sendRequest(new Request("VALUE", rid, ts, nonce, objectToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
-
+                    
+                    sendRequest(new Request("VALUE", rid, ts, nonce, objectToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream, integrityFlag, replayFlag);
+                
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -592,32 +594,26 @@ public class Server implements Runnable {
     //////////////////////////////////////////////////
 
     public void addConcurrentPost(JSONObject object, byte[] signature) {
-        System.out.println("CONCURRENT POST");
         ArrayList<Pair<JSONObject, byte[]>> new_announcements = new ArrayList<>();
         String user = (String) object.get("user");
         int i = 0;
-        System.out.println("BEFORE: " + generalBoard.getSecond().getAnnoucements().toJSONString());
-        if(generalBoard.getSecond().getRawAnnouncements().size() < 2){
-            System.out.println("0");
+        if(generalBoard.getSecond().getRawAnnouncements().size() < 2) {
             if((int) generalBoard.getSecond().getRawAnnouncements().get(0).getFirst().get("ts") == (int) object.get("ts")){
-                System.out.println("1");
                 JSONObject older = generalBoard.getSecond().getRawAnnouncements().get(0).getFirst();
                 String older_user = (String) older.get("user");
 
-                if(user.compareTo(older_user) < 0){
+                if(user.compareTo(older_user) < 0) {
                     new_announcements.add(new Pair<>(object, signature));
                     new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(0));
                 }
-                else{
-                    System.out.println("4434");
+                else {
                     new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(0));
                     new_announcements.add(new Pair<>(object, signature));
                 }
             }
-
-
         }
-        else{
+        
+        else {
             while(i < generalBoard.getSecond().getAnnoucements().size() - 1) {
                 if((int) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst().get("ts") == (int) object.get("ts")) {
                     JSONObject older = (JSONObject) generalBoard.getSecond().getRawAnnouncements().get(i).getFirst();
@@ -627,21 +623,18 @@ public class Server implements Runnable {
                     String next_user = (String) next_older.get("user");
 
                     if(user.compareTo(older_user) < 0){
-                        System.out.println("0");
                         new_announcements.add(new Pair<>(object, signature));
                         new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
                         break;
                     }
 
                     if(user.compareTo(older_user) > 0 && user.compareTo(next_user) < 0) {
-                        System.out.println("1");
                         new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
                         new_announcements.add(new Pair<>(object, signature));
                         break;
                     }
                 }
-                else{
-                    System.out.println("ta a entrar no else");
+                else {
                     new_announcements.add(generalBoard.getSecond().getRawAnnouncements().get(i));
                 }
                 i++;
@@ -754,9 +747,13 @@ public class Server implements Runnable {
             // Send response to client
             // ------> Handshake one way
             byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
-            
+            /***** SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash] *****/
+            if(integrityFlag) {
+            	sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(request.getPublicKeyToReadFrom()).getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream, integrityFlag, replayFlag);
+            }
+            /************************************************************************************************************/
             if(!dropOperationFlag) {
-            	sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(request.getPublicKeyToReadFrom()).getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
+            	sendRequest(new Request("VALUE", request.getRid(), usersBoards.get(request.getPublicKeyToReadFrom()).getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream, integrityFlag, replayFlag);
             } else {
             	System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED VALUE");
             }
@@ -788,7 +785,7 @@ public class Server implements Runnable {
         try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", getClientPort(userIdMap.get(request.getPublicKey()))).getOutputStream())) {
             if(!dropOperationFlag) {
                 byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
-                sendRequest(new Request("VALUEGENERAL", request.getRid(), generalBoard.getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream);
+                sendRequest(new Request("VALUEGENERAL", request.getRid(), generalBoard.getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream, integrityFlag, replayFlag);
             } else {
                 System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED READ GENERAL");
             }
@@ -868,21 +865,21 @@ public class Server implements Runnable {
         } 
     }
 
-    private void sendRequest(Request request, ObjectOutputStream outputStream){
+    private void sendRequest(Request request, ObjectOutputStream outputStream, boolean integrityHackingIHIH, boolean replayHackingIHIH){
         try {
             // Sign response
             byte[] signature = cryptoManager.signRequest(request);
-            /***** SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash] *****/
-            if(integrityFlag) {
-                //request.setSuccess(false);  --> alteramos outras coisas
-                //request.setErrorCode(-33);
-            }
-            /************************************************************************************************************/
             /***** SIMULATE ATTACKER: Replay attack by sending a replayed message from the past (this message is simulated)] *****/
-            if(replayFlag && !handshake){
+            if(replayHackingIHIH && !handshake){
                 outputStream.writeObject(oldEnvelope);
             }
             /*********************************************************************************************************************/
+            /***** SIMULATE ATTACKER: changing an attribute from the response will make it different from the hash] *****/
+            if(integrityHackingIHIH) {
+            	request.setRid(-999);
+            	request.setTs(-999);
+            }
+            /************************************************************************************************************/
             else{
                 outputStream.writeObject(new Envelope(request, signature));
             }
