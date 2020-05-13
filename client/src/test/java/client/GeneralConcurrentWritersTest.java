@@ -49,6 +49,12 @@ public class GeneralConcurrentWritersTest extends BaseTest {
         });
         threadWrite.start();
 
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         setGeneralConcurrentWriteFlag(false);
 
         Thread threadWrite2 = new Thread(new Runnable() {
@@ -70,7 +76,7 @@ public class GeneralConcurrentWritersTest extends BaseTest {
             }
         }
 
-        results = getMessagesFromJSONGeneral(clientEndpoint2.readGeneral(1));
+        results = getMessagesFromJSONGeneral(clientEndpoint3.readGeneral(1));
         assertEquals("This should be the one returned user2", results[0]);
     }
 
@@ -92,6 +98,11 @@ public class GeneralConcurrentWritersTest extends BaseTest {
         });
         threadWrite.start();
 
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         setGeneralConcurrentWriteFlag(false);
 
         Thread threadWrite2 = new Thread(new Runnable() {
@@ -113,7 +124,7 @@ public class GeneralConcurrentWritersTest extends BaseTest {
             }
         }
 
-        results = getMessagesFromJSONGeneral(clientEndpoint2.readGeneral(1));
+        results = getMessagesFromJSONGeneral(clientEndpoint3.readGeneral(1));
         assertEquals("This should be the one returned user2 test2", results[0]);
     }
 }
