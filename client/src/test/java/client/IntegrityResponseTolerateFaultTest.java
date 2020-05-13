@@ -27,6 +27,11 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
         setIntegrityFlag(true,1);
     }
 
+    @After
+    public void slepp() throws InterruptedException {
+        Thread.sleep(5000);
+    }
+
     @AfterClass
     public static void turnFlagOff() {
         setIntegrityFlag(false,1);
