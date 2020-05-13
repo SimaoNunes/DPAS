@@ -1,6 +1,7 @@
 package client;
 
 import exceptions.*;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,10 +27,24 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
         setIntegrityFlag(true,1);
     }
 
+    @After
+    public void slepp() throws InterruptedException {
+        Thread.sleep(5000);
+    }
+
     @AfterClass
     public static void turnFlagOff() {
         setIntegrityFlag(false,1);
 
+    }
+
+    @After
+    public void waitMethod() {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -70,6 +85,11 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
     public void Should_throw_AlreadyRegisteredException_Register() throws NonceTimeoutException, FreshnessException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, UnknownPublicKeyException, AlreadyRegisteredException {
         clientEndpoint1.register();
     }
+
+    @Test(expected = TooMuchAnnouncementsException.class)
+	public void Should_Fail_When_AskingAlotOfPosts() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+		clientEndpoint1.read("user1", 50);
+	}
 
 
 }
