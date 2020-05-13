@@ -119,6 +119,14 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
 	public void Should_Fail_When_PostingInGeneralAndAnnouncDoesntExist() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		int[] announcs1 = {20};
 		assertEquals(1, clientEndpoint1.postGeneral("user1 referenced announcements:", announcs1));
+    }
+    
+    @Test(expected = MessageTooBigException.class)
+	public void Should_Fail_When_MessageIsTooBigInGeneral() throws MessageTooBigException, UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+		clientEndpoint1.postGeneral("Has 256 charssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
+									"sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
+									"sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss" +
+									"ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", null);
 	}
 
 
