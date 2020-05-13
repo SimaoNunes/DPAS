@@ -32,13 +32,10 @@ public class ClientEndpoint {
     private static final int TIMEOUT = 5000;
     private static final int TIMEOUT_WHILE = 100;  // this * 50 miliseconds
     private int nServers = 4;
-    private int nFaults  = 1;
     private int nQuorum  = 2;
  
-
     private String registerErrorMessage = "There was a problem with your request, we cannot infer if you registered. Please try to login.";
     private String errorMessage = "There was a problem with your request. Please try again.";
-
 
     private ReplayAttacker replayAttacker = null;
     private boolean replayFlag = false;
@@ -269,8 +266,7 @@ public class ClientEndpoint {
             return 0;
         } catch(IOException e) {
             throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_REGISTER);
-        }
-        
+        } 
     }
 
     
@@ -800,7 +796,6 @@ public class ClientEndpoint {
                 break;
         }
 
-
         // Wait for listeners to get result
         int timeout = 0;
         boolean timeout_flag = false;
@@ -828,7 +823,6 @@ public class ClientEndpoint {
         }
 
         Envelope result = listener.getResultGeneral();
-
 
         // Threads that will make the requests to the server
         if(result.getRequest() != null){
@@ -936,7 +930,6 @@ public class ClientEndpoint {
             default:
             	return result;
         }
-        
 	}
 
     
@@ -1032,6 +1025,4 @@ public class ClientEndpoint {
         return cryptoManager.initiateServersPorts(nServers);
 
     }
-    
-
 }
