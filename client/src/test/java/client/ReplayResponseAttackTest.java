@@ -25,12 +25,12 @@ public class ReplayResponseAttackTest extends BaseTest {
     		FreshnessException, IntegrityException, UserNotRegisteredException, MessageTooBigException, InvalidAnnouncementException {
         clientEndpoint1.register();
         clientEndpoint1.post("user1 announc message1", null);
-        setReplayFlag(true);
+        setReplayFlag(true,1);
     }
    
     @AfterClass
     public static void setReplayFlagFalse() {
-    	setReplayFlag(false);
+    	setReplayFlag(false,1);
     }
 
     @Test(expected = FreshnessException.class)
