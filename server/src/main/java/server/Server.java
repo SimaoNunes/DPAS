@@ -30,6 +30,7 @@ public class Server implements Runnable {
 	private int nFaults = 1;
 	private int nQuorum = 2;
 	private static final int PORT = 9000;
+	private static final int TIMEOUT_WHILE = 100; // 50 * this
     private ServerSocket server;
     private String serverPort;
     private ConcurrentHashMap<PublicKey, String> userIdMap = null;
@@ -482,11 +483,9 @@ public class Server implements Runnable {
             while (!delivered.get(envelope.getRequest().getPublicKey())) {
                 try {
                     Thread.sleep(50);
-                    System.out.println("tou a espera");
-                    System.out.println("PORT: " + serverPort + " " + timeout);
                     timeout++;
 
-                    if (timeout == 200) {
+                    if (timeout == TIMEOUT_WHILE) {
                         break_flag = true;
                         break;
                     }

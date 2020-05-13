@@ -29,6 +29,8 @@ public class ClientEndpoint {
 
     /************ Replication variables *************/
     private static final int PORT = 9000;
+    private static final int TIMEOUT = 5000;
+    private static final int TIMEOUT_WHILE = 100;  // this * 50
     private int nServers = 4;
     private int nFaults  = 1;
     private int nQuorum  = 2;
@@ -325,9 +327,9 @@ public class ClientEndpoint {
             	}
             }
         }
+
         // Get Quorum from the result to make a decision regarding the responses
         int result = getQuorumInt(results);
-        System.out.println("RESULT: " + result);
         switch (result) {
             case (-1):
                 throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
@@ -343,6 +345,8 @@ public class ClientEndpoint {
                 throw new FreshnessException(ExceptionsMessages.CANT_INFER_POST);
             case (-14):
                 throw new IntegrityException(ExceptionsMessages.CANT_INFER_POST);
+            case (-666):
+                throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
         }
         return result;
     }
@@ -369,7 +373,7 @@ public class ClientEndpoint {
 
             Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(serverKey));
 
-            System.out.println(envelopeResponse.getResponse().toString());
+            System.out.println("AFTER DO SENDRECEIVE:" + envelopeResponse.getResponse().toString());
 
             /***** SIMULATE ATTACKER: replay register *****/
             if(isReplayFlag()){
@@ -388,11 +392,10 @@ public class ClientEndpoint {
             // On success, return 1
             return 1;
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            return 0;
         } catch (IOException e) {
             throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
         }
-        return 0;
     }
 
 
@@ -461,6 +464,8 @@ public class ClientEndpoint {
                 throw new FreshnessException(ExceptionsMessages.CANT_INFER_POST);
             case (-14):
                 throw new IntegrityException(ExceptionsMessages.CANT_INFER_POST);
+            case (-666):
+                throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
         }
         return result;
     }
@@ -529,7 +534,7 @@ public class ClientEndpoint {
 
         try {
             listenerSocket = new ServerSocket(getClientPort());
-            listenerSocket.setSoTimeout(20000);
+            listenerSocket.setSoTimeout(TIMEOUT);
             listener = new Listener(listenerSocket, nQuorum, username, getPublicKey(), serversPorts);
         } catch (IOException e) {
             e.printStackTrace();
@@ -595,7 +600,7 @@ public class ClientEndpoint {
             try {
                 Thread.sleep(50);
                 timeout++;
-                if(timeout == 400){
+                if(timeout == TIMEOUT_WHILE){
                     timeout_flag = true;
                     break;
                 }
@@ -735,6 +740,7 @@ public class ClientEndpoint {
         ServerSocket listenerSocket = null;
         try {
             listenerSocket = new ServerSocket(getClientPort());
+            listenerSocket.setSoTimeout(TIMEOUT);
             listener = new Listener(listenerSocket, nQuorum, username, getPublicKey(), serversPorts);
         } catch (IOException e) {
             e.printStackTrace();
@@ -757,7 +763,7 @@ public class ClientEndpoint {
             try {
                 Thread.sleep(50);
                 timeout++;
-                if(timeout == 400){
+                if(timeout == TIMEOUT_WHILE){
                     timeout_flag = true;
                     break;
                 }
@@ -965,7 +971,7 @@ public class ClientEndpoint {
             }
         }
         //NOT QUORUM
-        return 0;
+        return -666;
     }
 
     private Response getQuorumResponse(Response[] results) {
