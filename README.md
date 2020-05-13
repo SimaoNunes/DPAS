@@ -9,6 +9,28 @@ This is Java API that wants to solve the problems concerned with the emergence o
 - Users can read all the announcements of other users and obtain their cronological order
 - When posting announcements, users can refer to previous announcements posted by them or other users.
 
+## ClientApp
+
+We developed a simple App that runs the API as an example. To run it you must go to the directory client and
+then ran the app:
+
+```bash
+cd client
+mvn exec:java
+```
+
+If you don't provide any arguments, the application assumes you are trying to register to the Service. If so
+you must provide an username that appears on the keystore [user1, user2, user3] because we are assuming the server
+and clients know all the keys from everyone, and for simplification, we used the keystore alias as their well known usernames.
+If you are already registered in the system you must run app as a registered user:
+
+```bash
+cd client
+mvn exec:java -Dexev.args="<username>"
+```
+
+Now just enjoy the application!
+
 ## How to test 
 
 To test our system and simulate possible attacks, we provided a set of tests inside the Client's module. 
