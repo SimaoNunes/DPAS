@@ -140,7 +140,7 @@ public class BaseTest {
         }
     }
 
-    public String[] getReferencedAnnouncementsFromJSONResultWith1PostGeneral(JSONObject json){
+    public String[] getReferencedAnnouncementsFromJSONResultWith1PostGeneral(JSONObject json) {
 
         JSONArray arrayAnnouncement = (JSONArray) json.get("announcementList");
         String[] numbers = null;
@@ -164,7 +164,7 @@ public class BaseTest {
         }
     }
 
-    public static void shutDown(){
+    public static void shutDown() {
         Socket socket = null;
         try {
             socket = new Socket(serverAddress, 9000);
@@ -178,7 +178,7 @@ public class BaseTest {
         }
     }
 
-    public static void setReplayFlag(boolean flag){
+    public static void setReplayFlag(boolean flag) {
         Socket socket = null;
         String message = "REPLAY_FLAG_";
         if(flag){
@@ -202,7 +202,7 @@ public class BaseTest {
         }
     }
 
-    public static void setIntegrityFlag(boolean flag){
+    public static void setIntegrityFlag(boolean flag, int nServers) {
         Socket socket = null;
         String message = "INTEGRITY_FLAG_";
         if(flag){
@@ -212,13 +212,18 @@ public class BaseTest {
             message+="FALSE";
         }
         try {
-            socket = new Socket(serverAddress, 9000);
-            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-            outputStream.writeObject(new Envelope(new Request(message)));
-            Envelope confirmIntegrity = (Envelope) inputStream.readObject();
-            outputStream.close();
-            socket.close();
+        	int port = PORT;
+            int i = 0;
+            while(i < nServers){
+	            socket = new Socket(serverAddress, port + i);
+	            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+	            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+	            outputStream.writeObject(new Envelope(new Request(message)));
+	            Envelope confirmIntegrity = (Envelope) inputStream.readObject();
+	            outputStream.close();
+	            socket.close();
+	            i++;
+            }
 
         } catch (IOException |
                 ClassNotFoundException e) {
@@ -226,7 +231,7 @@ public class BaseTest {
         }
     }
     
-    public static void setDropNonceFlag(boolean flag){
+    public static void setDropNonceFlag(boolean flag, int nServers){
         Socket socket = null;
         String message = "DROP_NONCE_FLAG_";
         if(flag){
@@ -238,7 +243,7 @@ public class BaseTest {
         try {
             int port = PORT;
             int i = 0;
-            while(i < 4){
+            while(i < nServers){
                 socket = new Socket(serverAddress, port + i);
                 ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
                 outputStream.writeObject(new Envelope(new Request(message)));
@@ -257,7 +262,7 @@ public class BaseTest {
         }
     }
     
-    public static void setDropOperationFlag(boolean flag){
+    public static void setDropOperationFlag(boolean flag, int nServers){
         Socket socket = null;
         String message = "DROP_OPERATION_FLAG_";
         if(flag){
@@ -269,7 +274,7 @@ public class BaseTest {
         try {
             int port = PORT;
             int i = 0;
-            while(i < 4){
+            while(i < nServers){
                 socket = new Socket(serverAddress, port + i);
                 ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
                 ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());

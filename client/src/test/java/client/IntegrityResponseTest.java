@@ -23,13 +23,13 @@ public class IntegrityResponseTest extends BaseTest{
 
     @After
     public void turnFlagOff() {
-        setIntegrityFlag(false);
+        setIntegrityFlag(false,4);
 
     }
 
     @Test(expected = IntegrityException.class)
     public void Should_throw_Integrity_Exception_Post() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException {
-        setIntegrityFlag(true);
+        setIntegrityFlag(true,4);
 
         clientEndpoint1.post("a resposta a esta mensagem vai ser alterada", null);
 
@@ -37,7 +37,7 @@ public class IntegrityResponseTest extends BaseTest{
 
     @Test(expected = IntegrityException.class)
     public void Should_throw_Integrity_Exception_Read() throws NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
-        setIntegrityFlag(true);
+        setIntegrityFlag(true,4);
 
         clientEndpoint1.read("user2", 1);
 
@@ -45,7 +45,7 @@ public class IntegrityResponseTest extends BaseTest{
 
     @Test(expected = IntegrityException.class)
     public void Should_throw_Integrity_Exception_PostGeneral() throws MessageTooBigException, InvalidAnnouncementException, NonceTimeoutException, FreshnessException, UserNotRegisteredException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
-        setIntegrityFlag(true);
+        setIntegrityFlag(true,4);
 
         clientEndpoint1.post("a resposta vai ser alterada confiem", null);
 
@@ -53,7 +53,7 @@ public class IntegrityResponseTest extends BaseTest{
 
     @Test(expected = IntegrityException.class)
     public void Should_throw_Integrity_Exception_ReadGeneral() throws IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, NonceTimeoutException, UserNotRegisteredException, FreshnessException {
-        setIntegrityFlag(true);
+        setIntegrityFlag(true,4);
 
         clientEndpoint1.readGeneral(1);
 
@@ -61,7 +61,7 @@ public class IntegrityResponseTest extends BaseTest{
 
     @Test(expected = IntegrityException.class)
     public void Should_throw_Integrity_Exception_Register() throws NonceTimeoutException, FreshnessException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, UnknownPublicKeyException, AlreadyRegisteredException {
-        setIntegrityFlag(true);
+        setIntegrityFlag(true,4);
 
         clientEndpoint1.register();
 

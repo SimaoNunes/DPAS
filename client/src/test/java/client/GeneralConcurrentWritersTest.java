@@ -1,7 +1,6 @@
 package client;
 
 import exceptions.*;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,7 +27,6 @@ public class GeneralConcurrentWritersTest extends BaseTest {
     public void Should_Succeed_When_2ConcurrentWriter1ReaderStaysTheLast() throws UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, MessageTooBigException, FreshnessException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
 
         setGeneralConcurrentWriteFlag(true);
-
 
         String[] results;
 

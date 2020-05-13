@@ -23,12 +23,12 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
         clientEndpoint2.post("message from user2", null);
         clientEndpoint2.postGeneral("message general just to populate", null);
         
-        setIntegrityFlag(true);
+        setIntegrityFlag(true,1);
     }
 
     @AfterClass
     public static void turnFlagOff() {
-        setIntegrityFlag(false);
+        setIntegrityFlag(false,1);
 
     }
 
@@ -66,13 +66,10 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
 
     }
 
-    // @Test(expected = IntegrityException.class)
-    // public void Should_throw_Integrity_Exception_Register() throws NonceTimeoutException, FreshnessException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, UnknownPublicKeyException, AlreadyRegisteredException {
-    //     setIntegrityFlag(true);
-
-    //     clientEndpoint3.register();
-
-    // }
+    @Test(expected = AlreadyRegisteredExecption.class)
+    public void Should_throw_AlreadyRegisteredException_Register() throws NonceTimeoutException, FreshnessException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException, UnknownPublicKeyException, AlreadyRegisteredException {
+        clientEndpoint1.register();
+    }
 
 
 }
