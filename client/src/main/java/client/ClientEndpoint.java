@@ -55,6 +55,11 @@ public class ClientEndpoint {
         serversPorts = initiateServersPorts();
     }
 
+    public void changeNservers(int nServers) {
+        this.nServers = nServers;
+        serversPorts = initiateServersPorts();
+    }
+
     public boolean isReplayFlag() {
         return replayFlag;
     }
@@ -322,6 +327,7 @@ public class ClientEndpoint {
         }
         // Get Quorum from the result to make a decision regarding the responses
         int result = getQuorumInt(results);
+        System.out.println("RESULT: " + result);
         switch (result) {
             case (-1):
                 throw new UserNotRegisteredException(ExceptionsMessages.USER_NOT_REGISTERED);
@@ -362,6 +368,8 @@ public class ClientEndpoint {
         try {
 
             Envelope envelopeResponse = sendReceive(envelopeRequest, serversPorts.get(serverKey));
+
+            System.out.println(envelopeResponse.getResponse().toString());
 
             /***** SIMULATE ATTACKER: replay register *****/
             if(isReplayFlag()){
@@ -521,6 +529,7 @@ public class ClientEndpoint {
 
         try {
             listenerSocket = new ServerSocket(getClientPort());
+            listenerSocket.setSoTimeout(20000);
             listener = new Listener(listenerSocket, nQuorum, username, getPublicKey(), serversPorts);
         } catch (IOException e) {
             e.printStackTrace();
@@ -580,9 +589,16 @@ public class ClientEndpoint {
         }
 
         // Wait for listeners to get result
+        int timeout = 0;
+        boolean timeout_flag = false;
         while(listener.getResult() == null) {
             try {
                 Thread.sleep(50);
+                timeout++;
+                if(timeout == 400){
+                    timeout_flag = true;
+                    break;
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -593,6 +609,10 @@ public class ClientEndpoint {
             listenerSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+        if(timeout_flag){
+            throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
         }
 
         // Get result from Listener
@@ -774,21 +794,33 @@ public class ClientEndpoint {
 
 
         // Wait for listeners to get result
+        int timeout = 0;
+        boolean timeout_flag = false;
         while(listener.getResultGeneral() == null) {
             try {
                 Thread.sleep(50);
+                timeout++;
+                if(timeout == 400){
+                    timeout_flag = true;
+                    break;
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-
-        Envelope result = listener.getResultGeneral();
 
         try {
             listenerSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        if(timeout_flag){
+            throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
+        }
+
+        Envelope result = listener.getResultGeneral();
+
 
         // Threads that will make the requests to the server
         if(result.getRequest() != null){

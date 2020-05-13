@@ -12,6 +12,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.security.PublicKey;
 import java.util.*;
 import java.util.Collection;
@@ -72,6 +73,7 @@ public class Listener implements Runnable{
 
         try {
             socket = endpoint.accept();
+
         } catch(IOException e){
             return;
         }

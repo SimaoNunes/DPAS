@@ -166,8 +166,10 @@ public class Server implements Runnable {
                             	cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
                             	checkExceptions(envelope.getRequest(), outStream, new int[] {-4, -5}, null) && checkDelivered(envelope))
                         {
+                            System.out.println("dentro do write");
                             write(envelope.getRequest(), outStream);
                         }
+                        System.out.println("acabei tudo");
                         break;
                     case "POSTGENERAL":
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}, null) &&
@@ -179,6 +181,7 @@ public class Server implements Runnable {
                         }
                         break;
                     case "READ":
+                        System.out.println("entrei no READ");
                         if(checkExceptions(envelope.getRequest(), outStream, new int[] {-7, -1}, "READ") &&
                         		cryptoManager.verifyRequest(envelope.getRequest(), envelope.getSignature(), cryptoManager.getPublicKeyFromKs(userIdMap.get(envelope.getRequest().getPublicKey()))) &&
                                 cryptoManager.checkNonce(envelope.getRequest().getPublicKey(), envelope.getRequest().getServerNonce()) &&
@@ -430,8 +433,10 @@ public class Server implements Runnable {
     }
 
     private boolean checkDelivered(Envelope envelope){
+        System.out.println("CHECK DELIVERED");
 
         delivered.put(envelope.getRequest().getPublicKey(), false);
+        boolean break_flag = false;
 
         sentEcho.remove(envelope.getRequest().getPublicKey());
         sentReady.remove(envelope.getRequest().getPublicKey());
@@ -477,18 +482,28 @@ public class Server implements Runnable {
             while (!delivered.get(envelope.getRequest().getPublicKey())) {
                 try {
                     Thread.sleep(50);
+                    System.out.println("tou a espera");
+                    System.out.println("PORT: " + serverPort + " " + timeout);
                     timeout++;
 
-                    if (timeout == 1000) {
-                        return false;
+                    if (timeout == 200) {
+                        break_flag = true;
+                        break;
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
+
             delivered.remove(envelope.getRequest().getPublicKey());
+            if(break_flag){
+                return false;
+            }
+            else{
+                return true;
+            }
         }
-        return true;
+        return false;
     }
 
     
@@ -1174,6 +1189,7 @@ public class Server implements Runnable {
 //////////////////////////////////////////
     @SuppressWarnings("all")
     public boolean checkExceptions(Request request, ObjectOutputStream outStream, int[] codes, String operationType) {
+        System.out.println("check exceptions");
         for (int i = 0; i < codes.length; i++) {
             switch(codes[i]) {
                 // ## UserNotRegistered ## -> check if user is registered
@@ -1192,6 +1208,7 @@ public class Server implements Runnable {
                     break;
                 // ## UserNotRegistered ## -> [READ] check if user TO READ FROM is registered
                 case -3:
+                    System.out.println("-3");
                     if(!userIdMap.containsKey(request.getPublicKeyToReadFrom())) {
                         sendExceptionCode(request.getPublicKey(), request.getClientNonce(), -3, operationType);
                         return false;
@@ -1213,6 +1230,7 @@ public class Server implements Runnable {
                     break;
                 // ## InvalidPostsNumber ## -> check if number of requested posts are bigger than zero
                 case -6:
+                    System.out.println("-6");
                     if (request.getNumber() < 0) {
                         sendExceptionCode(request.getPublicKey(), request.getClientNonce(), -6, operationType);
                         return false;
@@ -1227,8 +1245,11 @@ public class Server implements Runnable {
                     break;
                 // ## TooMuchAnnouncements ## -> Check if user is trying to read more announcements that Board number of announcements
                 case -10:
+                    System.out.println("-10");
                     if ((request.getOperation().equals("READ") && request.getNumber() > usersBoards.get(request.getPublicKeyToReadFrom()).getSecond().size()) || (request.getOperation().equals("READGENERAL") && request.getNumber() > generalBoard.getSecond().size())) {
+                        System.out.println("before send");
                         sendExceptionCode(request.getPublicKey(), request.getClientNonce(), -10, operationType);
+                        System.out.println("after send");
                         return false;
                     }
                     break;
