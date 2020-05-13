@@ -9,30 +9,6 @@ This is Java API that wants to solve the problems concerned with the emergence o
 - Users can read all the announcements of other users and obtain their cronological order
 - When posting announcements, users can refer to previous announcements posted by them or other users.
 
-## Exceptions Guide
-
-Every time the server must throw an exception, it sends an error code to the client.
-This error code is translated into an exception as the following:
-
-- -1 -> UserNotRegistered
-- -2 -> AlreadyRegistered
-- -3 -> InvalidPublicKey (currently not being used, only UnknownPublicKey)
-- -4 -> MessageTooBig
-- -5 -> InvalidAnnouncement
-- -6 -> InvalidPostsNumber
-- -7 -> UnknownPublicKey
-- -8 -> ErrorReadingFile
-- -9 -> ErrorWrittingFile
-- -10 -> TooMuchAnnouncements
-
-This are exceptions that the server doesn't throw explicitly, which means this are exceptios that the endpoint
-interprets based on timeouts and non fresh/non integrate messages.
-
-- -11 -> NonceTimeout
-- -12 -> OperationTimeout
-- -13 -> Freshness
-- -14 -> Integrity
-
 ## How to test 
 
 To test our system and simulate possible attacks, we provided a set of tests inside the Client's module. 
@@ -78,6 +54,29 @@ To reboot the server, you must stop the execution on console number 2, and execu
 ctrl+c  #interrupt the execution
 mvn exec:java
 ```
+## Exceptions Guide
+
+Every time the server must throw an exception, it sends an error code to the client.
+This error code is translated into an exception as the following:
+
+- -1 -> UserNotRegistered
+- -2 -> AlreadyRegistered
+- -3 -> InvalidPublicKey (currently not being used, only UnknownPublicKey)
+- -4 -> MessageTooBig
+- -5 -> InvalidAnnouncement
+- -6 -> InvalidPostsNumber
+- -7 -> UnknownPublicKey
+- -8 -> ErrorReadingFile
+- -9 -> ErrorWrittingFile
+- -10 -> TooMuchAnnouncements
+
+This are exceptions that the server doesn't throw explicitly, which means this are exceptios that the endpoint
+interprets based on timeouts and non fresh/non integrate messages.
+
+- -11 -> NonceTimeout
+- -12 -> OperationTimeout
+- -13 -> Freshness
+- -14 -> Integrity
 
 ## Contributors
 - Simão Nunes
