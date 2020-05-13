@@ -1,6 +1,7 @@
 package client;
 
 import exceptions.*;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -24,6 +25,11 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
         clientEndpoint2.postGeneral("message general just to populate", null);
         
         setIntegrityFlag(true,1);
+    }
+
+    @After
+    public void slepp() throws InterruptedException {
+        Thread.sleep(5000);
     }
 
     @AfterClass
