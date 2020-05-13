@@ -262,10 +262,12 @@ public class Server implements Runnable {
                         shutDown();
                         break;
                     case "REPLAY_FLAG_TRUE":
-                        replayFlag = true;
+                    	replayFlag = true;
+                    	outStream.writeObject(new Envelope(new Request("REPLAY_ACK")));
                         break;
                     case "REPLAY_FLAG_FALSE":
-                        replayFlag = false;
+                    	replayFlag = false;
+                    	outStream.writeObject(new Envelope(new Request("REPLAY_ACK")));
                         break;
                     case "INTEGRITY_FLAG_TRUE":
                         integrityFlag = true;
