@@ -3,6 +3,7 @@ package client;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -40,8 +41,8 @@ public class IntegrityRequestTolerateFaultTest extends BaseTest {
 		clientEndpoint1.setIntegrityFlag(true);
 	}
 	
-	@After
-	public void turnFlagOff() {
+	@AfterClass
+	public static void turnFlagOff() {
 		clientEndpoint1.setIntegrityFlag(false);
 	}
 
