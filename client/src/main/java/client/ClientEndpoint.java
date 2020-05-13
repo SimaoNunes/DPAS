@@ -29,6 +29,8 @@ public class ClientEndpoint {
 
     /************ Replication variables *************/
     private static final int PORT = 9000;
+    private static final int TIMEOUT = 5000;
+    private static final int TIMEOUT_WHILE = 100;  // this * 50
     private int nServers = 4;
     private int nFaults  = 1;
     private int nQuorum  = 2;
@@ -325,6 +327,7 @@ public class ClientEndpoint {
             	}
             }
         }
+
         // Get Quorum from the result to make a decision regarding the responses
         int result = getQuorumInt(results);
         switch (result) {
@@ -342,6 +345,8 @@ public class ClientEndpoint {
                 throw new FreshnessException(ExceptionsMessages.CANT_INFER_POST);
             case (-14):
                 throw new IntegrityException(ExceptionsMessages.CANT_INFER_POST);
+            case (-666):
+                throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
         }
         return result;
     }
@@ -385,11 +390,10 @@ public class ClientEndpoint {
             // On success, return 1
             return 1;
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            return 0;
         } catch (IOException e) {
             throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
         }
-        return 0;
     }
 
 
@@ -458,6 +462,8 @@ public class ClientEndpoint {
                 throw new FreshnessException(ExceptionsMessages.CANT_INFER_POST);
             case (-14):
                 throw new IntegrityException(ExceptionsMessages.CANT_INFER_POST);
+            case (-666):
+                throw new OperationTimeoutException(ExceptionsMessages.CANT_INFER_POST);
         }
         return result;
     }
@@ -526,7 +532,7 @@ public class ClientEndpoint {
 
         try {
             listenerSocket = new ServerSocket(getClientPort());
-            listenerSocket.setSoTimeout(20000);
+            listenerSocket.setSoTimeout(TIMEOUT);
             listener = new Listener(listenerSocket, nQuorum, username, getPublicKey(), serversPorts);
         } catch (IOException e) {
             e.printStackTrace();
@@ -592,7 +598,7 @@ public class ClientEndpoint {
             try {
                 Thread.sleep(50);
                 timeout++;
-                if(timeout == 400){
+                if(timeout == TIMEOUT_WHILE){
                     timeout_flag = true;
                     break;
                 }
@@ -732,6 +738,7 @@ public class ClientEndpoint {
         ServerSocket listenerSocket = null;
         try {
             listenerSocket = new ServerSocket(getClientPort());
+            listenerSocket.setSoTimeout(TIMEOUT);
             listener = new Listener(listenerSocket, nQuorum, username, getPublicKey(), serversPorts);
         } catch (IOException e) {
             e.printStackTrace();
@@ -797,7 +804,7 @@ public class ClientEndpoint {
             try {
                 Thread.sleep(50);
                 timeout++;
-                if(timeout == 400){
+                if(timeout == TIMEOUT_WHILE){
                     timeout_flag = true;
                     break;
                 }
@@ -981,19 +988,7 @@ public class ClientEndpoint {
             }
         }
         //NOT QUORUM
-        return 0;
-    }
-
-    private Response getQuorumResponse(Response[] results) {
-        Response finalResult = results[0];
-        for(int i = 1; i < results.length; i++) {
-            if (results[i].getSuccess() == finalResult.getSuccess() && results[i].getErrorCode() == finalResult.getErrorCode()) {
-                continue;
-            } else {
-                System.out.println("Not quorum n sei o que fazer");
-            }
-        }
-        return finalResult;
+        return -666;
     }
     
     private int getMajorityOfQuorumInt(int[] results) {
