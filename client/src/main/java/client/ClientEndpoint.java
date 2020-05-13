@@ -55,7 +55,7 @@ public class ClientEndpoint {
         serversPorts = initiateServersPorts();
     }
 
-    public void changeNservers(int nServers){
+    public void changeNservers(int nServers) {
         this.nServers = nServers;
         serversPorts = initiateServersPorts();
     }
