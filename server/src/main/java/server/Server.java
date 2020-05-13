@@ -778,13 +778,14 @@ public class Server implements Runnable {
         }
         JSONObject announcementsToSend = generalBoard.getSecond().getAnnouncements(total);
         try(ObjectOutputStream outputStream = new ObjectOutputStream(new Socket("localhost", getClientPort(userIdMap.get(request.getPublicKey()))).getOutputStream())) {
-            if(!dropOperationFlag) {
+            if (!dropOperationFlag) {
                 byte[] nonce = startOneWayHandshake(userIdMap.get(request.getPublicKey()));
                 sendRequest(new Request("VALUEGENERAL", request.getRid(), generalBoard.getFirst(), nonce, announcementsToSend, cryptoManager.getPublicKeyFromKs("server")), outputStream, integrityFlag, replayFlag);
             } else {
                 System.out.println("SERVER ON PORT " + this.serverPort + ": DROPPED READ GENERAL");
             }
-
+        } catch(SocketException e){
+            //do nothing
         } catch (UnknownHostException e1) {
             e1.printStackTrace();
         } catch (IOException e1) {
