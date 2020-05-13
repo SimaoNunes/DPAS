@@ -89,7 +89,12 @@ public class IntegrityResponseTolerateFaultTest extends BaseTest{
     @Test(expected = TooMuchAnnouncementsException.class)
 	public void Should_Fail_When_AskingAlotOfPosts() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
 		clientEndpoint1.read("user1", 50);
-	}
+    }
+    
+    @Test(expected = InvalidPostsNumberException.class)
+	public void Should_Fail_When_BadPostsNumber() throws InvalidPostsNumberException, UserNotRegisteredException, TooMuchAnnouncementsException, NonceTimeoutException, OperationTimeoutException, FreshnessException, IntegrityException {
+		clientEndpoint1.read("user1", -10);
+    }
 
 
 }
