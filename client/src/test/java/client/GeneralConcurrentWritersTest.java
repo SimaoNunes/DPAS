@@ -1,6 +1,7 @@
 package client;
 
 import exceptions.*;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -15,7 +16,6 @@ public class GeneralConcurrentWritersTest extends BaseTest {
         clientEndpoint2.register();
         clientEndpoint3.register();
         clientEndpoint3.setWaitForReadCompleteFlag(true);
-        setGeneralConcurrentWriteFlag(true);
     }
 
     @AfterClass
@@ -25,31 +25,38 @@ public class GeneralConcurrentWritersTest extends BaseTest {
     }
 
     @Test
-    public void Should_Succeed_When_2ConcurrentWriter1Reader() throws UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, MessageTooBigException, FreshnessException, IntegrityException, OperationTimeoutException {
+    public void Should_Succeed_When_2ConcurrentWriter1ReaderStaysTheLast() throws UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, MessageTooBigException, FreshnessException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
 
-        String[][] result = new String[2][1];
+        setGeneralConcurrentWriteFlag(true);
 
-        Thread threadRead = new Thread(new Runnable() {
+
+        String[] results;
+
+        Thread threadWrite = new Thread(new Runnable() {
             public void run() {
                 try {
-                    clientEndpoint1.post(" message1 user1", null);
+                    clientEndpoint1.postGeneral(" message1 user1", null);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         });
-        threadRead.start();
+        threadWrite.start();
 
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         setGeneralConcurrentWriteFlag(false);
 
-        clientEndpoint2.post("This should be the one returned user1", null);
+        Thread threadWrite2 = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    clientEndpoint2.postGeneral("This should be the one returned user2", null);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        threadWrite2.start();
 
-        while(threadRead.isAlive()) {
+        while(threadWrite.isAlive() || threadWrite2.isAlive()) {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
@@ -57,6 +64,50 @@ public class GeneralConcurrentWritersTest extends BaseTest {
             }
         }
 
-        assertEquals("This should be the one returned user1", result[0][0]);
+        results = getMessagesFromJSONGeneral(clientEndpoint2.readGeneral(1));
+        assertEquals("This should be the one returned user2", results[0]);
+    }
+
+    @Test
+    public void Should_Succeed_When_2ConcurrentWriter1ReaderStaysTheFirst() throws UserNotRegisteredException, InvalidAnnouncementException, NonceTimeoutException, MessageTooBigException, FreshnessException, IntegrityException, OperationTimeoutException, TooMuchAnnouncementsException, InvalidPostsNumberException {
+
+        setGeneralConcurrentWriteFlag(true);
+
+        String[] results;
+
+        Thread threadWrite = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    clientEndpoint2.postGeneral("This should be the one returned user2 test2", null);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        threadWrite.start();
+
+        setGeneralConcurrentWriteFlag(false);
+
+        Thread threadWrite2 = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    clientEndpoint1.postGeneral("message user1 will be shifted test2", null);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        threadWrite2.start();
+
+        while(threadWrite.isAlive() || threadWrite2.isAlive()) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        results = getMessagesFromJSONGeneral(clientEndpoint2.readGeneral(1));
+        assertEquals("This should be the one returned user2 test2", results[0]);
     }
 }
